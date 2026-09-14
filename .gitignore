@@ -216,3 +216,16 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# --- doomscroll-bias ---
+# Partial writes from an interrupted collection run. src/run.py writes each
+# response to a .tmp sibling and then os.replace()s it into place, so a .tmp
+# left behind is by definition incomplete and must never be committed or
+# scored.
+results/raw/*.tmp
+results/tables/*.tmp
+
+# Local API keys. The four secrets live in the environment or in GitHub
+# Actions secrets, never in the tree.
+.env
+.env.*
