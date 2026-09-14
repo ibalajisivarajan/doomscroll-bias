@@ -1,0 +1,37 @@
+cff-version: 1.2.0
+message: "If you use this audit, its vignette set, or its protocol, please cite it as below."
+title: >-
+  doomscroll-bias: a paired-vignette audit of gendered and culturally framed
+  blame attribution in open-weight LLM judgements of doomscrolling conflict
+abstract: >-
+  A pre-registered audit asking whether open-weight large language models judge
+  relationship conflict involving doomscrolling differently depending on the
+  gender of the scrolling partner, and whether that shift differs between North
+  American and South Asian cultural framings. The design is a paired
+  within-item factorial: 120 authored fictional vignettes, each rendered in six
+  conditions (gender male/female/neutral x culture north_american/south_asian)
+  so that only names and pronouns differ across the renderings of a given
+  vignette, making each vignette its own control. Two open-weight models from
+  different labs are queried five times per cell at temperature 0, for 7,200
+  calls in total. Alongside the blame-attribution measures the audit reports a
+  grounding check: whether the sentence each model returns as its evidence
+  actually appears verbatim in the vignette it was shown.
+type: software
+license: MIT
+version: 0.1.0
+date-released: "2026-09-14"
+repository-code: "https://github.com/ibalajisivarajan/doomscroll-bias"
+url: "https://github.com/ibalajisivarajan/doomscroll-bias"
+authors:
+  - family-names: Sivarajan
+    given-names: Balaji
+    alias: ibalajisivarajan
+keywords:
+  - large language models
+  - algorithmic audit
+  - gender bias
+  - cultural bias
+  - open-weight models
+  - vignette study
+  - pre-registration
+  - hallucination

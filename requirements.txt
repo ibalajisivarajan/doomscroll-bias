@@ -1,0 +1,26 @@
+# Minimum versions, not exact pins. The analysis uses long-stable APIs from all
+# six of these, so a floor keeps a fresh clone working on current Python
+# without freezing the study to whatever happened to be installed on the day
+# the scaffold was written. CI installs the latest satisfying release, so a
+# break shows up in a dispatch rather than silently years later.
+#
+# The floors are set at the first release that supports Python 3.12, which is
+# what .github/workflows/run.yml pins.
+
+# HTTP for the OpenAI-compatible endpoints and the Notion API.
+requests>=2.31.0
+
+# Reads config/protocol.yaml, the frozen source of truth.
+PyYAML>=6.0.1
+
+# Cell means, pivots and crosstabs in src/analyze.py.
+pandas>=2.2.0
+
+# Wilcoxon signed-rank, chi-square, rank utilities for Cliff's delta.
+scipy>=1.11.0
+
+# Fault-gap histograms, driven headless through the Agg backend.
+matplotlib>=3.8.0
+
+# Markdown tables in results/tables/results.md.
+tabulate>=0.9.0
