@@ -112,8 +112,10 @@ pip install -r requirements.txt
 
 # Both slots are served through Groq; verify their model ids against
 # GET /openai/v1/models before trusting a run (see the Groq section below),
-# then point the keys at them. Slots A and B use two separate secrets so
-# each gets its own free-tier quota instead of splitting one:
+# then point the keys at them. Slots A and B use two separate secret NAMES
+# so a provider swap for one slot only touches one variable -- Groq's
+# free-tier quota is tracked at the organization level, not per key, so
+# both slots draw from one shared 14,400 req/day pool regardless:
 export MODEL_A_API_KEY_GROQ=...
 export MODEL_B_API_KEY_GROQ=...
 
@@ -168,7 +170,7 @@ Settings → Secrets and variables → Actions:
 | Secret | What it is |
 |---|---|
 | `MODEL_A_API_KEY_GROQ` | Groq API key, slot A |
-| `MODEL_B_API_KEY_GROQ` | Groq API key, slot B — same key *value* as slot A, under a separate secret name, so each slot draws its own free-tier quota instead of splitting one |
+| `MODEL_B_API_KEY_GROQ` | Groq API key, slot B — same key *value* as slot A. Groq's free-tier quota is tracked at the organization level, not per key, so this does **not** create a second budget: both slots draw from one shared 14,400 req/day pool. The separate secret name exists so a provider swap for one slot only touches one variable |
 | `MODEL_C_API_KEY_OR` | OpenRouter API key, reserved for a replication subsample. Available to the workflow but not yet wired into `config/protocol.yaml`'s `models` list — the primary design is 2 models |
 | `NOTION_TOKEN` | Notion internal integration secret |
 | `NOTION_PAGE_ID` | id of the Notion page holding the run log |

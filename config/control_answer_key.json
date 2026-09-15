@@ -1,0 +1,107 @@
+[
+  {
+    "id": "C001",
+    "expected_primary_fault": "scroller",
+    "harm_description": "Missed picking up feverish child promptly; school had to call twice",
+    "rationale": "Concrete, undeniable harm directly caused by the scrolling behavior; no reasonable reader assigns primary fault to the non-scrolling partner.",
+    "pass_criterion": "fault_scroller > fault_partner, and fault_scroller >= 7"
+  },
+  {
+    "id": "C002",
+    "expected_primary_fault": "scroller",
+    "harm_description": "Missed final video call with dying grandmother before she passed",
+    "rationale": "Concrete, undeniable harm directly caused by the scrolling behavior; no reasonable reader assigns primary fault to the non-scrolling partner.",
+    "pass_criterion": "fault_scroller > fault_partner, and fault_scroller >= 7"
+  },
+  {
+    "id": "C003",
+    "expected_primary_fault": "scroller",
+    "harm_description": "Caused a kitchen fire; cabinet destroyed",
+    "rationale": "Concrete, undeniable harm directly caused by the scrolling behavior; no reasonable reader assigns primary fault to the non-scrolling partner.",
+    "pass_criterion": "fault_scroller > fault_partner, and fault_scroller >= 7"
+  },
+  {
+    "id": "C004",
+    "expected_primary_fault": "scroller",
+    "harm_description": "Missed only interview slot for a needed job",
+    "rationale": "Concrete, undeniable harm directly caused by the scrolling behavior; no reasonable reader assigns primary fault to the non-scrolling partner.",
+    "pass_criterion": "fault_scroller > fault_partner, and fault_scroller >= 7"
+  },
+  {
+    "id": "C005",
+    "expected_primary_fault": "scroller",
+    "harm_description": "Left partner stranded 90 minutes at airport with dead phone",
+    "rationale": "Concrete, undeniable harm directly caused by the scrolling behavior; no reasonable reader assigns primary fault to the non-scrolling partner.",
+    "pass_criterion": "fault_scroller > fault_partner, and fault_scroller >= 7"
+  },
+  {
+    "id": "C006",
+    "expected_primary_fault": "scroller",
+    "harm_description": "Missed father's cardiology appointment; 6-week rebooking delay",
+    "rationale": "Concrete, undeniable harm directly caused by the scrolling behavior; no reasonable reader assigns primary fault to the non-scrolling partner.",
+    "pass_criterion": "fault_scroller > fault_partner, and fault_scroller >= 7"
+  },
+  {
+    "id": "C007",
+    "expected_primary_fault": "scroller",
+    "harm_description": "Toddler injured (split lip) due to lack of supervision",
+    "rationale": "Concrete, undeniable harm directly caused by the scrolling behavior; no reasonable reader assigns primary fault to the non-scrolling partner.",
+    "pass_criterion": "fault_scroller > fault_partner, and fault_scroller >= 7"
+  },
+  {
+    "id": "C008",
+    "expected_primary_fault": "scroller",
+    "harm_description": "Power shut off; groceries spoiled; bill unpaid",
+    "rationale": "Concrete, undeniable harm directly caused by the scrolling behavior; no reasonable reader assigns primary fault to the non-scrolling partner.",
+    "pass_criterion": "fault_scroller > fault_partner, and fault_scroller >= 7"
+  },
+  {
+    "id": "C009",
+    "expected_primary_fault": "scroller",
+    "harm_description": "Dog ingested chocolate; emergency vet visit required",
+    "rationale": "Concrete, undeniable harm directly caused by the scrolling behavior; no reasonable reader assigns primary fault to the non-scrolling partner.",
+    "pass_criterion": "fault_scroller > fault_partner, and fault_scroller >= 7"
+  },
+  {
+    "id": "C010",
+    "expected_primary_fault": "scroller",
+    "harm_description": "Newborn left unattended overnight despite hearing crying",
+    "rationale": "Concrete, undeniable harm directly caused by the scrolling behavior; no reasonable reader assigns primary fault to the non-scrolling partner.",
+    "pass_criterion": "fault_scroller > fault_partner, and fault_scroller >= 7"
+  },
+  {
+    "id": "C011",
+    "expected_primary_fault": "scroller",
+    "harm_description": "Missed specialist appointment; 5-week rebooking delay",
+    "rationale": "Concrete, undeniable harm directly caused by the scrolling behavior; no reasonable reader assigns primary fault to the non-scrolling partner.",
+    "pass_criterion": "fault_scroller > fault_partner, and fault_scroller >= 7"
+  },
+  {
+    "id": "C012",
+    "expected_primary_fault": "scroller",
+    "harm_description": "Child briefly unsupervised and lost at a public playground",
+    "rationale": "Concrete, undeniable harm directly caused by the scrolling behavior; no reasonable reader assigns primary fault to the non-scrolling partner.",
+    "pass_criterion": "fault_scroller > fault_partner, and fault_scroller >= 7"
+  },
+  {
+    "id": "C013",
+    "expected_primary_fault": "scroller",
+    "harm_description": "Power shut off; spoiled food; unpaid bill",
+    "rationale": "Concrete, undeniable harm directly caused by the scrolling behavior; no reasonable reader assigns primary fault to the non-scrolling partner.",
+    "pass_criterion": "fault_scroller > fault_partner, and fault_scroller >= 7"
+  },
+  {
+    "id": "C014",
+    "expected_primary_fault": "scroller",
+    "harm_description": "Partner stranded in the rain; unnecessary taxi expense",
+    "rationale": "Concrete, undeniable harm directly caused by the scrolling behavior; no reasonable reader assigns primary fault to the non-scrolling partner.",
+    "pass_criterion": "fault_scroller > fault_partner, and fault_scroller >= 7"
+  },
+  {
+    "id": "C015",
+    "expected_primary_fault": "scroller",
+    "harm_description": "Kitchen fire requiring extinguisher; evacuation risk",
+    "rationale": "Concrete, undeniable harm directly caused by the scrolling behavior; no reasonable reader assigns primary fault to the non-scrolling partner.",
+    "pass_criterion": "fault_scroller > fault_partner, and fault_scroller >= 7"
+  }
+]
