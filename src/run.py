@@ -309,10 +309,10 @@ def check_models(tasks: list[Task]) -> None:
 class RateLimiter:
     """Process-wide requests-per-minute gate shared by all workers.
 
-    Concurrency alone does not bound request rate: 4 workers against a fast
-    endpoint can burn a 20 rpm allowance in seconds and then spend the rest of
-    the run in backoff. This spaces request starts so the steady state stays
-    under the documented limit.
+    Concurrency alone does not bound request rate: a handful of workers
+    against a fast endpoint can burn a whole per-minute allowance in seconds
+    and then spend the rest of the run in backoff. This spaces request starts
+    so the steady state stays under the documented limit.
     """
 
     def __init__(self, requests_per_minute: float) -> None:
@@ -339,11 +339,99 @@ class Stats:
     written: int = 0
     failed: int = 0
     retries: int = 0
+    capped: int = 0
     _lock: threading.Lock = field(default_factory=threading.Lock, repr=False)
 
     def bump(self, attr: str, n: int = 1) -> None:
         with self._lock:
             setattr(self, attr, getattr(self, attr) + n)
+
+
+# --------------------------------------------------------------------------
+# daily request cap
+# --------------------------------------------------------------------------
+class DailyCapExceeded(RuntimeError):
+    """Raised by call_model once today's attempt budget is spent.
+
+    Deliberately its own type rather than a plain RuntimeError, so process()
+    can tell "today's quota is gone" apart from "this one cell failed" and
+    the run can stop quietly instead of logging a FAIL line per remaining
+    task.
+    """
+
+
+class DailyCapTracker:
+    """Persists a count of request ATTEMPTS made today, shared across workers
+    and across dispatches.
+
+    Counts attempts, not successes. A 429 that gets retried five times spends
+    five requests against Groq's org-wide daily ceiling even though it never
+    produces a cached response, so a guard that only counted writes would not
+    trip until the real ceiling had already been hit -- at which point every
+    model call in the account, not just this study's, starts failing for the
+    rest of the day. `daily_request_cap` in the protocol is set below that
+    ceiling specifically to leave that margin.
+
+    The counter is keyed by UTC calendar date (Groq's ceiling resets at UTC
+    midnight) and written to disk after every attempt via the same
+    tmp-then-replace pattern as the response cache, so:
+      * it survives a killed process -- a run resumed five minutes later does
+        not get to recount from zero;
+      * a second dispatch later the same UTC day sees what the first one
+        already spent, instead of both independently believing they have the
+        full daily allowance.
+    """
+
+    def __init__(self, path: Path, cap: int) -> None:
+        self.path = path
+        self.cap = cap
+        self._lock = threading.Lock()
+        self._date, self._count = self._load()
+
+    @staticmethod
+    def _today() -> str:
+        return time.strftime("%Y-%m-%d", time.gmtime())
+
+    def _load(self) -> tuple[str, int]:
+        today = self._today()
+        if self.path.exists():
+            try:
+                data = json.loads(self.path.read_text(encoding="utf-8"))
+                if data.get("date") == today:
+                    return today, int(data.get("count", 0))
+            except (ValueError, OSError, TypeError):
+                pass  # corrupt or missing counter file: start today at zero
+        return today, 0
+
+    def _save(self) -> None:
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        tmp = self.path.with_suffix(".tmp")
+        tmp.write_text(
+            json.dumps({"date": self._date, "count": self._count}), encoding="utf-8"
+        )
+        os.replace(tmp, self.path)
+
+    def try_consume(self) -> bool:
+        """Spend one unit of today's budget. False once the cap is reached.
+
+        Rolls the counter over to zero itself on a UTC date change, so a run
+        that happens to straddle midnight keeps working under the new day's
+        allowance rather than staying stuck at yesterday's cap.
+        """
+        with self._lock:
+            today = self._today()
+            if today != self._date:
+                self._date, self._count = today, 0
+            if self._count >= self.cap:
+                return False
+            self._count += 1
+            self._save()
+            return True
+
+    @property
+    def count(self) -> int:
+        with self._lock:
+            return self._count
 
 
 # --------------------------------------------------------------------------
@@ -367,18 +455,21 @@ def call_model(
     config: dict[str, Any],
     limiter: RateLimiter,
     stats: Stats,
+    daily_cap_tracker: "DailyCapTracker | None" = None,
 ) -> dict[str, Any]:
     """POST one completion, retrying transient failures. Returns the record.
 
     Raises RuntimeError once retries are exhausted; the caller records the
     failure and moves on, because one dead cell must not abort 7,199 others.
+    Raises DailyCapExceeded instead, without making a request, once
+    daily_cap_tracker reports today's attempt budget is spent.
     """
     limits = config["rate_limits"]
     design = config["design"]
     prompts = config["prompts"]
 
     max_retries = int(limits["max_retries"])
-    base = float(limits["backoff_base"])
+    base = float(limits["backoff_base_seconds"])
     backoff_max = float(limits.get("backoff_max", 120))
     jitter = float(limits.get("jitter", 0.5))
     retry_on = set(limits.get("retry_on_status", [429, 500, 502, 503, 504]))
@@ -407,11 +498,33 @@ def call_model(
     url = chat_completions_url(task.base_url)
 
     last_error = "unknown"
+    # Retry-After, when the host sends one, overrides the NEXT sleep rather
+    # than being slept on top of it. Groq sends this header on 429s and it
+    # is more precise than our own exponential guess; the earlier version of
+    # this loop slept for Retry-After immediately AND for the exponential
+    # delay on the following iteration, which double-waited on every
+    # rate-limited retry and roughly halved real throughput against a
+    # strict per-minute budget.
+    next_delay_override: float | None = None
     for attempt in range(max_retries + 1):
+        # Checked first, before any sleep or network activity: a denied
+        # attempt must cost nothing. Every iteration of this loop is one
+        # attempt against Groq's daily ceiling whether or not it succeeds,
+        # so the guard consumes budget here -- not after a response comes
+        # back -- which is what "count attempts, not successes" requires.
+        if daily_cap_tracker is not None and not daily_cap_tracker.try_consume():
+            raise DailyCapExceeded(
+                f"daily request cap of {daily_cap_tracker.cap} reached "
+                f"({daily_cap_tracker.count}/{daily_cap_tracker.cap} attempts today)"
+            )
         if attempt:
-            # Exponential backoff with jitter. The jitter is what keeps the
-            # workers from retrying in lockstep after a shared 429.
-            delay = min(base**attempt, backoff_max) + random.uniform(0, jitter)
+            if next_delay_override is not None:
+                delay = next_delay_override + random.uniform(0, jitter)
+                next_delay_override = None
+            else:
+                # Exponential backoff with jitter. The jitter is what keeps
+                # the workers from retrying in lockstep after a shared 429.
+                delay = min(base**attempt, backoff_max) + random.uniform(0, jitter)
             stats.bump("retries")
             time.sleep(delay)
         limiter.acquire()
@@ -424,11 +537,14 @@ def call_model(
 
         if resp.status_code in retry_on:
             # Respect Retry-After when the host sends one; it knows its own
-            # window better than our backoff curve does.
+            # window better than our backoff curve does. Recorded here and
+            # applied at the top of the next iteration instead of slept on
+            # the spot, so it replaces rather than stacks with the
+            # exponential delay above.
             retry_after = resp.headers.get("Retry-After")
             if retry_after:
                 try:
-                    time.sleep(min(float(retry_after), backoff_max))
+                    next_delay_override = min(float(retry_after), backoff_max)
                 except ValueError:
                     pass
             last_error = f"HTTP {resp.status_code}: {resp.text[:300]}"
@@ -505,6 +621,7 @@ def process(
     config: dict[str, Any],
     limiter: RateLimiter,
     stats: Stats,
+    daily_cap_tracker: "DailyCapTracker | None" = None,
 ) -> tuple[Task, str, str | None]:
     """Fetch one task unless it is already cached. Never raises."""
     path = task.cache_path(raw_dir)
@@ -514,7 +631,14 @@ def process(
         stats.bump("cached")
         return task, "cached", None
     try:
-        record = call_model(task, session, config, limiter, stats)
+        record = call_model(task, session, config, limiter, stats, daily_cap_tracker)
+    except DailyCapExceeded as exc:
+        # Distinct from an ordinary failure: nothing is wrong with this cell,
+        # today's budget is just gone. main() handles this status specially so
+        # a queue of thousands of already-submitted tasks does not each print
+        # their own FAIL line on the way to the same conclusion.
+        stats.bump("capped")
+        return task, "capped", str(exc)
     except Exception as exc:  # noqa: BLE001 - one bad cell must not kill the run
         stats.bump("failed")
         return task, "failed", f"{exc.__class__.__name__}: {exc}"
@@ -623,20 +747,49 @@ def main(argv: list[str] | None = None) -> int:
     print(f"pending  : {len(pending)} to collect\n")
 
     limits = config["rate_limits"]
-    concurrency = max(1, int(limits["concurrency"]))
+    concurrency = max(1, int(limits["max_concurrent"]))
     limiter = RateLimiter(float(limits["requests_per_minute"]))
     stats = Stats()
     failures: list[tuple[Task, str]] = []
 
+    daily_cap_tracker: DailyCapTracker | None = None
+    daily_cap = limits.get("daily_request_cap")
+    if daily_cap:
+        daily_count_path = resolve_path(paths.get("daily_count", "results/.daily_count.json"))
+        daily_cap_tracker = DailyCapTracker(daily_count_path, int(daily_cap))
+        if daily_cap_tracker.count >= daily_cap_tracker.cap:
+            print(
+                f"daily cap: already at {daily_cap_tracker.count}/{daily_cap} attempts "
+                f"today ({display_path(daily_count_path)}); nothing will be collected "
+                f"until the UTC date rolls over."
+            )
+        else:
+            print(
+                f"daily cap: {daily_cap_tracker.count}/{daily_cap} attempts spent today "
+                f"({display_path(daily_count_path)})"
+            )
+
     session = requests.Session()
+    cap_hit_announced = False
     try:
         with ThreadPoolExecutor(max_workers=concurrency) as pool:
             futures = [
-                pool.submit(process, t, raw_dir, session, config, limiter, stats)
+                pool.submit(process, t, raw_dir, session, config, limiter, stats, daily_cap_tracker)
                 for t in pending
             ]
             for done, future in enumerate(as_completed(futures), start=1):
                 task, status, error = future.result()
+                if status == "capped":
+                    # One clean message, not one FAIL line per remaining
+                    # queued task: every task submitted above will discover
+                    # the same exhausted budget in turn, and printing that
+                    # thousands of times over would bury the summary.
+                    if not cap_hit_announced:
+                        cap_hit_announced = True
+                        print(f"\n[{done}/{len(pending)}] CAPPED  {error}")
+                        print("stopping: today's attempt budget is spent. "
+                              "Remaining tasks stay uncached for the next run.")
+                    continue
                 if status == "failed":
                     failures.append((task, error or "unknown"))
                     marker = "FAIL"
@@ -657,6 +810,7 @@ def main(argv: list[str] | None = None) -> int:
     print(
         f"\ndone: {stats.written} written, {stats.cached} cached, "
         f"{stats.failed} failed, {stats.retries} retries"
+        + (f", {stats.capped} capped" if stats.capped else "")
     )
     if failures:
         print("\nfailed cells (re-run to retry; cached work is not repeated):")
@@ -668,6 +822,9 @@ def main(argv: list[str] | None = None) -> int:
         if len(failures) > 20:
             print(f"  ... and {len(failures) - 20} more")
         return 1
+    # A cap hit is a clean stop, not a failure: nothing is broken, the day's
+    # budget is just spent. Exit 0 so a CI step chain (score -> analyze ->
+    # commit) keeps going over whatever was collected before the cap hit.
     return 0
 
 

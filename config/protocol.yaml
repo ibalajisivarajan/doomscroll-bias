@@ -108,33 +108,51 @@ design:
 # MODEL SLOTS
 # ---------------------------------------------------------------------------
 # Two open-weight models from two different labs, so that a finding is not an
-# artefact of one lab's post-training pipeline. Slots are deliberately
-# unfilled: the exact checkpoints and hosts get pinned in the commit that sets
-# locked: true, and pinning them here is part of the pre-registration.
+# artefact of one lab's post-training pipeline. Both are served through Groq
+# (provider: groq is the inference host, not the lab that trained the
+# checkpoint -- `lab` records that separately, which is what the "two
+# different labs" requirement actually constrains).
 #
 # Every slot speaks the OpenAI-compatible /chat/completions dialect. base_url
 # is the API root WITHOUT the /chat/completions suffix; run.py appends it.
 # api_key never appears in this file -- only the name of the environment
 # variable holding it.
+#
+# id is PLACEHOLDER until verified against `GET /openai/v1/models` on the
+# live account (see the setup note in README.md) -- Groq's catalogue changes
+# model slugs and deprecates versions without much notice, and a stale slug
+# fails every call. Do not flip `locked: true` with an unverified id.
 models:
   - slot: A
-    id: "TBD"
-    provider: "TBD"
-    base_url: "TBD"
-    env_key: MODEL_A_API_KEY
+    id: "llama-3.3-70b-versatile"      # PLACEHOLDER -- verify before locking
+    lab: meta
+    provider: groq
+    base_url: "https://api.groq.com/openai/v1"
+    env_key: MODEL_A_API_KEY_GROQ
     weights: open
     notes: >-
-      Lab 1. Must be an open-weight checkpoint with a published weights
-      release, so the exact artefact under audit can be re-obtained later.
+      Lab 1 (Meta). Must be an open-weight checkpoint with a published
+      weights release, so the exact artefact under audit can be
+      re-obtained later.
   - slot: B
-    id: "TBD"
-    provider: "TBD"
-    base_url: "TBD"
-    env_key: MODEL_B_API_KEY
+    id: "qwen/qwen3-32b"               # PLACEHOLDER -- verify before locking
+    lab: alibaba
+    provider: groq
+    base_url: "https://api.groq.com/openai/v1"
+    env_key: MODEL_B_API_KEY_GROQ
     weights: open
     notes: >-
-      Lab 2. Must come from a different lab than slot A and not be a
-      fine-tune or distillation of it.
+      Lab 2 (Alibaba). Must come from a different lab than slot A and not
+      be a fine-tune or distillation of it.
+
+# Not a model slot: MODEL_A_API_KEY_GROQ and MODEL_B_API_KEY_GROQ are the same
+# key value under two secret names, because Groq's free tier tracks quota per
+# API key and giving both slots the same key would have them share one 30
+# rpm / 6,000 tpm budget instead of two. A third key, MODEL_C_API_KEY_OR
+# (OpenRouter), exists for a replication subsample and is not wired into the
+# `models` list above -- src/run.py's design (n_models: 2, total_calls: 7200)
+# does not include it. It reaches the workflow's env block so it is available
+# when that replication is built, and nothing currently reads it.
 
 # ---------------------------------------------------------------------------
 # PROMPTS
@@ -338,19 +356,33 @@ statistics:
 # ---------------------------------------------------------------------------
 # RATE LIMITS AND RETRIES
 # ---------------------------------------------------------------------------
-# Operational, not part of the scientific plan -- tune freely. Values are
-# deliberately conservative: free and community inference tiers throttle hard,
-# and a run that trips a limit wastes a whole dispatch.
+# Operational, not part of the scientific plan -- tune freely. Sized to
+# Groq's free tier at the org level: 30 requests/min, 6,000 tokens/min,
+# 14,400 requests/day, shared across both model slots (they are two API
+# keys, but Groq's published free-tier ceiling is per account, not
+# strictly additive per key -- see the account dashboard before assuming
+# otherwise). Our calls run ~500 tokens each (prompt + completion), so
+# 6,000 tpm / 500 ~= 12 req/min is the binding constraint, tighter than
+# the 30 req/min figure and the one requests_per_minute is set to.
 rate_limits:
-  concurrency: 4
-  requests_per_minute: 20
+  max_concurrent: 2
+  requests_per_minute: 12
   max_retries: 6
-  backoff_base: 2          # seconds; delay = base ** attempt + jitter
+  backoff_base_seconds: 2  # delay = base ** attempt + jitter, when Groq
+                           # sends no Retry-After header to use instead
   backoff_max: 120         # cap on any single sleep
   jitter: 0.5              # uniform [0, jitter) added to every sleep, so
                            # concurrent workers do not retry in lockstep
   retry_on_status: [408, 409, 429, 500, 502, 503, 504]
   request_timeout: 120
+  # Hard stop below Groq's 14,400/day org-wide ceiling, with ~2,400 requests
+  # of margin for anything else drawing on the same account (manual testing,
+  # a second study, a human poking at the API key) plus this collection's own
+  # retries, which spend real attempts without producing cached responses.
+  # src/run.py counts every attempt (including retries) against this, persists
+  # the running total in paths.daily_count, and stops cleanly -- not with an
+  # error -- once it is reached; see DailyCapTracker in src/run.py.
+  daily_request_cap: 12000
 
 paths:
   vignettes: data/vignettes.jsonl
@@ -358,6 +390,16 @@ paths:
   tables: results/tables
   scored_csv: results/tables/scored.csv
   results_md: results/tables/results.md
+  # Persisted count of request attempts made today (UTC). Lives under
+  # results/ on purpose: the "Commit results to main" step in
+  # .github/workflows/run.yml stages the whole results/ tree, so this file is
+  # committed like everything else there, and a second same-day dispatch sees
+  # exactly what an earlier one already spent without depending on the
+  # actions/cache entry (which is keyed to results/raw only, and can expire)
+  # still being around. It resets itself on UTC date rollover -- see
+  # DailyCapTracker in src/run.py -- so yesterday's committed count never
+  # throttles today.
+  daily_count: results/.daily_count.json
 
 notion:
   enabled: true

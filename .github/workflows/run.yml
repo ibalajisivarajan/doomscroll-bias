@@ -8,9 +8,14 @@
 #     minutes so the job ends on its own terms -- committing what it has and
 #     saving the cache -- instead of being shot in the head with the run's work
 #     stranded in a container.
-#   * Free and community inference tiers rate-limit hard. At the protocol's 20
-#     rpm that is 6 hours of wall clock for 7,200 calls before a single retry,
-#     and retries are not rare on those tiers.
+#   * Free and community inference tiers rate-limit hard. At the protocol's
+#     12 rpm (Groq's free-tier 6,000 tokens/min divided by our ~500-token
+#     calls, tighter than its 30 req/min headline figure) that is 10 hours
+#     of wall clock for 7,200 calls before a single retry, and retries are
+#     not rare on those tiers. Groq's daily request ceiling (14,400/day,
+#     org-wide) binds even sooner; src/run.py's daily-cap guard stops the
+#     run cleanly at 12,000 attempts rather than spend the account into a
+#     day-long lockout.
 #
 # So a full run spans several dispatches, and the design assumes that. Every
 # response is cached as its own file in results/raw, that directory is restored
@@ -23,12 +28,20 @@
 # accident.
 #
 # Required repository secrets (Settings -> Secrets and variables -> Actions):
-#   MODEL_A_API_KEY   key for the model in slot A
-#   MODEL_B_API_KEY   key for the model in slot B
-#   NOTION_TOKEN      Notion internal integration secret
-#   NOTION_PAGE_ID    id of the Notion page holding the run log
-#                     (the page MUST be shared with the integration via its
-#                      "..." -> Connections menu, or Notion answers 404)
+#   MODEL_A_API_KEY_GROQ   Groq key, slot A
+#   MODEL_B_API_KEY_GROQ   Groq key, slot B (same key value as slot A --
+#                          Groq's free-tier quota is tracked per key, and
+#                          two keys give the two slots independent budgets
+#                          instead of splitting one)
+#   MODEL_C_API_KEY_OR     OpenRouter key for a replication subsample; not
+#                          wired into config/protocol.yaml's `models` list
+#                          yet (the primary design is 2 models), but available
+#                          in this workflow's env for when that is built
+#   NOTION_TOKEN           Notion internal integration secret
+#   NOTION_PAGE_ID         id of the Notion page holding the run log
+#                          (the page MUST be shared with the integration via
+#                           its "..." -> Connections menu, or Notion answers
+#                           404)
 
 name: run
 
@@ -105,8 +118,9 @@ jobs:
 
       - name: Collect responses
         env:
-          MODEL_A_API_KEY: ${{ secrets.MODEL_A_API_KEY }}
-          MODEL_B_API_KEY: ${{ secrets.MODEL_B_API_KEY }}
+          MODEL_A_API_KEY_GROQ: ${{ secrets.MODEL_A_API_KEY_GROQ }}
+          MODEL_B_API_KEY_GROQ: ${{ secrets.MODEL_B_API_KEY_GROQ }}
+          MODEL_C_API_KEY_OR: ${{ secrets.MODEL_C_API_KEY_OR }}
         run: |
           ARGS=""
           if [ -n "${{ inputs.limit }}" ]; then

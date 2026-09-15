@@ -110,10 +110,12 @@ mean nothing.
 ```bash
 pip install -r requirements.txt
 
-# Fill in the two model slots in config/protocol.yaml (id, provider, base_url),
-# then point the keys at them:
-export MODEL_A_API_KEY=...
-export MODEL_B_API_KEY=...
+# Both slots are served through Groq; verify their model ids against
+# GET /openai/v1/models before trusting a run (see the Groq section below),
+# then point the keys at them. Slots A and B use two separate secrets so
+# each gets its own free-tier quota instead of splitting one:
+export MODEL_A_API_KEY_GROQ=...
+export MODEL_B_API_KEY_GROQ=...
 
 python src/run.py --dry-run                    # inspect the task list, call nothing
 python src/run.py --limit 2 --allow-unlocked   # smoke test
@@ -159,16 +161,47 @@ Steps: collect → score → analyse → commit `results/` back to `main` → ap
 run-log line to Notion (`if: always()`, `continue-on-error: true`) → upload the
 tables and figures as artifacts.
 
-### The four required secrets
+### The required secrets
 
 Settings → Secrets and variables → Actions:
 
 | Secret | What it is |
 |---|---|
-| `MODEL_A_API_KEY` | API key for the model in slot A |
-| `MODEL_B_API_KEY` | API key for the model in slot B |
+| `MODEL_A_API_KEY_GROQ` | Groq API key, slot A |
+| `MODEL_B_API_KEY_GROQ` | Groq API key, slot B — same key *value* as slot A, under a separate secret name, so each slot draws its own free-tier quota instead of splitting one |
+| `MODEL_C_API_KEY_OR` | OpenRouter API key, reserved for a replication subsample. Available to the workflow but not yet wired into `config/protocol.yaml`'s `models` list — the primary design is 2 models |
 | `NOTION_TOKEN` | Notion internal integration secret |
 | `NOTION_PAGE_ID` | id of the Notion page holding the run log |
+
+## The Groq model-id gotcha
+
+The two ids in `config/protocol.yaml` are marked `# PLACEHOLDER` on purpose.
+Groq's model catalogue changes slugs and deprecates versions without much
+notice, so a hand-typed id is a guess, not a fact — and a wrong id fails every
+single call, burning the full retry budget on each one before giving up.
+**Verify before locking**, against the account that will actually run the
+study:
+
+```bash
+curl -s https://api.groq.com/openai/v1/models \
+  -H "Authorization: Bearer $GROQ_API_KEY" | python3 -m json.tool | grep '"id"'
+```
+
+Replace both placeholder ids with the exact strings that come back, then set
+`locked: true` in its own commit. `src/run.py` also refuses to run with the
+literal string `TBD` in a model slot, but it has no way to know a *filled-in*
+id is wrong — that check is on you, once, before the first real dispatch.
+
+Separately: Groq's free tier binds on **tokens per minute** before it binds on
+requests per minute. The published ceiling is 30 req/min, but at ~500 tokens a
+call and a 6,000 tokens/min budget, the real ceiling is closer to 12 req/min —
+`config/protocol.yaml`'s `rate_limits.requests_per_minute: 12` is set to that,
+not to the headline number. The daily ceiling (14,400 requests/day, org-wide,
+shared across both key slots) binds sooner than either: `src/run.py` tracks
+attempts — including retries — in `results/.daily_count.json` and stops
+cleanly at `rate_limits.daily_request_cap` (12,000, a margin below the real
+ceiling) rather than exhausting the account and locking out every other call
+on it for the rest of the day.
 
 ## The Notion gotcha
 
