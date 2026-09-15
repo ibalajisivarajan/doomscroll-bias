@@ -52,7 +52,9 @@ on:
   workflow_dispatch:
     inputs:
       limit:
-        description: "Max uncached calls this dispatch (blank = no limit)"
+        description: >-
+          Max uncached calls this dispatch (blank = no limit; the run still
+          stops itself cleanly at rate_limits.max_collection_minutes either way)
         required: false
         default: ""
         type: string

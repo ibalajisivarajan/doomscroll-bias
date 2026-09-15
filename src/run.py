@@ -360,6 +360,23 @@ class DailyCapExceeded(RuntimeError):
     """
 
 
+class TimeBudgetExceeded(RuntimeError):
+    """Raised by call_model once the collection deadline has passed.
+
+    With the full 120-vignette design (7,200 calls) and requests_per_minute
+    at 12, collection alone needs >=600 minutes with zero retries -- longer
+    than the workflow's 350-minute job timeout, every single dispatch. A job
+    that hits its hard timeout is cancelled abruptly: even an if: always()
+    step gets, at best, a short grace window to finish, which is not
+    something a git commit and push should depend on. This makes run.py stop
+    on its own terms, with real margin, so score/analyse/commit always run
+    as an ordinary successful step chain instead of racing a cancellation.
+
+    Handled identically to DailyCapExceeded in process() and main(): one
+    clean message, not a FAIL line per already-queued task.
+    """
+
+
 class DailyCapTracker:
     """Persists a count of request ATTEMPTS made today, shared across workers
     and across dispatches.
@@ -456,13 +473,14 @@ def call_model(
     limiter: RateLimiter,
     stats: Stats,
     daily_cap_tracker: "DailyCapTracker | None" = None,
+    deadline: float | None = None,
 ) -> dict[str, Any]:
     """POST one completion, retrying transient failures. Returns the record.
 
     Raises RuntimeError once retries are exhausted; the caller records the
     failure and moves on, because one dead cell must not abort 7,199 others.
-    Raises DailyCapExceeded instead, without making a request, once
-    daily_cap_tracker reports today's attempt budget is spent.
+    Raises DailyCapExceeded, or TimeBudgetExceeded once time.monotonic()
+    passes `deadline`, instead -- both without making a request.
     """
     limits = config["rate_limits"]
     design = config["design"]
@@ -516,6 +534,11 @@ def call_model(
             raise DailyCapExceeded(
                 f"daily request cap of {daily_cap_tracker.cap} reached "
                 f"({daily_cap_tracker.count}/{daily_cap_tracker.cap} attempts today)"
+            )
+        if deadline is not None and time.monotonic() >= deadline:
+            raise TimeBudgetExceeded(
+                "collection deadline reached; stopping with margin before "
+                "the job timeout rather than racing a hard cancellation"
             )
         if attempt:
             if next_delay_override is not None:
@@ -622,6 +645,7 @@ def process(
     limiter: RateLimiter,
     stats: Stats,
     daily_cap_tracker: "DailyCapTracker | None" = None,
+    deadline: float | None = None,
 ) -> tuple[Task, str, str | None]:
     """Fetch one task unless it is already cached. Never raises."""
     path = task.cache_path(raw_dir)
@@ -631,11 +655,12 @@ def process(
         stats.bump("cached")
         return task, "cached", None
     try:
-        record = call_model(task, session, config, limiter, stats, daily_cap_tracker)
-    except DailyCapExceeded as exc:
+        record = call_model(task, session, config, limiter, stats, daily_cap_tracker, deadline)
+    except (DailyCapExceeded, TimeBudgetExceeded) as exc:
         # Distinct from an ordinary failure: nothing is wrong with this cell,
-        # today's budget is just gone. main() handles this status specially so
-        # a queue of thousands of already-submitted tasks does not each print
+        # a budget (daily attempts, or wall-clock time before the job
+        # timeout) is just spent. main() handles this status specially so a
+        # queue of thousands of already-submitted tasks does not each print
         # their own FAIL line on the way to the same conclusion.
         stats.bump("capped")
         return task, "capped", str(exc)
@@ -678,6 +703,17 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "--dry-run",
         action="store_true",
         help="build and summarise the task list without calling any endpoint",
+    )
+    p.add_argument(
+        "--max-minutes",
+        type=float,
+        default=None,
+        metavar="MIN",
+        help=(
+            "stop collecting cleanly after MIN minutes (overrides "
+            "rate_limits.max_collection_minutes in the protocol); mainly "
+            "for smoke-testing the clean-stop path itself"
+        ),
     )
     return p.parse_args(argv)
 
@@ -769,12 +805,27 @@ def main(argv: list[str] | None = None) -> int:
                 f"({display_path(daily_count_path)})"
             )
 
+    # --max-minutes overrides the protocol's own collection budget; both are
+    # optional, so a plain local run keeps working with no time limit at all.
+    # See TimeBudgetExceeded: at the full 120-vignette design this is what
+    # keeps a dispatch from racing the job's hard timeout-minutes cancellation.
+    max_minutes = args.max_minutes
+    if max_minutes is None:
+        max_minutes = limits.get("max_collection_minutes")
+    deadline: float | None = None
+    if max_minutes:
+        deadline = time.monotonic() + float(max_minutes) * 60
+        print(f"deadline : stopping collection cleanly after {float(max_minutes):.1f} minutes")
+
     session = requests.Session()
     cap_hit_announced = False
     try:
         with ThreadPoolExecutor(max_workers=concurrency) as pool:
             futures = [
-                pool.submit(process, t, raw_dir, session, config, limiter, stats, daily_cap_tracker)
+                pool.submit(
+                    process, t, raw_dir, session, config, limiter, stats,
+                    daily_cap_tracker, deadline,
+                )
                 for t in pending
             ]
             for done, future in enumerate(as_completed(futures), start=1):
@@ -787,8 +838,7 @@ def main(argv: list[str] | None = None) -> int:
                     if not cap_hit_announced:
                         cap_hit_announced = True
                         print(f"\n[{done}/{len(pending)}] CAPPED  {error}")
-                        print("stopping: today's attempt budget is spent. "
-                              "Remaining tasks stay uncached for the next run.")
+                        print("stopping cleanly. Remaining tasks stay uncached for the next run.")
                     continue
                 if status == "failed":
                     failures.append((task, error or "unknown"))

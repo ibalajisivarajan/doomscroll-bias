@@ -406,6 +406,17 @@ rate_limits:
   # the running total in paths.daily_count, and stops cleanly -- not with an
   # error -- once it is reached; see DailyCapTracker in src/run.py.
   daily_request_cap: 12000
+  # At the full 120-vignette design (7,200 calls) and 12 req/min, collection
+  # alone needs >=600 minutes with zero retries -- longer than the workflow's
+  # 350-minute job timeout, every single dispatch. A hard job timeout cancels
+  # the job abruptly; an if: always() step (like "Persist daily counter")
+  # gets at best a short grace window, not something a git commit and push
+  # should depend on. This makes src/run.py stop collecting on its own terms
+  # instead: 300 minutes, leaving ~50 minutes of margin under the job
+  # timeout for score/analyse/commit/notion/upload to run as an ordinary
+  # successful step chain rather than a cancellation race. See
+  # TimeBudgetExceeded in src/run.py. Overridden locally by --max-minutes.
+  max_collection_minutes: 300
 
 paths:
   vignettes: data/vignettes.jsonl
