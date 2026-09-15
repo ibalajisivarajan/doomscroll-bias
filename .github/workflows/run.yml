@@ -8,9 +8,14 @@
 #     minutes so the job ends on its own terms -- committing what it has and
 #     saving the cache -- instead of being shot in the head with the run's work
 #     stranded in a container.
-#   * Free and community inference tiers rate-limit hard. At the protocol's 20
-#     rpm that is 6 hours of wall clock for 7,200 calls before a single retry,
-#     and retries are not rare on those tiers.
+#   * Free and community inference tiers rate-limit hard. At the protocol's
+#     12 rpm (Groq's free-tier 6,000 tokens/min divided by our ~500-token
+#     calls, tighter than its 30 req/min headline figure) that is 10 hours
+#     of wall clock for 7,200 calls before a single retry, and retries are
+#     not rare on those tiers. Groq's daily request ceiling (14,400/day,
+#     org-wide) binds even sooner; src/run.py's daily-cap guard stops the
+#     run cleanly at 12,000 attempts rather than spend the account into a
+#     day-long lockout.
 #
 # So a full run spans several dispatches, and the design assumes that. Every
 # response is cached as its own file in results/raw, that directory is restored
@@ -23,12 +28,23 @@
 # accident.
 #
 # Required repository secrets (Settings -> Secrets and variables -> Actions):
-#   MODEL_A_API_KEY   key for the model in slot A
-#   MODEL_B_API_KEY   key for the model in slot B
-#   NOTION_TOKEN      Notion internal integration secret
-#   NOTION_PAGE_ID    id of the Notion page holding the run log
-#                     (the page MUST be shared with the integration via its
-#                      "..." -> Connections menu, or Notion answers 404)
+#   MODEL_A_API_KEY_GROQ   Groq key, slot A
+#   MODEL_B_API_KEY_GROQ   Groq key, slot B (same key value as slot A --
+#                          Groq's free-tier quota is tracked at the
+#                          ORGANIZATION level, not per key, so both slots
+#                          draw from one shared 14,400 req/day pool.
+#                          Two secret names exist so a provider swap for
+#                          one slot only touches one variable, not because
+#                          duplicating the key increases quota.)
+#   MODEL_C_API_KEY_OR     OpenRouter key for a replication subsample; not
+#                          wired into config/protocol.yaml's `models` list
+#                          yet (the primary design is 2 models), but available
+#                          in this workflow's env for when that is built
+#   NOTION_TOKEN           Notion internal integration secret
+#   NOTION_PAGE_ID         id of the Notion page holding the run log
+#                          (the page MUST be shared with the integration via
+#                           its "..." -> Connections menu, or Notion answers
+#                           404)
 
 name: run
 
@@ -36,7 +52,9 @@ on:
   workflow_dispatch:
     inputs:
       limit:
-        description: "Max uncached calls this dispatch (blank = no limit)"
+        description: >-
+          Max uncached calls this dispatch (blank = no limit; the run still
+          stops itself cleanly at rate_limits.max_collection_minutes either way)
         required: false
         default: ""
         type: string
@@ -105,8 +123,9 @@ jobs:
 
       - name: Collect responses
         env:
-          MODEL_A_API_KEY: ${{ secrets.MODEL_A_API_KEY }}
-          MODEL_B_API_KEY: ${{ secrets.MODEL_B_API_KEY }}
+          MODEL_A_API_KEY_GROQ: ${{ secrets.MODEL_A_API_KEY_GROQ }}
+          MODEL_B_API_KEY_GROQ: ${{ secrets.MODEL_B_API_KEY_GROQ }}
+          MODEL_C_API_KEY_OR: ${{ secrets.MODEL_C_API_KEY_OR }}
         run: |
           ARGS=""
           if [ -n "${{ inputs.limit }}" ]; then
@@ -117,6 +136,43 @@ jobs:
           fi
           echo "python src/run.py $ARGS"
           python src/run.py $ARGS
+
+      # Runs whether or not "Collect responses" succeeded: a cell that
+      # exhausts its retries makes run.py exit 1, and without if: always()
+      # here every step below -- score, analyse, and the full results commit
+      # -- would be skipped, stranding this file on the ephemeral runner.
+      # The actions/cache entry above covers only results/raw, not this file,
+      # so a same-day retry after such a failure would otherwise reload a
+      # stale committed count (or find none) and could spend another
+      # near-full day's allowance right when the guard matters most.
+      # Committed on its own, separate from the full results commit later in
+      # the job (which still only runs when collection succeeds).
+      # continue-on-error: true so a push race here (e.g. two dispatches
+      # landing on main close together) never cascades into skipping score/
+      # analyse/commit on what may otherwise be a perfectly good run.
+      - name: Persist daily counter
+        if: always()
+        continue-on-error: true
+        run: |
+          if [ ! -f results/.daily_count.json ]; then
+            echo "no daily counter file yet (nothing was attempted this run); nothing to persist"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add results/.daily_count.json
+          if git diff --cached --quiet; then
+            echo "daily counter unchanged; nothing to commit"
+            exit 0
+          fi
+          git commit -m "counter: dispatch ${{ github.run_id }}"
+          for attempt in 1 2 3; do
+            git pull --rebase --autostash origin main && git push origin HEAD:main && exit 0
+            echo "push attempt $attempt failed; retrying in $((attempt * 5))s"
+            sleep $((attempt * 5))
+          done
+          echo "could not push daily counter after 3 attempts" >&2
+          exit 1
 
       # Scoring and analysis run over whatever is cached, so a partial
       # collection still produces readable interim numbers.

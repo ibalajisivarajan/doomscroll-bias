@@ -104,37 +104,77 @@ design:
     judgement is applied to a response before it has been scored by
     src/score.py.
 
+  # Factor 2 relabeled for accuracy, not "cultural setting". The `culture`
+  # key under `factors` above (north_american / south_asian) is left
+  # unrenamed -- it is read throughout src/run.py, src/score.py and
+  # src/analyze.py, and by every column named `culture` in scored.csv, so
+  # renaming it would be a functional change, not a documentation one. This
+  # is the honest name for what the manipulation actually is, for anyone
+  # writing about the design rather than code reading it.
+  factor_2_name: "cultural_name_cue_framing"  # was informally "cultural_setting"
+  factor_2_note: >-
+    Manipulation is via ethnocultural name association only (confirmed:
+    9/120 vignettes contain any additional setting detail). Not a
+    manipulation of cultural context, norms, or setting. Documented
+    as a limitation; framed as the actual finding, not underclaimed.
+
+  matching_rule_amendment: >-
+    Pronoun-driven grammatical agreement (e.g. "he was" -> "they were")
+    is permitted and is not a wording violation, since it is required
+    by standard English usage for singular "they."
+
 # ---------------------------------------------------------------------------
 # MODEL SLOTS
 # ---------------------------------------------------------------------------
 # Two open-weight models from two different labs, so that a finding is not an
-# artefact of one lab's post-training pipeline. Slots are deliberately
-# unfilled: the exact checkpoints and hosts get pinned in the commit that sets
-# locked: true, and pinning them here is part of the pre-registration.
+# artefact of one lab's post-training pipeline. Both are served through Groq
+# (provider: groq is the inference host, not the lab that trained the
+# checkpoint -- `lab` records that separately, which is what the "two
+# different labs" requirement actually constrains).
 #
 # Every slot speaks the OpenAI-compatible /chat/completions dialect. base_url
 # is the API root WITHOUT the /chat/completions suffix; run.py appends it.
 # api_key never appears in this file -- only the name of the environment
 # variable holding it.
+#
+# id is PLACEHOLDER until verified against `GET /openai/v1/models` on the
+# live account (see the setup note in README.md) -- Groq's catalogue changes
+# model slugs and deprecates versions without much notice, and a stale slug
+# fails every call. Do not flip `locked: true` with an unverified id.
 models:
   - slot: A
-    id: "TBD"
-    provider: "TBD"
-    base_url: "TBD"
-    env_key: MODEL_A_API_KEY
+    id: "llama-3.3-70b-versatile"      # PLACEHOLDER -- verify before locking
+    lab: meta
+    provider: groq
+    base_url: "https://api.groq.com/openai/v1"
+    env_key: MODEL_A_API_KEY_GROQ
     weights: open
     notes: >-
-      Lab 1. Must be an open-weight checkpoint with a published weights
-      release, so the exact artefact under audit can be re-obtained later.
+      Lab 1 (Meta). Must be an open-weight checkpoint with a published
+      weights release, so the exact artefact under audit can be
+      re-obtained later.
   - slot: B
-    id: "TBD"
-    provider: "TBD"
-    base_url: "TBD"
-    env_key: MODEL_B_API_KEY
+    id: "qwen/qwen3-32b"               # PLACEHOLDER -- verify before locking
+    lab: alibaba
+    provider: groq
+    base_url: "https://api.groq.com/openai/v1"
+    env_key: MODEL_B_API_KEY_GROQ
     weights: open
     notes: >-
-      Lab 2. Must come from a different lab than slot A and not be a
-      fine-tune or distillation of it.
+      Lab 2 (Alibaba). Must come from a different lab than slot A and not
+      be a fine-tune or distillation of it.
+
+# Not a model slot: MODEL_A_API_KEY_GROQ and MODEL_B_API_KEY_GROQ are the same
+# key VALUE under two secret NAMES. This does not create two budgets --
+# Groq's free tier is tracked at the organization level, not per key, so both
+# slots draw from one shared 30 rpm / 6,000 tpm / 14,400 req/day pool no
+# matter how many secret names point at it. The two names exist so a
+# provider swap for one slot only touches one variable, not because
+# duplicating the key multiplies quota. A third key, MODEL_C_API_KEY_OR
+# (OpenRouter), exists for a replication subsample and is not wired into the
+# `models` list above -- src/run.py's design (n_models: 2, total_calls: 7200)
+# does not include it. It reaches the workflow's env block so it is available
+# when that replication is built, and nothing currently reads it.
 
 # ---------------------------------------------------------------------------
 # PROMPTS
@@ -338,19 +378,45 @@ statistics:
 # ---------------------------------------------------------------------------
 # RATE LIMITS AND RETRIES
 # ---------------------------------------------------------------------------
-# Operational, not part of the scientific plan -- tune freely. Values are
-# deliberately conservative: free and community inference tiers throttle hard,
-# and a run that trips a limit wastes a whole dispatch.
+# Operational, not part of the scientific plan -- tune freely. Sized to
+# Groq's free tier at the org level: 30 requests/min, 6,000 tokens/min,
+# 14,400 requests/day, shared across both model slots. Confirmed: Groq's
+# free-tier quota is tracked at the organization level, not per API key, so
+# slots A and B (two secret names, same key value) draw from one pool, not
+# two -- do not size any of these limits as if the slots were additive.
+# Our calls run ~500 tokens each (prompt + completion), so 6,000 tpm / 500
+# ~= 12 req/min is the binding constraint, tighter than the 30 req/min
+# figure and the one requests_per_minute is set to.
 rate_limits:
-  concurrency: 4
-  requests_per_minute: 20
+  max_concurrent: 2
+  requests_per_minute: 12
   max_retries: 6
-  backoff_base: 2          # seconds; delay = base ** attempt + jitter
+  backoff_base_seconds: 2  # delay = base ** attempt + jitter, when Groq
+                           # sends no Retry-After header to use instead
   backoff_max: 120         # cap on any single sleep
   jitter: 0.5              # uniform [0, jitter) added to every sleep, so
                            # concurrent workers do not retry in lockstep
   retry_on_status: [408, 409, 429, 500, 502, 503, 504]
   request_timeout: 120
+  # Hard stop below Groq's 14,400/day org-wide ceiling, with ~2,400 requests
+  # of margin for anything else drawing on the same account (manual testing,
+  # a second study, a human poking at the API key) plus this collection's own
+  # retries, which spend real attempts without producing cached responses.
+  # src/run.py counts every attempt (including retries) against this, persists
+  # the running total in paths.daily_count, and stops cleanly -- not with an
+  # error -- once it is reached; see DailyCapTracker in src/run.py.
+  daily_request_cap: 12000
+  # At the full 120-vignette design (7,200 calls) and 12 req/min, collection
+  # alone needs >=600 minutes with zero retries -- longer than the workflow's
+  # 350-minute job timeout, every single dispatch. A hard job timeout cancels
+  # the job abruptly; an if: always() step (like "Persist daily counter")
+  # gets at best a short grace window, not something a git commit and push
+  # should depend on. This makes src/run.py stop collecting on its own terms
+  # instead: 300 minutes, leaving ~50 minutes of margin under the job
+  # timeout for score/analyse/commit/notion/upload to run as an ordinary
+  # successful step chain rather than a cancellation race. See
+  # TimeBudgetExceeded in src/run.py. Overridden locally by --max-minutes.
+  max_collection_minutes: 300
 
 paths:
   vignettes: data/vignettes.jsonl
@@ -358,6 +424,16 @@ paths:
   tables: results/tables
   scored_csv: results/tables/scored.csv
   results_md: results/tables/results.md
+  # Persisted count of request attempts made today (UTC). Lives under
+  # results/ on purpose: the "Commit results to main" step in
+  # .github/workflows/run.yml stages the whole results/ tree, so this file is
+  # committed like everything else there, and a second same-day dispatch sees
+  # exactly what an earlier one already spent without depending on the
+  # actions/cache entry (which is keyed to results/raw only, and can expire)
+  # still being around. It resets itself on UTC date rollover -- see
+  # DailyCapTracker in src/run.py -- so yesterday's committed count never
+  # throttles today.
+  daily_count: results/.daily_count.json
 
 notion:
   enabled: true
