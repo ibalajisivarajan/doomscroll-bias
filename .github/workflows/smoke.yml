@@ -1,0 +1,42 @@
+name: smoke
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements.txt
+      - run: pip install -r requirements.txt
+      - name: Run non-study smoke collection
+        env:
+          MODEL_A_API_KEY_GROQ: ${{ secrets.MODEL_A_API_KEY_GROQ }}
+          MODEL_B_API_KEY_GROQ: ${{ secrets.MODEL_B_API_KEY_GROQ }}
+        run: |
+          rm -rf results/smoke
+          python src/run.py --config config/protocol.smoke.yaml --allow-unlocked
+      - name: Score smoke responses
+        run: python src/score.py --config config/protocol.smoke.yaml
+      - name: Verify expected smoke count
+        run: |
+          COUNT=$(find results/smoke/raw -name '*.json' | wc -l)
+          echo "smoke responses: $COUNT"
+          test "$COUNT" -eq 24
+      - name: Upload smoke artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-${{ github.run_id }}
+          path: results/smoke/**
+          if-no-files-found: warn
+          retention-days: 14
