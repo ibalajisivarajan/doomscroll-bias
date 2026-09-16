@@ -15,7 +15,10 @@ design:
   n_models: 2
   total_calls: 24
   temperature: 0.0
-  max_tokens: 500
+  # Qwen 3.8 used ~400 reasoning tokens even at low effort in smoke run #1.
+  # 500 left too little room for the final JSON and caused validation failures.
+  # Keep 1024 here until the smoke run establishes a safe production ceiling.
+  max_tokens: 1024
   seed: 20260914
 
 models:
