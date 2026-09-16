@@ -79,11 +79,12 @@ test has to survive.
 {"id": "V001", "distress": false, "variants": {"male_north_american": "...", "female_north_american": "...", "...": "..."}}
 ```
 
-Three rows ship with the scaffold — `V001`, `V002` and `D001` — so the
-pipeline runs end to end on day one. **The remaining 117 are authored by
-hand.** Ids beginning with `D` embed an explicit distress cue (`D001`: a recent
-layoff); they are the only vignettes with a gold label, so distress *recall* is
-reported on them and no precision or false-positive rate is claimed anywhere.
+The frozen dataset contains 120 completed base vignettes: 85 ordinary
+relational-friction vignettes, 20 distress vignettes and 15 concrete-harm
+controls. Each vignette has six matched renderings, producing 720 variants.
+Ids beginning with `D` embed an explicit distress cue; they are the only
+vignettes with a gold label, so distress *recall* is reported on them and no
+precision or false-positive rate is claimed anywhere.
 
 ## Statistical plan
 
@@ -175,24 +176,23 @@ Settings → Secrets and variables → Actions:
 | `NOTION_TOKEN` | Notion internal integration secret |
 | `NOTION_PAGE_ID` | id of the Notion page holding the run log |
 
-## The Groq model-id gotcha
+## Groq model availability check
 
-The two ids in `config/protocol.yaml` are marked `# PLACEHOLDER` on purpose.
-Groq's model catalogue changes slugs and deprecates versions without much
-notice, so a hand-typed id is a guess, not a fact — and a wrong id fails every
-single call, burning the full retry budget on each one before giving up.
-**Verify before locking**, against the account that will actually run the
-study:
+The two model ids in `config/protocol.yaml` were verified in the Groq Console
+before protocol lock. Groq's catalogue can still change slugs or deprecate
+models, so confirm that both ids remain available immediately before the first
+production run:
 
 ```bash
 curl -s https://api.groq.com/openai/v1/models \
   -H "Authorization: Bearer $GROQ_API_KEY" | python3 -m json.tool | grep '"id"'
 ```
 
-Replace both placeholder ids with the exact strings that come back, then set
-`locked: true` in its own commit. `src/run.py` also refuses to run with the
-literal string `TBD` in a model slot, but it has no way to know a *filled-in*
-id is wrong — that check is on you, once, before the first real dispatch.
+The response must include `openai/gpt-oss-120b` and `qwen/qwen3.8-27b`.
+If either model is unavailable, do not start production collection; document
+and review any replacement as a protocol amendment. `src/run.py` refuses to
+run with the literal string `TBD`, but it cannot independently confirm current
+provider availability.
 
 Separately: Groq's free tier binds on **tokens per minute** before it binds on
 requests per minute. The published ceiling is 30 req/min, but at ~500 tokens a
@@ -222,7 +222,7 @@ setup steps are in the module docstring.
 
 ```
 config/protocol.yaml        frozen source of truth: design, prompts, metrics, stats plan
-data/vignettes.jsonl        vignettes, 6 renderings each (3 seed rows; 117 to author)
+data/vignettes.jsonl        frozen dataset: 120 vignettes, 6 renderings each
 src/run.py                  collection: task list -> /chat/completions -> results/raw
 src/score.py                parsing, the verbatim-quote check, action classifier -> scored.csv
 src/analyze.py              paired tests, effect sizes, CIs, figures -> results.md
