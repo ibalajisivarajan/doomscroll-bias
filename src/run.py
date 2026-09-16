@@ -15,11 +15,12 @@ Design notes, because the reasons matter more than the mechanics:
   checkpoint, so there is no separate state to corrupt or to disagree with the
   cache.
 
-* The filename is sha256(model_id, run_index, prompt). Keying on the prompt
-  rather than on the condition labels means that editing a vignette, or the
-  prompt template, changes the key and forces a re-collection instead of
-  silently mixing responses to two different texts under one label. That is a
-  feature: it makes stale data impossible to reuse by accident.
+* The filename is sha256(model_id, inference options, run_index, prompt).
+  Keying on the prompt AND the model-specific inference options means that
+  editing a vignette, changing the prompt template, or changing reasoning mode
+  forces a re-collection instead of silently mixing responses produced under
+  different conditions. That is a feature: it makes stale data impossible to
+  reuse by accident.
 
 * Write to <name>.tmp, fsync, then os.replace. Rename within a filesystem is
   atomic, so a job killed mid-write leaves a .tmp file that the next run
@@ -134,6 +135,8 @@ class Task:
     provider: str
     base_url: str
     env_key: str
+    reasoning_effort: str | None
+    reasoning_format: str | None
     vignette_id: str
     gender: str
     culture: str
@@ -148,14 +151,19 @@ class Task:
 
     @property
     def cache_key(self) -> str:
-        """sha256 over (model_id, run_index, prompt).
+        """sha256 over model, inference mode, run index and prompt.
 
-        The prompt is included verbatim so that any change to the vignette or
-        the template invalidates the cache rather than silently reusing a
-        response to different text.
+        Provider-controlled reasoning settings can materially change model
+        behaviour even when the model id and prompt are identical. They are
+        therefore part of the cache identity, so changing reasoning mode can
+        never silently reuse responses collected under another mode.
         """
         h = hashlib.sha256()
         h.update(self.model_id.encode("utf-8"))
+        h.update(b"\x00")
+        h.update((self.reasoning_effort or "").encode("utf-8"))
+        h.update(b"\x00")
+        h.update((self.reasoning_format or "").encode("utf-8"))
         h.update(b"\x00")
         h.update(str(self.run_index).encode("utf-8"))
         h.update(b"\x00")
@@ -213,6 +221,16 @@ def build_tasks(
                                 provider=str(model.get("provider", "")),
                                 base_url=str(model["base_url"]),
                                 env_key=str(model["env_key"]),
+                                reasoning_effort=(
+                                    str(model["reasoning_effort"])
+                                    if model.get("reasoning_effort") is not None
+                                    else None
+                                ),
+                                reasoning_format=(
+                                    str(model["reasoning_format"])
+                                    if model.get("reasoning_format") is not None
+                                    else None
+                                ),
                                 vignette_id=str(vignette["id"]),
                                 gender=gender,
                                 culture=culture,
@@ -258,12 +276,7 @@ def check_lock(config: dict[str, Any], allow_unlocked: bool) -> None:
 
 
 def check_models(tasks: list[Task]) -> None:
-    """Fail cleanly on unfilled model slots and missing credentials.
-
-    The protocol ships with id/provider/base_url set to "TBD" on purpose, so
-    this is the expected state of a fresh clone. It must read as a to-do list,
-    not as a crash.
-    """
+    """Fail cleanly on unfilled model slots and missing credentials."""
     problems: list[str] = []
     seen: set[str] = set()
     for task in tasks:
@@ -285,7 +298,7 @@ def check_models(tasks: list[Task]) -> None:
                 f"{label}: {', '.join(placeholders)} still set to TBD in "
                 f"config/protocol.yaml"
             )
-            continue  # no point checking the key for a slot with no endpoint
+            continue
         if not os.environ.get(task.env_key):
             problems.append(
                 f"{label} ({task.model_id}): environment variable "
@@ -295,10 +308,9 @@ def check_models(tasks: list[Task]) -> None:
         die(
             "cannot start collection:\n  - "
             + "\n  - ".join(problems)
-            + "\n\nFill in the model slots in config/protocol.yaml (id, "
-            "provider, base_url) and export the matching API keys, then "
-            "re-run. Use --dry-run to inspect the task list without "
-            "calling any endpoint.",
+            + "\n\nFill in the model slots in config/protocol.yaml and export "
+            "the matching API keys, then re-run. Use --dry-run to inspect "
+            "the task list without calling any endpoint.",
             code=4,
         )
 
@@ -307,13 +319,7 @@ def check_models(tasks: list[Task]) -> None:
 # rate limiting
 # --------------------------------------------------------------------------
 class RateLimiter:
-    """Process-wide requests-per-minute gate shared by all workers.
-
-    Concurrency alone does not bound request rate: a handful of workers
-    against a fast endpoint can burn a whole per-minute allowance in seconds
-    and then spend the rest of the run in backoff. This spaces request starts
-    so the steady state stays under the documented limit.
-    """
+    """Process-wide requests-per-minute gate shared by all workers."""
 
     def __init__(self, requests_per_minute: float) -> None:
         self._min_interval = 60.0 / requests_per_minute if requests_per_minute > 0 else 0.0
@@ -351,53 +357,15 @@ class Stats:
 # daily request cap
 # --------------------------------------------------------------------------
 class DailyCapExceeded(RuntimeError):
-    """Raised by call_model once today's attempt budget is spent.
-
-    Deliberately its own type rather than a plain RuntimeError, so process()
-    can tell "today's quota is gone" apart from "this one cell failed" and
-    the run can stop quietly instead of logging a FAIL line per remaining
-    task.
-    """
+    pass
 
 
 class TimeBudgetExceeded(RuntimeError):
-    """Raised by call_model once the collection deadline has passed.
-
-    With the full 120-vignette design (7,200 calls) and requests_per_minute
-    at 12, collection alone needs >=600 minutes with zero retries -- longer
-    than the workflow's 350-minute job timeout, every single dispatch. A job
-    that hits its hard timeout is cancelled abruptly: even an if: always()
-    step gets, at best, a short grace window to finish, which is not
-    something a git commit and push should depend on. This makes run.py stop
-    on its own terms, with real margin, so score/analyse/commit always run
-    as an ordinary successful step chain instead of racing a cancellation.
-
-    Handled identically to DailyCapExceeded in process() and main(): one
-    clean message, not a FAIL line per already-queued task.
-    """
+    pass
 
 
 class DailyCapTracker:
-    """Persists a count of request ATTEMPTS made today, shared across workers
-    and across dispatches.
-
-    Counts attempts, not successes. A 429 that gets retried five times spends
-    five requests against Groq's org-wide daily ceiling even though it never
-    produces a cached response, so a guard that only counted writes would not
-    trip until the real ceiling had already been hit -- at which point every
-    model call in the account, not just this study's, starts failing for the
-    rest of the day. `daily_request_cap` in the protocol is set below that
-    ceiling specifically to leave that margin.
-
-    The counter is keyed by UTC calendar date (Groq's ceiling resets at UTC
-    midnight) and written to disk after every attempt via the same
-    tmp-then-replace pattern as the response cache, so:
-      * it survives a killed process -- a run resumed five minutes later does
-        not get to recount from zero;
-      * a second dispatch later the same UTC day sees what the first one
-        already spent, instead of both independently believing they have the
-        full daily allowance.
-    """
+    """Persists a count of request attempts made today."""
 
     def __init__(self, path: Path, cap: int) -> None:
         self.path = path
@@ -417,7 +385,7 @@ class DailyCapTracker:
                 if data.get("date") == today:
                     return today, int(data.get("count", 0))
             except (ValueError, OSError, TypeError):
-                pass  # corrupt or missing counter file: start today at zero
+                pass
         return today, 0
 
     def _save(self) -> None:
@@ -429,12 +397,6 @@ class DailyCapTracker:
         os.replace(tmp, self.path)
 
     def try_consume(self) -> bool:
-        """Spend one unit of today's budget. False once the cap is reached.
-
-        Rolls the counter over to zero itself on a UTC date change, so a run
-        that happens to straddle midnight keeps working under the new day's
-        allowance rather than staying stuck at yesterday's cap.
-        """
         with self._lock:
             today = self._today()
             if today != self._date:
@@ -455,11 +417,6 @@ class DailyCapTracker:
 # the call
 # --------------------------------------------------------------------------
 def chat_completions_url(base_url: str) -> str:
-    """Join the configured API root to the chat-completions path.
-
-    Hosts are inconsistent about trailing slashes and about whether the root
-    already ends in /v1, so normalise here instead of in the config.
-    """
     base = base_url.rstrip("/")
     if base.endswith("/chat/completions"):
         return base
@@ -475,13 +432,7 @@ def call_model(
     daily_cap_tracker: "DailyCapTracker | None" = None,
     deadline: float | None = None,
 ) -> dict[str, Any]:
-    """POST one completion, retrying transient failures. Returns the record.
-
-    Raises RuntimeError once retries are exhausted; the caller records the
-    failure and moves on, because one dead cell must not abort 7,199 others.
-    Raises DailyCapExceeded, or TimeBudgetExceeded once time.monotonic()
-    passes `deadline`, instead -- both without making a request.
-    """
+    """POST one completion, retrying transient failures. Returns the record."""
     limits = config["rate_limits"]
     design = config["design"]
     prompts = config["prompts"]
@@ -503,11 +454,13 @@ def call_model(
         "max_tokens": int(design.get("max_tokens", 500)),
     }
     if design.get("seed") is not None:
-        # Honoured by some hosts, ignored by others. Harmless either way, and
-        # when it is honoured it makes the 5 repeats genuinely reproducible.
         payload["seed"] = int(design["seed"])
     if prompts.get("response_format") == "json_object":
         payload["response_format"] = {"type": "json_object"}
+    if task.reasoning_effort is not None:
+        payload["reasoning_effort"] = task.reasoning_effort
+    if task.reasoning_format is not None:
+        payload["reasoning_format"] = task.reasoning_format
 
     headers = {
         "Authorization": f"Bearer {os.environ.get(task.env_key, '')}",
@@ -516,20 +469,8 @@ def call_model(
     url = chat_completions_url(task.base_url)
 
     last_error = "unknown"
-    # Retry-After, when the host sends one, overrides the NEXT sleep rather
-    # than being slept on top of it. Groq sends this header on 429s and it
-    # is more precise than our own exponential guess; the earlier version of
-    # this loop slept for Retry-After immediately AND for the exponential
-    # delay on the following iteration, which double-waited on every
-    # rate-limited retry and roughly halved real throughput against a
-    # strict per-minute budget.
     next_delay_override: float | None = None
     for attempt in range(max_retries + 1):
-        # Checked first, before any sleep or network activity: a denied
-        # attempt must cost nothing. Every iteration of this loop is one
-        # attempt against Groq's daily ceiling whether or not it succeeds,
-        # so the guard consumes budget here -- not after a response comes
-        # back -- which is what "count attempts, not successes" requires.
         if daily_cap_tracker is not None and not daily_cap_tracker.try_consume():
             raise DailyCapExceeded(
                 f"daily request cap of {daily_cap_tracker.cap} reached "
@@ -545,8 +486,6 @@ def call_model(
                 delay = next_delay_override + random.uniform(0, jitter)
                 next_delay_override = None
             else:
-                # Exponential backoff with jitter. The jitter is what keeps
-                # the workers from retrying in lockstep after a shared 429.
                 delay = min(base**attempt, backoff_max) + random.uniform(0, jitter)
             stats.bump("retries")
             time.sleep(delay)
@@ -559,11 +498,6 @@ def call_model(
             continue
 
         if resp.status_code in retry_on:
-            # Respect Retry-After when the host sends one; it knows its own
-            # window better than our backoff curve does. Recorded here and
-            # applied at the top of the next iteration instead of slept on
-            # the spot, so it replaces rather than stacks with the
-            # exponential delay above.
             retry_after = resp.headers.get("Retry-After")
             if retry_after:
                 try:
@@ -574,8 +508,6 @@ def call_model(
             continue
 
         if resp.status_code >= 400:
-            # 400/401/403/404 are configuration errors, not weather. Retrying
-            # a bad model id or a rejected key just wastes the quota.
             raise RuntimeError(
                 f"HTTP {resp.status_code} (not retryable): {resp.text[:300]}"
             )
@@ -603,11 +535,10 @@ def call_model(
             "variant": task.variant,
             "run_index": task.run_index,
             "temperature": payload["temperature"],
+            "reasoning_effort": task.reasoning_effort,
+            "reasoning_format": task.reasoning_format,
             "system_prompt": task.system_prompt,
             "user_prompt": task.user_prompt,
-            # The vignette text is stored alongside the response so the
-            # verbatim-quote check in score.py never has to guess which text
-            # produced this output, even if data/vignettes.jsonl later changes.
             "vignette_text": task.vignette_text,
             "response_text": content,
             "finish_reason": (body["choices"][0] or {}).get("finish_reason"),
@@ -622,13 +553,6 @@ def call_model(
 
 
 def write_atomic(path: Path, record: dict[str, Any]) -> None:
-    """Write JSON via a .tmp sibling plus os.replace.
-
-    os.replace is atomic within a filesystem, so a reader (or a killed job)
-    only ever sees the complete file or no file at all. fsync before the rename
-    means a machine that loses power does not leave a rename pointing at empty
-    bytes.
-    """
     tmp = path.with_suffix(".tmp")
     with tmp.open("w", encoding="utf-8") as fh:
         json.dump(record, fh, ensure_ascii=False, indent=2)
@@ -647,24 +571,16 @@ def process(
     daily_cap_tracker: "DailyCapTracker | None" = None,
     deadline: float | None = None,
 ) -> tuple[Task, str, str | None]:
-    """Fetch one task unless it is already cached. Never raises."""
     path = task.cache_path(raw_dir)
     if path.exists():
-        # The file's existence is the checkpoint. This is what makes the run
-        # resumable across dispatches at zero bookkeeping cost.
         stats.bump("cached")
         return task, "cached", None
     try:
         record = call_model(task, session, config, limiter, stats, daily_cap_tracker, deadline)
     except (DailyCapExceeded, TimeBudgetExceeded) as exc:
-        # Distinct from an ordinary failure: nothing is wrong with this cell,
-        # a budget (daily attempts, or wall-clock time before the job
-        # timeout) is just spent. main() handles this status specially so a
-        # queue of thousands of already-submitted tasks does not each print
-        # their own FAIL line on the way to the same conclusion.
         stats.bump("capped")
         return task, "capped", str(exc)
-    except Exception as exc:  # noqa: BLE001 - one bad cell must not kill the run
+    except Exception as exc:  # noqa: BLE001
         stats.bump("failed")
         return task, "failed", f"{exc.__class__.__name__}: {exc}"
     write_atomic(path, record)
@@ -722,7 +638,6 @@ def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
     config = load_config(args.config)
     paths = config.get("paths", {})
-    # Config paths may be absolute (a test cache in /tmp) or repo-relative.
     vignette_path = resolve_path(paths.get("vignettes", "data/vignettes.jsonl"))
     vignettes = load_vignettes(vignette_path)
     raw_dir = resolve_path(paths.get("raw", "results/raw"))
@@ -762,8 +677,6 @@ def main(argv: list[str] | None = None) -> int:
             )
         return 0
 
-    # Lock and credential checks run before anything is sent, so a
-    # misconfigured clone fails in a second rather than after 40 timeouts.
     check_lock(config, args.allow_unlocked)
     check_models(tasks)
 
@@ -771,8 +684,6 @@ def main(argv: list[str] | None = None) -> int:
         print("nothing to do: every planned call is already cached.")
         return 0
     if args.limit is not None:
-        # Report the limit separately from an empty queue: "nothing to do"
-        # must mean the collection is complete, never "you passed --limit 0".
         held_back = max(0, len(pending) - max(0, args.limit))
         pending = pending[: max(0, args.limit)]
         if held_back:
@@ -805,10 +716,6 @@ def main(argv: list[str] | None = None) -> int:
                 f"({display_path(daily_count_path)})"
             )
 
-    # --max-minutes overrides the protocol's own collection budget; both are
-    # optional, so a plain local run keeps working with no time limit at all.
-    # See TimeBudgetExceeded: at the full 120-vignette design this is what
-    # keeps a dispatch from racing the job's hard timeout-minutes cancellation.
     max_minutes = args.max_minutes
     if max_minutes is None:
         max_minutes = limits.get("max_collection_minutes")
@@ -831,10 +738,6 @@ def main(argv: list[str] | None = None) -> int:
             for done, future in enumerate(as_completed(futures), start=1):
                 task, status, error = future.result()
                 if status == "capped":
-                    # One clean message, not one FAIL line per remaining
-                    # queued task: every task submitted above will discover
-                    # the same exhausted budget in turn, and printing that
-                    # thousands of times over would bury the summary.
                     if not cap_hit_announced:
                         cap_hit_announced = True
                         print(f"\n[{done}/{len(pending)}] CAPPED  {error}")
@@ -851,7 +754,6 @@ def main(argv: list[str] | None = None) -> int:
                     + (f"  {error}" if error else "")
                 )
     except KeyboardInterrupt:
-        # Already-written files stay valid, so a Ctrl-C is a pause, not a loss.
         print("\ninterrupted; completed responses are cached. Re-run to resume.")
         return 130
     finally:
@@ -872,9 +774,6 @@ def main(argv: list[str] | None = None) -> int:
         if len(failures) > 20:
             print(f"  ... and {len(failures) - 20} more")
         return 1
-    # A cap hit is a clean stop, not a failure: nothing is broken, the day's
-    # budget is just spent. Exit 0 so a CI step chain (score -> analyze ->
-    # commit) keeps going over whatever was collected before the cap hit.
     return 0
 
 
