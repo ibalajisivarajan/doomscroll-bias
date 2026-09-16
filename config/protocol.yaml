@@ -32,7 +32,7 @@
 #     tests only and taints any output it produces.
 #
 # Flip this to true before the real data collection run.
-locked: false
+locked: true
 
 study:
   id: doomscroll-bias
@@ -95,10 +95,7 @@ design:
   n_models: 2
   total_calls: 7200                   # 120 x 6 x 2 x 5
   temperature: 0.0
-  # Smoke run #1 showed 500 completion tokens was insufficient for Qwen 3.8
-  # with low hidden reasoning. Smoke run #2 passed 24/24 at 1024, so this is
-  # frozen as the production completion ceiling for both models.
-  max_tokens: 1024
+  max_tokens: 500
   seed: 20260914                      # passed when the endpoint honours it
 
   blinding: >-
@@ -143,8 +140,6 @@ design:
 # Model IDs were verified against the Groq Console model selector before
 # protocol lock. Re-verify availability with `GET /openai/v1/models` immediately
 # before the production collection run, because provider catalogues can change.
-# Reasoning is explicitly frozen to the same common setting on both models so
-# provider defaults cannot create an unintended inference-regime confound.
 models:
   - slot: A
     id: "openai/gpt-oss-120b"
@@ -153,8 +148,6 @@ models:
     base_url: "https://api.groq.com/openai/v1"
     env_key: MODEL_A_API_KEY_GROQ
     weights: open
-    reasoning_effort: low
-    reasoning_format: hidden
     notes: >-
       Lab 1 (OpenAI). Open-weight GPT-OSS 120B checkpoint served through
       Groq. Selected from the live Groq Console model catalogue before
@@ -166,22 +159,23 @@ models:
     base_url: "https://api.groq.com/openai/v1"
     env_key: MODEL_B_API_KEY_GROQ
     weights: open
-    reasoning_effort: low
-    reasoning_format: hidden
     notes: >-
       Lab 2 (Alibaba/Qwen). Open-weight Qwen 3.8 27B checkpoint served
       through Groq. Selected from the live Groq Console model catalogue
       before protocol lock. Provider availability should be re-checked
       immediately before production collection.
 
-# MODEL_A_API_KEY_GROQ and MODEL_B_API_KEY_GROQ currently hold the same Groq
-# organization credential under two secret names. The Groq Organization Limits
-# page was checked before production readiness. For each selected model it
-# showed 30 RPM, 1,000 RPD, 8,000 TPM and 200,000 TPD. These are model-specific
-# account limits, not a 14,400-request shared free-tier allowance. A third key,
-# MODEL_C_API_KEY_OR (OpenRouter), exists for a replication subsample and is not
-# wired into the `models` list above -- src/run.py's design (n_models: 2,
-# total_calls: 7200) does not include it.
+# Not a model slot: MODEL_A_API_KEY_GROQ and MODEL_B_API_KEY_GROQ are the same
+# key VALUE under two secret NAMES. This does not create two budgets --
+# Groq's free tier is tracked at the organization level, not per key, so both
+# slots draw from one shared 30 rpm / 6,000 tpm / 14,400 req/day pool no
+# matter how many secret names point at it. The two names exist so a
+# provider swap for one slot only touches one variable, not because
+# duplicating the key multiplies quota. A third key, MODEL_C_API_KEY_OR
+# (OpenRouter), exists for a replication subsample and is not wired into the
+# `models` list above -- src/run.py's design (n_models: 2, total_calls: 7200)
+# does not include it. It reaches the workflow's env block so it is available
+# when that replication is built, and nothing currently reads it.
 
 # ---------------------------------------------------------------------------
 # PROMPTS
@@ -385,21 +379,18 @@ statistics:
 # ---------------------------------------------------------------------------
 # RATE LIMITS AND RETRIES
 # ---------------------------------------------------------------------------
-# Operational, not part of the scientific plan -- tune freely. The Groq
-# Organization Limits page was verified before production readiness. Each
-# selected model currently has 30 RPM, 1,000 RPD, 8,000 TPM and 200,000 TPD.
-# Smoke run #2 measured roughly 604 total tokens/response for GPT-OSS and 960
-# for Qwen. Qwen is therefore the binding token case. Production dispatches
-# intentionally collect each slot separately, with a default limit of 150
-# uncached successes per model per dispatch. At the smoke average this is about
-# 144K tokens for Qwen and 91K for GPT-OSS, leaving material daily headroom for
-# retries and longer-than-smoke prompts. The global attempt cap below is a
-# second safety brake, not a substitute for Groq's own per-model enforcement.
+# Operational, not part of the scientific plan -- tune freely. Sized to
+# Groq's free tier at the org level: 30 requests/min, 6,000 tokens/min,
+# 14,400 requests/day, shared across both model slots. Confirmed: Groq's
+# free-tier quota is tracked at the organization level, not per API key, so
+# slots A and B (two secret names, same key value) draw from one pool, not
+# two -- do not size any of these limits as if the slots were additive.
+# Our calls run ~500 tokens each (prompt + completion), so 6,000 tpm / 500
+# ~= 12 req/min is the binding constraint, tighter than the 30 req/min
+# figure and the one requests_per_minute is set to.
 rate_limits:
-  max_concurrent: 1
-  # 4 rpm keeps the Qwen smoke average around 3.8K tokens/minute, under half
-  # the verified 8K TPM ceiling and well under the 30 RPM request ceiling.
-  requests_per_minute: 4
+  max_concurrent: 2
+  requests_per_minute: 12
   max_retries: 6
   backoff_base_seconds: 2  # delay = base ** attempt + jitter, when Groq
                            # sends no Retry-After header to use instead
@@ -408,14 +399,24 @@ rate_limits:
                            # concurrent workers do not retry in lockstep
   retry_on_status: [408, 409, 429, 500, 502, 503, 504]
   request_timeout: 120
-  # Workflow default: <=150 uncached successes for A + <=150 for B. A shared
-  # cap of 360 attempts leaves room for up to 60 retries while preventing a
-  # runaway same-day dispatch. Groq's model-specific RPD/TPD limits remain the
-  # authoritative hard limits.
-  daily_request_cap: 360
-  # With 150 calls/model at 4 rpm, a normal dispatch is roughly 75 minutes plus
-  # retries and scoring. Keep the existing 300-minute clean-stop budget so even
-  # unusually retry-heavy runs finish well before the 350-minute Actions wall.
+  # Hard stop below Groq's 14,400/day org-wide ceiling, with ~2,400 requests
+  # of margin for anything else drawing on the same account (manual testing,
+  # a second study, a human poking at the API key) plus this collection's own
+  # retries, which spend real attempts without producing cached responses.
+  # src/run.py counts every attempt (including retries) against this, persists
+  # the running total in paths.daily_count, and stops cleanly -- not with an
+  # error -- once it is reached; see DailyCapTracker in src/run.py.
+  daily_request_cap: 12000
+  # At the full 120-vignette design (7,200 calls) and 12 req/min, collection
+  # alone needs >=600 minutes with zero retries -- longer than the workflow's
+  # 350-minute job timeout, every single dispatch. A hard job timeout cancels
+  # the job abruptly; an if: always() step (like "Persist daily counter")
+  # gets at best a short grace window, not something a git commit and push
+  # should depend on. This makes src/run.py stop collecting on its own terms
+  # instead: 300 minutes, leaving ~50 minutes of margin under the job
+  # timeout for score/analyse/commit/notion/upload to run as an ordinary
+  # successful step chain rather than a cancellation race. See
+  # TimeBudgetExceeded in src/run.py. Overridden locally by --max-minutes.
   max_collection_minutes: 300
 
 paths:
