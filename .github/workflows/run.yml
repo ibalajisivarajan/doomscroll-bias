@@ -1,50 +1,7 @@
 # Collection + analysis for the doomscroll-bias audit.
 #
-# WHY THIS IS MANUAL-ONLY AND WHY IT RESUMES
-# ------------------------------------------
-# A full collection is 7,200 calls and it will NOT finish in one dispatch:
-#
-#   * GitHub-hosted jobs are hard-killed at 6 hours. The timeout below is 350
-#     minutes so the job ends on its own terms -- committing what it has and
-#     saving the cache -- instead of being shot in the head with the run's work
-#     stranded in a container.
-#   * Free and community inference tiers rate-limit hard. At the protocol's
-#     12 rpm (Groq's free-tier 6,000 tokens/min divided by our ~500-token
-#     calls, tighter than its 30 req/min headline figure) that is 10 hours
-#     of wall clock for 7,200 calls before a single retry, and retries are
-#     not rare on those tiers. Groq's daily request ceiling (14,400/day,
-#     org-wide) binds even sooner; src/run.py's daily-cap guard stops the
-#     run cleanly at 12,000 attempts rather than spend the account into a
-#     day-long lockout.
-#
-# So a full run spans several dispatches, and the design assumes that. Every
-# response is cached as its own file in results/raw, that directory is restored
-# through actions/cache at the start and saved at the end, and src/run.py skips
-# anything already cached. Dispatch it, let it burn down as much as it can,
-# dispatch it again. Progress is monotonic; nothing is recollected.
-#
-# There is no schedule and no push trigger on purpose: every dispatch spends
-# real API quota, and a trigger that fires on its own would spend it by
-# accident.
-#
-# Required repository secrets (Settings -> Secrets and variables -> Actions):
-#   MODEL_A_API_KEY_GROQ   Groq key, slot A
-#   MODEL_B_API_KEY_GROQ   Groq key, slot B (same key value as slot A --
-#                          Groq's free-tier quota is tracked at the
-#                          ORGANIZATION level, not per key, so both slots
-#                          draw from one shared 14,400 req/day pool.
-#                          Two secret names exist so a provider swap for
-#                          one slot only touches one variable, not because
-#                          duplicating the key increases quota.)
-#   MODEL_C_API_KEY_OR     OpenRouter key for a replication subsample; not
-#                          wired into config/protocol.yaml's `models` list
-#                          yet (the primary design is 2 models), but available
-#                          in this workflow's env for when that is built
-#   NOTION_TOKEN           Notion internal integration secret
-#   NOTION_PAGE_ID         id of the Notion page holding the run log
-#                          (the page MUST be shared with the integration via
-#                           its "..." -> Connections menu, or Notion answers
-#                           404)
+# Manual-only and resumable by design. Every response is cached separately,
+# committed to main, and skipped on later dispatches.
 
 name: run
 
@@ -65,12 +22,8 @@ on:
         type: boolean
 
 permissions:
-  # Needed by the commit step, which pushes results back to main.
   contents: write
 
-# One collection at a time. Two dispatches in parallel would race on the
-# results/raw cache and on the push to main, and would double the request rate
-# the protocol's rate limits are meant to hold.
 concurrency:
   group: doomscroll-collection
   cancel-in-progress: false
@@ -78,13 +31,9 @@ concurrency:
 jobs:
   collect:
     runs-on: ubuntu-latest
-    # Under the 6h hard kill, with room to commit results and save the cache.
     timeout-minutes: 350
 
     steps:
-      # Checked out at main, not at the dispatching ref, because the commit
-      # step pushes results to main and committing results from one branch onto
-      # another is how a cache and a history disagree.
       - name: Checkout main
         uses: actions/checkout@v4
         with:
@@ -103,11 +52,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      # The resume mechanism. The key is unique per run so this dispatch always
-      # saves a fresh cache, and the "raw-" restore-key pulls the most recent
-      # previous one -- so dispatch N starts from everything dispatches 1..N-1
-      # collected. results/raw is also committed to main below, which makes the
-      # cache a speed-up rather than the only copy.
       - name: Restore response cache
         uses: actions/cache@v4
         with:
@@ -137,47 +81,36 @@ jobs:
           echo "python src/run.py $ARGS"
           python src/run.py $ARGS
 
-      # Runs whether or not "Collect responses" succeeded: a cell that
-      # exhausts its retries makes run.py exit 1, and without if: always()
-      # here every step below -- score, analyse, and the full results commit
-      # -- would be skipped, stranding this file on the ephemeral runner.
-      # The actions/cache entry above covers only results/raw, not this file,
-      # so a same-day retry after such a failure would otherwise reload a
-      # stale committed count (or find none) and could spend another
-      # near-full day's allowance right when the guard matters most.
-      # Committed on its own, separate from the full results commit later in
-      # the job (which still only runs when collection succeeds).
-      # continue-on-error: true so a push race here (e.g. two dispatches
-      # landing on main close together) never cascades into skipping score/
-      # analyse/commit on what may otherwise be a perfectly good run.
       - name: Persist daily counter
         if: always()
         continue-on-error: true
         run: |
           if [ ! -f results/.daily_count.json ]; then
-            echo "no daily counter file yet (nothing was attempted this run); nothing to persist"
+            echo "no daily counter file yet; nothing to persist"
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add results/.daily_count.json
           if git diff --cached --quiet; then
-            echo "daily counter unchanged; nothing to commit"
+            echo "daily counter unchanged"
             exit 0
           fi
           git commit -m "counter: dispatch ${{ github.run_id }}"
           for attempt in 1 2 3; do
             git pull --rebase --autostash origin main && git push origin HEAD:main && exit 0
-            echo "push attempt $attempt failed; retrying in $((attempt * 5))s"
             sleep $((attempt * 5))
           done
-          echo "could not push daily counter after 3 attempts" >&2
           exit 1
 
-      # Scoring and analysis run over whatever is cached, so a partial
-      # collection still produces readable interim numbers.
       - name: Score responses
         run: python src/score.py
+
+      - name: Check known-answer controls
+        run: python src/control_check.py
+
+      - name: Refresh seeded manual-validation sample
+        run: python src/sample_manual_validation.py
 
       - name: Analyse
         run: python src/analyze.py
@@ -192,23 +125,13 @@ jobs:
             exit 0
           fi
           git commit -m "results: collection run ${{ github.run_number }} ($(find results/raw -name '*.json' | wc -l) responses cached)"
-          # Another dispatch, or a local push, may have landed on main while
-          # this job was collecting. Rebase onto it rather than force-pushing:
-          # results are additive files, so a rebase resolves cleanly and no
-          # other run's work is discarded.
           for attempt in 1 2 3; do
             git pull --rebase --autostash origin main && git push origin HEAD:main && exit 0
-            echo "push attempt $attempt failed; retrying in $((attempt * 5))s"
             sleep $((attempt * 5))
           done
-          echo "could not push results to main after 3 attempts" >&2
           exit 1
 
-      # if: always() because the run log is most useful precisely when the
-      # collection failed. continue-on-error because a dashboard that is not
-      # configured -- or a Notion outage -- must never fail a run whose data
-      # is already committed.
-      - name: Sync run log to Notion
+      - name: Sync live dashboard and run history to Notion
         if: always()
         continue-on-error: true
         env:
@@ -218,8 +141,6 @@ jobs:
           python src/notion_sync.py \
             --note "dispatch #${{ github.run_number }} (${{ job.status }}), limit='${{ inputs.limit }}', allow_unlocked=${{ inputs.allow_unlocked }}"
 
-      # Uploaded even on failure: the tables and figures from a job that died
-      # partway are how you find out why it died.
       - name: Upload tables and figures
         if: always()
         uses: actions/upload-artifact@v4
