@@ -8,12 +8,13 @@ name: run
 on:
   workflow_dispatch:
     inputs:
-      limit:
+      per_model_limit:
         description: >-
-          Max uncached calls this dispatch (blank = no limit; the run still
-          stops itself cleanly at rate_limits.max_collection_minutes either way)
+          Max uncached calls per model this dispatch. Default 150 is sized to
+          stay comfortably under the verified 200K tokens/day/model Groq limit
+          using smoke-run token usage, while leaving headroom for retries.
         required: false
-        default: ""
+        default: "150"
         type: string
       allow_unlocked:
         description: "Run even though config/protocol.yaml has locked: false (smoke tests only)"
@@ -65,15 +66,31 @@ jobs:
           mkdir -p results/raw results/tables
           echo "cached responses on entry: $(find results/raw -name '*.json' | wc -l)"
 
-      - name: Collect responses
+      - name: Collect slot A responses
         env:
           MODEL_A_API_KEY_GROQ: ${{ secrets.MODEL_A_API_KEY_GROQ }}
           MODEL_B_API_KEY_GROQ: ${{ secrets.MODEL_B_API_KEY_GROQ }}
           MODEL_C_API_KEY_OR: ${{ secrets.MODEL_C_API_KEY_OR }}
         run: |
-          ARGS=""
-          if [ -n "${{ inputs.limit }}" ]; then
-            ARGS="$ARGS --limit ${{ inputs.limit }}"
+          ARGS="--model A"
+          if [ -n "${{ inputs.per_model_limit }}" ]; then
+            ARGS="$ARGS --limit ${{ inputs.per_model_limit }}"
+          fi
+          if [ "${{ inputs.allow_unlocked }}" = "true" ]; then
+            ARGS="$ARGS --allow-unlocked"
+          fi
+          echo "python src/run.py $ARGS"
+          python src/run.py $ARGS
+
+      - name: Collect slot B responses
+        env:
+          MODEL_A_API_KEY_GROQ: ${{ secrets.MODEL_A_API_KEY_GROQ }}
+          MODEL_B_API_KEY_GROQ: ${{ secrets.MODEL_B_API_KEY_GROQ }}
+          MODEL_C_API_KEY_OR: ${{ secrets.MODEL_C_API_KEY_OR }}
+        run: |
+          ARGS="--model B"
+          if [ -n "${{ inputs.per_model_limit }}" ]; then
+            ARGS="$ARGS --limit ${{ inputs.per_model_limit }}"
           fi
           if [ "${{ inputs.allow_unlocked }}" = "true" ]; then
             ARGS="$ARGS --allow-unlocked"
@@ -139,7 +156,7 @@ jobs:
           NOTION_PAGE_ID: ${{ secrets.NOTION_PAGE_ID }}
         run: |
           python src/notion_sync.py \
-            --note "dispatch #${{ github.run_number }} (${{ job.status }}), limit='${{ inputs.limit }}', allow_unlocked=${{ inputs.allow_unlocked }}"
+            --note "dispatch #${{ github.run_number }} (${{ job.status }}), per_model_limit='${{ inputs.per_model_limit }}', allow_unlocked=${{ inputs.allow_unlocked }}"
 
       - name: Upload tables and figures
         if: always()
