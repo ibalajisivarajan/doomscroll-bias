@@ -114,9 +114,8 @@ pip install -r requirements.txt
 # Both slots are served through Groq; verify their model ids against
 # GET /openai/v1/models before trusting a run (see the Groq section below),
 # then point the keys at them. Slots A and B use two separate secret NAMES
-# so a provider swap for one slot only touches one variable -- Groq's
-# free-tier quota is tracked at the organization level, not per key, so
-# both slots draw from one shared 14,400 req/day pool regardless:
+# so a provider swap for one slot only touches one variable. Duplicating one
+# API key does not increase provider limits:
 export MODEL_A_API_KEY_GROQ=...
 export MODEL_B_API_KEY_GROQ=...
 
@@ -171,7 +170,7 @@ Settings → Secrets and variables → Actions:
 | Secret | What it is |
 |---|---|
 | `MODEL_A_API_KEY_GROQ` | Groq API key, slot A |
-| `MODEL_B_API_KEY_GROQ` | Groq API key, slot B — same key *value* as slot A. Groq's free-tier quota is tracked at the organization level, not per key, so this does **not** create a second budget: both slots draw from one shared 14,400 req/day pool. The separate secret name exists so a provider swap for one slot only touches one variable |
+| `MODEL_B_API_KEY_GROQ` | Groq API key, slot B — same key *value* as slot A. This does **not** multiply provider quota. The separate secret name exists so a provider swap for one slot only touches one variable |
 | `MODEL_C_API_KEY_OR` | OpenRouter API key, reserved for a replication subsample. Available to the workflow but not yet wired into `config/protocol.yaml`'s `models` list — the primary design is 2 models |
 | `NOTION_TOKEN` | Notion internal integration secret |
 | `NOTION_PAGE_ID` | id of the Notion page holding the run log |
@@ -194,16 +193,13 @@ and review any replacement as a protocol amendment. `src/run.py` refuses to
 run with the literal string `TBD`, but it cannot independently confirm current
 provider availability.
 
-Separately: Groq's free tier binds on **tokens per minute** before it binds on
-requests per minute. The published ceiling is 30 req/min, but at ~500 tokens a
-call and a 6,000 tokens/min budget, the real ceiling is closer to 12 req/min —
-`config/protocol.yaml`'s `rate_limits.requests_per_minute: 12` is set to that,
-not to the headline number. The daily ceiling (14,400 requests/day, org-wide,
-shared across both key slots) binds sooner than either: `src/run.py` tracks
-attempts — including retries — in `results/.daily_count.json` and stops
-cleanly at `rate_limits.daily_request_cap` (12,000, a margin below the real
-ceiling) rather than exhausting the account and locking out every other call
-on it for the rest of the day.
+The live Groq organization limits verified on 2026-09-15 are, for each selected
+model: 30 requests/minute, 1,000 requests/day, 8,000 tokens/minute and 200,000
+tokens/day. Smoke run #2 averaged ~604 total tokens for GPT-OSS and ~960 for
+Qwen. Production therefore uses one worker, 6 requests/minute and a conservative
+process-wide cap of 180 attempts/day. At the observed Qwen usage, that is about
+172,800 tokens and leaves headroom for variation. `src/run.py` counts retries in
+`results/.daily_count.json` and stops cleanly before exhausting the allowance.
 
 ## The Notion gotcha
 
