@@ -137,32 +137,33 @@ design:
 # api_key never appears in this file -- only the name of the environment
 # variable holding it.
 #
-# id is PLACEHOLDER until verified against `GET /openai/v1/models` on the
-# live account (see the setup note in README.md) -- Groq's catalogue changes
-# model slugs and deprecates versions without much notice, and a stale slug
-# fails every call. Do not flip `locked: true` with an unverified id.
+# Model IDs were verified against the Groq Console model selector before
+# protocol lock. Re-verify availability with `GET /openai/v1/models` immediately
+# before the production collection run, because provider catalogues can change.
 models:
   - slot: A
-    id: "llama-3.3-70b-versatile"      # PLACEHOLDER -- verify before locking
-    lab: meta
+    id: "openai/gpt-oss-120b"
+    lab: openai
     provider: groq
     base_url: "https://api.groq.com/openai/v1"
     env_key: MODEL_A_API_KEY_GROQ
     weights: open
     notes: >-
-      Lab 1 (Meta). Must be an open-weight checkpoint with a published
-      weights release, so the exact artefact under audit can be
-      re-obtained later.
+      Lab 1 (OpenAI). Open-weight GPT-OSS 120B checkpoint served through
+      Groq. Selected from the live Groq Console model catalogue before
+      protocol lock.
   - slot: B
-    id: "qwen/qwen3-32b"               # PLACEHOLDER -- verify before locking
+    id: "qwen/qwen3.8-27b"
     lab: alibaba
     provider: groq
     base_url: "https://api.groq.com/openai/v1"
     env_key: MODEL_B_API_KEY_GROQ
     weights: open
     notes: >-
-      Lab 2 (Alibaba). Must come from a different lab than slot A and not
-      be a fine-tune or distillation of it.
+      Lab 2 (Alibaba/Qwen). Open-weight Qwen 3.8 27B checkpoint served
+      through Groq. Selected from the live Groq Console model catalogue
+      before protocol lock. Provider availability should be re-checked
+      immediately before production collection.
 
 # Not a model slot: MODEL_A_API_KEY_GROQ and MODEL_B_API_KEY_GROQ are the same
 # key VALUE under two secret NAMES. This does not create two budgets --
