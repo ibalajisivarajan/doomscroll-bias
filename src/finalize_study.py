@@ -107,7 +107,11 @@ def prepare(github_output: str | None = None) -> int:
 
     run(sys.executable, "src/score.py")
     run(sys.executable, "src/control_check.py")
-    run(sys.executable, "src/sample_manual_validation.py")
+    # The final collection run already creates the deterministic blinded sample.
+    # Never regenerate an existing worksheet here: after the human coder fills
+    # it, regeneration would erase the manual labels and defeat the validation gate.
+    if not MANUAL.exists():
+        run(sys.executable, "src/sample_manual_validation.py")
     run(sys.executable, "src/analyze.py")
 
     FINAL_DIR.mkdir(parents=True, exist_ok=True)
