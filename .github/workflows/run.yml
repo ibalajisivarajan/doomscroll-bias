@@ -6,6 +6,10 @@
 name: run
 
 on:
+  schedule:
+    # Groq free-tier daily quotas reset on the UTC day boundary. Run shortly
+    # after rollover so each model starts with a fresh per-model allowance.
+    - cron: "20 0 * * *"
   workflow_dispatch:
     inputs:
       per_model_limit:
@@ -66,16 +70,31 @@ jobs:
           mkdir -p results/raw results/tables
           echo "cached responses on entry: $(find results/raw -name '*.json' | wc -l)"
 
+      - name: Check collection completion
+        id: progress
+        run: |
+          python - <<'PY'
+          import pathlib, yaml
+          cfg = yaml.safe_load(pathlib.Path("config/protocol.yaml").read_text())
+          target = int(cfg["design"]["total_calls"])
+          cached = len(list(pathlib.Path("results/raw").glob("*.json")))
+          complete = cached >= target
+          print(f"cached={cached} target={target} complete={complete}")
+          with open("$GITHUB_OUTPUT", "a", encoding="utf-8") as fh:
+              fh.write(f"complete={'true' if complete else 'false'}\n")
+          PY
+
       - name: Collect slot A responses
+        if: steps.progress.outputs.complete != 'true'
         env:
           MODEL_A_API_KEY_GROQ: ${{ secrets.MODEL_A_API_KEY_GROQ }}
           MODEL_B_API_KEY_GROQ: ${{ secrets.MODEL_B_API_KEY_GROQ }}
           MODEL_C_API_KEY_OR: ${{ secrets.MODEL_C_API_KEY_OR }}
         run: |
           ARGS="--model A"
-          if [ -n "${{ inputs.per_model_limit }}" ]; then
-            ARGS="$ARGS --limit ${{ inputs.per_model_limit }}"
-          fi
+          LIMIT="${{ github.event.inputs.per_model_limit }}"
+          LIMIT="${LIMIT:-175}"
+          ARGS="$ARGS --limit $LIMIT"
           if [ "${{ inputs.allow_unlocked }}" = "true" ]; then
             ARGS="$ARGS --allow-unlocked"
           fi
@@ -83,15 +102,16 @@ jobs:
           python src/run.py $ARGS
 
       - name: Collect slot B responses
+        if: steps.progress.outputs.complete != 'true'
         env:
           MODEL_A_API_KEY_GROQ: ${{ secrets.MODEL_A_API_KEY_GROQ }}
           MODEL_B_API_KEY_GROQ: ${{ secrets.MODEL_B_API_KEY_GROQ }}
           MODEL_C_API_KEY_OR: ${{ secrets.MODEL_C_API_KEY_OR }}
         run: |
           ARGS="--model B"
-          if [ -n "${{ inputs.per_model_limit }}" ]; then
-            ARGS="$ARGS --limit ${{ inputs.per_model_limit }}"
-          fi
+          LIMIT="${{ github.event.inputs.per_model_limit }}"
+          LIMIT="${LIMIT:-175}"
+          ARGS="$ARGS --limit $LIMIT"
           if [ "${{ inputs.allow_unlocked }}" = "true" ]; then
             ARGS="$ARGS --allow-unlocked"
           fi
@@ -99,7 +119,7 @@ jobs:
           python src/run.py $ARGS
 
       - name: Persist per-model daily counters
-        if: always()
+        if: steps.progress.outputs.complete != 'true' && always()
         continue-on-error: true
         run: |
           if ! compgen -G "results/.daily_count_*.json" > /dev/null; then
@@ -121,18 +141,23 @@ jobs:
           exit 1
 
       - name: Score responses
+        if: steps.progress.outputs.complete != 'true'
         run: python src/score.py
 
       - name: Check known-answer controls
+        if: steps.progress.outputs.complete != 'true'
         run: python src/control_check.py
 
       - name: Refresh seeded manual-validation sample
+        if: steps.progress.outputs.complete != 'true'
         run: python src/sample_manual_validation.py
 
       - name: Analyse
+        if: steps.progress.outputs.complete != 'true'
         run: python src/analyze.py
 
       - name: Commit results to main
+        if: steps.progress.outputs.complete != 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -149,14 +174,14 @@ jobs:
           exit 1
 
       - name: Sync live dashboard and run history to Notion
-        if: always()
+        if: steps.progress.outputs.complete != 'true' && always()
         continue-on-error: true
         env:
           NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
           NOTION_PAGE_ID: ${{ secrets.NOTION_PAGE_ID }}
         run: |
           python src/notion_sync.py \
-            --note "dispatch #${{ github.run_number }} (${{ job.status }}), per_model_limit='${{ inputs.per_model_limit }}', allow_unlocked=${{ inputs.allow_unlocked }}"
+            --note "dispatch #${{ github.run_number }} (${{ job.status }}), trigger=${{ github.event_name }}, per_model_limit='${{ github.event.inputs.per_model_limit || '175' }}', allow_unlocked=${{ github.event.inputs.allow_unlocked || 'false' }}"
 
       - name: Upload tables and figures
         if: always()
