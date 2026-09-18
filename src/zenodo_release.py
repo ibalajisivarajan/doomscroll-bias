@@ -114,9 +114,11 @@ def main() -> int:
     if not token:
         raise SystemExit("ZENODO_TOKEN is not configured")
 
+    api = (args.api or DEFAULT_API).strip() or DEFAULT_API
+    api = api.rstrip("/")
     if args.cmd == "reserve":
-        return reserve(token, args.api.rstrip("/"), args.github_output)
-    return publish(token, args.api.rstrip("/"), args.deposit_id, args.archive, args.tag, args.github_output)
+        return reserve(token, api, args.github_output)
+    return publish(token, api, args.deposit_id, args.archive, args.tag, args.github_output)
 
 
 if __name__ == "__main__":
