@@ -699,22 +699,30 @@ def main(argv: list[str] | None = None) -> int:
     stats = Stats()
     failures: list[tuple[Task, str]] = []
 
-    daily_cap_tracker: DailyCapTracker | None = None
-    daily_cap = limits.get("daily_request_cap")
+    # Groq publishes daily limits per selected model, so quota accounting must
+    # also be per model. A single shared counter would let the first slot consume
+    # most of the day's allowance and artificially starve the second slot.
+    daily_cap_trackers: dict[str, DailyCapTracker] = {}
+    daily_cap = limits.get("daily_request_cap_per_model", limits.get("daily_request_cap"))
     if daily_cap:
-        daily_count_path = resolve_path(paths.get("daily_count", "results/.daily_count.json"))
-        daily_cap_tracker = DailyCapTracker(daily_count_path, int(daily_cap))
-        if daily_cap_tracker.count >= daily_cap_tracker.cap:
-            print(
-                f"daily cap: already at {daily_cap_tracker.count}/{daily_cap} attempts "
-                f"today ({display_path(daily_count_path)}); nothing will be collected "
-                f"until the UTC date rolls over."
+        daily_count_base = resolve_path(paths.get("daily_count", "results/.daily_count.json"))
+        for slot in sorted({t.model_slot for t in tasks}):
+            daily_count_path = daily_count_base.with_name(
+                f"{daily_count_base.stem}_{slot}{daily_count_base.suffix}"
             )
-        else:
-            print(
-                f"daily cap: {daily_cap_tracker.count}/{daily_cap} attempts spent today "
-                f"({display_path(daily_count_path)})"
-            )
+            tracker = DailyCapTracker(daily_count_path, int(daily_cap))
+            daily_cap_trackers[slot] = tracker
+            if tracker.count >= tracker.cap:
+                print(
+                    f"daily cap {slot}: already at {tracker.count}/{daily_cap} attempts "
+                    f"today ({display_path(daily_count_path)}); that model will not collect "
+                    f"again until the UTC date rolls over."
+                )
+            else:
+                print(
+                    f"daily cap {slot}: {tracker.count}/{daily_cap} attempts spent today "
+                    f"({display_path(daily_count_path)})"
+                )
 
     max_minutes = args.max_minutes
     if max_minutes is None:
@@ -731,7 +739,7 @@ def main(argv: list[str] | None = None) -> int:
             futures = [
                 pool.submit(
                     process, t, raw_dir, session, config, limiter, stats,
-                    daily_cap_tracker, deadline,
+                    daily_cap_trackers.get(t.model_slot), deadline,
                 )
                 for t in pending
             ]

@@ -10,11 +10,11 @@ on:
     inputs:
       per_model_limit:
         description: >-
-          Max uncached calls per model this dispatch. Default 150 is sized to
-          stay comfortably under the verified 200K tokens/day/model Groq limit
-          using smoke-run token usage, while leaving headroom for retries.
+          Max uncached calls per model this dispatch. Default 175 matches the
+          per-model free-tier safety cap while staying below the verified
+          200K tokens/day/model Groq limit using smoke-run token usage.
         required: false
-        default: "150"
+        default: "175"
         type: string
       allow_unlocked:
         description: "Run even though config/protocol.yaml has locked: false (smoke tests only)"
@@ -98,19 +98,19 @@ jobs:
           echo "python src/run.py $ARGS"
           python src/run.py $ARGS
 
-      - name: Persist daily counter
+      - name: Persist per-model daily counters
         if: always()
         continue-on-error: true
         run: |
-          if [ ! -f results/.daily_count.json ]; then
-            echo "no daily counter file yet; nothing to persist"
+          if ! compgen -G "results/.daily_count_*.json" > /dev/null; then
+            echo "no per-model daily counter files yet; nothing to persist"
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add results/.daily_count.json
+          git add results/.daily_count_*.json
           if git diff --cached --quiet; then
-            echo "daily counter unchanged"
+            echo "daily counters unchanged"
             exit 0
           fi
           git commit -m "counter: dispatch ${{ github.run_id }}"

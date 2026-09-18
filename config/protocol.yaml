@@ -384,12 +384,12 @@ statistics:
 # ---------------------------------------------------------------------------
 # RATE LIMITS AND RETRIES
 # ---------------------------------------------------------------------------
-# Operational, not part of the scientific plan -- tune freely. Sized to
+# Operational, not part of the scientific plan -- tune freely.
 # Verified in the Groq organization console on 2026-09-15 for both selected
 # models: 30 requests/minute, 1,000 requests/day, 8,000 tokens/minute, and
 # 200,000 tokens/day per model. Smoke run #2 averaged ~604 total tokens for
-# GPT-OSS and ~960 for Qwen. The process-wide limits below are intentionally
-# conservative enough for the higher-token Qwen path and count retries.
+# GPT-OSS and ~960 for Qwen. Groq's daily allowance is per model, so the
+# collector maintains a separate persisted attempt counter for each model slot.
 rate_limits:
   max_concurrent: 1
   requests_per_minute: 6
@@ -401,17 +401,14 @@ rate_limits:
                            # concurrent workers do not retry in lockstep
   retry_on_status: [408, 409, 429, 500, 502, 503, 504]
   request_timeout: 120
-# At Qwen's observed ~960 total tokens/response, 180 attempts consume about
-# 172,800 tokens. This leaves ~27,200 tokens of headroom under the verified
-# 200,000-token daily limit. The cap counts retries, which spend quota without
-# producing cached responses.
-  # src/run.py counts every attempt (including retries) against this, persists
-  # the running total in paths.daily_count, and stops cleanly -- not with an
-  # error -- once it is reached; see DailyCapTracker in src/run.py.
-  daily_request_cap: 180
-  # The daily token allowance now binds well before the six-hour Actions job
-  # limit. Keep the independent time budget as a fail-safe so collection still
-  # stops cleanly if provider behavior or retry timing changes.
+  # Free-tier production target: up to 175 request attempts per model per UTC
+  # day. At Qwen's observed ~960 total tokens/response, 175 attempts are about
+  # 168,000 tokens, leaving ~32,000 tokens of headroom under the verified
+  # 200,000-token daily limit. Retries count against the same per-model cap.
+  daily_request_cap_per_model: 175
+  # The daily token allowance binds well before the six-hour Actions job limit.
+  # Keep the independent time budget as a fail-safe so collection still stops
+  # cleanly if provider behavior or retry timing changes.
   max_collection_minutes: 300
 
 paths:
@@ -420,15 +417,11 @@ paths:
   tables: results/tables
   scored_csv: results/tables/scored.csv
   results_md: results/tables/results.md
-  # Persisted count of request attempts made today (UTC). Lives under
-  # results/ on purpose: the "Commit results to main" step in
-  # .github/workflows/run.yml stages the whole results/ tree, so this file is
-  # committed like everything else there, and a second same-day dispatch sees
-  # exactly what an earlier one already spent without depending on the
-  # actions/cache entry (which is keyed to results/raw only, and can expire)
-  # still being around. It resets itself on UTC date rollover -- see
-  # DailyCapTracker in src/run.py -- so yesterday's committed count never
-  # throttles today.
+  # Base path for persisted per-model request-attempt counters. src/run.py
+  # suffixes the model slot, producing results/.daily_count_A.json and
+  # results/.daily_count_B.json. They are committed with results/ so a second
+  # same-day dispatch sees quota already spent even if the Actions cache has
+  # expired. Each counter resets itself when the UTC date rolls over.
   daily_count: results/.daily_count.json
 
 notion:
