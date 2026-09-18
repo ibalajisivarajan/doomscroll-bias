@@ -147,9 +147,11 @@ under one label.
 
 ## Running it in Actions
 
-`.github/workflows/run.yml`, `workflow_dispatch` only — no schedule and no
-push trigger, because every dispatch spends real API quota. Inputs: `limit`
-(max uncached calls this dispatch) and `allow_unlocked`.
+`.github/workflows/run.yml` runs automatically once per UTC day and can also be
+started manually with `workflow_dispatch`. The scheduled path resumes from the
+raw-response cache, respects the per-model daily quota counters, and stops
+collecting once all 7,200 planned responses exist. Manual dispatch remains
+available for recovery or controlled testing.
 
 A full run **spans several dispatches by design**: GitHub jobs are hard-killed
 at 6 hours and free inference tiers rate-limit hard, so the job times out at
@@ -159,9 +161,11 @@ through `actions/cache@v4` with a `raw-` restore-key, so dispatch *N* starts
 from everything dispatches *1..N-1* collected. Dispatch it, let it burn down,
 dispatch it again. Progress is monotonic.
 
-Steps: collect → score → analyse → commit `results/` back to `main` → append a
-run-log line to Notion (`if: always()`, `continue-on-error: true`) → upload the
-tables and figures as artifacts.
+Daily steps: collect → score/QC → commit `results/` back to `main` → update the
+Notion live dashboard and Production Runs database → upload tables/artifacts.
+Inferential analysis is withheld while collection is incomplete. Once the cache
+reaches 7,200 responses, the finalization workflow reruns the preregistered
+analysis from the frozen complete corpus.
 
 ### The required secrets
 
@@ -197,9 +201,10 @@ The live Groq organization limits verified on 2026-09-15 are, for each selected
 model: 30 requests/minute, 1,000 requests/day, 8,000 tokens/minute and 200,000
 tokens/day. Smoke run #2 averaged ~604 total tokens for GPT-OSS and ~960 for
 Qwen. Production therefore uses one worker, 6 requests/minute and a conservative
-process-wide cap of 180 attempts/day. At the observed Qwen usage, that is about
-172,800 tokens and leaves headroom for variation. `src/run.py` counts retries in
-`results/.daily_count.json` and stops cleanly before exhausting the allowance.
+cap of 175 attempts per model per UTC day. `src/run.py` counts retries against
+separate persisted counters (`results/.daily_count_A.json` and
+`results/.daily_count_B.json`) so one model cannot consume the other model's
+daily allowance.
 
 ## The Notion gotcha
 
@@ -226,7 +231,8 @@ src/notion_sync.py          write-only run log to Notion
 results/raw/                one JSON file per response (the resume checkpoint)
 results/tables/             scored.csv, results.md, fault-gap histograms
 paper/                      write-up
-.github/workflows/run.yml   manual dispatch; resumes via the raw cache
+.github/workflows/run.yml   automatic daily collection; resumes via the raw cache
+.github/workflows/finalize.yml final freeze, human-validation gate, GitHub/Zenodo release
 ```
 
 ## Limitations worth stating up front
