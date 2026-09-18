@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
-"""Update the study's Notion dashboard and append an immutable run-history line.
+"""Update the study's Notion dashboard and production-run database.
 
 GitHub/results remain the source of truth. Notion is display-only. Each sync:
 1. computes collection/QC state from files on disk;
-2. updates a single dashboard marker paragraph when the integration has update
-   permission, or creates it if it does not exist;
-3. appends a timestamped history paragraph so every dispatch remains visible.
+2. updates the single dashboard marker paragraph on the living artifact;
+3. upserts one structured row in the Production Runs database for this Actions run.
 
 The workflow marks this step continue-on-error, so Notion can never jeopardize
 collected research data.
@@ -135,11 +134,6 @@ def dashboard_text(s: dict[str, Any]) -> str:
     )
 
 
-def history_text(s: dict[str, Any], note: str) -> str:
-    text = dashboard_text(s).replace(MARKER, "RUN_HISTORY|")
-    return text + (f" | Note={note}" if note else "")
-
-
 def rich_text(text: str) -> list[dict[str, Any]]:
     return [{"type": "text", "text": {"content": text[:2000]}}]
 
@@ -178,19 +172,86 @@ def find_dashboard_block(page_id: str, token: str) -> str | None:
     return None
 
 
-def sync(page_id: str, token: str, dashboard: str, history: str) -> str:
+def run_row_properties(s: dict[str, Any], note: str) -> dict[str, Any]:
+    run_id = os.environ.get("GITHUB_RUN_ID", "").strip()
+    run_number = os.environ.get("GITHUB_RUN_NUMBER", "").strip() or "?"
+    run_name = f"Run #{run_number}"
+    if run_number == "1" and "per_model_limit='30'" in note:
+        run_name += " — Production sanity"
+        stage = "Sanity"
+    elif s["target"] and s["cached"] >= s["target"]:
+        stage = "Complete"
+    else:
+        stage = "Production"
+
+    status = "Failed" if "(failure)" in note else ("Running" if "(in_progress)" in note else "Success")
+    workflow_url = ""
+    repo = os.environ.get("GITHUB_REPOSITORY", "").strip()
+    server = os.environ.get("GITHUB_SERVER_URL", "https://github.com").rstrip("/")
+    if repo and run_id:
+        workflow_url = f"{server}/{repo}/actions/runs/{run_id}"
+
+    hall = s["hallucination"]
+    today = time.strftime("%Y-%m-%d", time.gmtime())
+    props: dict[str, Any] = {
+        "Run": {"title": rich_text(run_name)},
+        "Date": {"date": {"start": today}},
+        "Status": {"select": {"name": status}},
+        "Stage": {"select": {"name": stage}},
+        "Responses": {"number": int(s["cached"])},
+        "Model A": {"number": int(s["slot_counts"].get("A", 0))},
+        "Model B": {"number": int(s["slot_counts"].get("B", 0))},
+        "Parsed": {"number": int(s["parsed"])},
+        "Hallucination Rate": {"number": None if hall is None else float(hall)},
+        "Control Pass": {"rich_text": rich_text(str(s["control_pass"]))},
+        "Commit": {"rich_text": rich_text(str(s["commit"]))},
+        "Notes": {"rich_text": rich_text(note or "Automated production sync")},
+    }
+    if workflow_url:
+        props["Workflow Run"] = {"url": workflow_url}
+    return props
+
+
+def upsert_run_row(database_id: str, token: str, s: dict[str, Any], note: str) -> str:
+    run_number = os.environ.get("GITHUB_RUN_NUMBER", "").strip() or "?"
+    run_name = f"Run #{run_number}"
+    if run_number == "1" and "per_model_limit='30'" in note:
+        run_name += " — Production sanity"
+
+    query = request(
+        "POST",
+        f"{NOTION_API}/databases/{database_id}/query",
+        token,
+        json={"filter": {"property": "Run", "title": {"equals": run_name}}, "page_size": 1},
+    ).json()
+    props = run_row_properties(s, note)
+    rows = query.get("results", [])
+    if rows:
+        request("PATCH", f"{NOTION_API}/pages/{rows[0]['id']}", token, json={"properties": props})
+        return "updated run database row"
+    request(
+        "POST",
+        f"{NOTION_API}/pages",
+        token,
+        json={"parent": {"database_id": database_id}, "properties": props},
+    )
+    return "created run database row"
+
+
+def sync(page_id: str, token: str, dashboard: str, s: dict[str, Any], note: str,
+         run_log_database_id: str | None = None) -> str:
     block_id = find_dashboard_block(page_id, token)
     if block_id:
         request("PATCH", f"{NOTION_API}/blocks/{block_id}", token,
                 json={"paragraph": {"rich_text": rich_text(dashboard)}})
-        action = "updated dashboard"
+        actions = ["updated dashboard"]
     else:
         request("PATCH", f"{NOTION_API}/blocks/{page_id}/children", token,
                 json={"children": [paragraph(dashboard)]})
-        action = "created dashboard"
-    request("PATCH", f"{NOTION_API}/blocks/{page_id}/children", token,
-            json={"children": [paragraph(history)]})
-    return action + " and appended run history"
+        actions = ["created dashboard"]
+    if run_log_database_id:
+        actions.append(upsert_run_row(run_log_database_id, token, s, note))
+    return " and ".join(actions)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -201,16 +262,19 @@ def main(argv: list[str] | None = None) -> int:
     args = p.parse_args(argv)
     config = yaml.safe_load(args.config.read_text(encoding="utf-8"))
     state = summarise(config)
-    dash, hist = dashboard_text(state), history_text(state, args.note)
+    dash = dashboard_text(state)
     if args.dry_run:
-        print(dash); print(hist); return 0
+        print(dash); return 0
     token = os.environ.get(config.get("notion", {}).get("token_env", "NOTION_TOKEN"), "").strip()
     raw_page = os.environ.get(config.get("notion", {}).get("page_id_env", "NOTION_PAGE_ID"), "").strip()
     if not token or not raw_page:
         print("error: NOTION_TOKEN/NOTION_PAGE_ID not configured; skipping dashboard sync", file=sys.stderr)
         return 1
     try:
-        action = sync(normalise_page_id(raw_page), token, dash, hist)
+        notion_cfg = config.get("notion", {})
+        raw_db = str(notion_cfg.get("run_log_database_id", "")).strip()
+        db_id = normalise_page_id(raw_db) if raw_db else None
+        action = sync(normalise_page_id(raw_page), token, dash, state, args.note, db_id)
     except NotionError as exc:
         print(f"error: {exc}", file=sys.stderr); return 1
     print(action); print(dash)

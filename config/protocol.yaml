@@ -430,6 +430,7 @@ notion:
   api_version: "2022-06-28"
   token_env: NOTION_TOKEN
   page_id_env: NOTION_PAGE_ID
+  run_log_database_id: b7ad1adb-c473-4512-a1ff-beb181a3dc4a
   note: >-
     Notion is the human-facing dashboard, not a data store. Nothing in the
     analysis path reads from it, so losing the page loses no data.
