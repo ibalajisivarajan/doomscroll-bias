@@ -80,7 +80,8 @@ jobs:
           cached = len(list(pathlib.Path("results/raw").glob("*.json")))
           complete = cached >= target
           print(f"cached={cached} target={target} complete={complete}")
-          with open("$GITHUB_OUTPUT", "a", encoding="utf-8") as fh:
+          import os
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as fh:
               fh.write(f"complete={'true' if complete else 'false'}\n")
           PY
 
