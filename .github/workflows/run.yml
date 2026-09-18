@@ -1,7 +1,7 @@
 # Collection + analysis for the doomscroll-bias audit.
 #
-# Manual-only and resumable by design. Every response is cached separately,
-# committed to main, and skipped on later dispatches.
+# Daily automatic collection plus optional manual dispatch. Every response is
+# cached separately, committed to main, and skipped on later dispatches.
 
 name: run
 
@@ -96,7 +96,7 @@ jobs:
           LIMIT="${{ github.event.inputs.per_model_limit }}"
           LIMIT="${LIMIT:-175}"
           ARGS="$ARGS --limit $LIMIT"
-          if [ "${{ inputs.allow_unlocked }}" = "true" ]; then
+          if [ "${{ github.event.inputs.allow_unlocked }}" = "true" ]; then
             ARGS="$ARGS --allow-unlocked"
           fi
           echo "python src/run.py $ARGS"
@@ -113,7 +113,7 @@ jobs:
           LIMIT="${{ github.event.inputs.per_model_limit }}"
           LIMIT="${LIMIT:-175}"
           ARGS="$ARGS --limit $LIMIT"
-          if [ "${{ inputs.allow_unlocked }}" = "true" ]; then
+          if [ "${{ github.event.inputs.allow_unlocked }}" = "true" ]; then
             ARGS="$ARGS --allow-unlocked"
           fi
           echo "python src/run.py $ARGS"
@@ -153,9 +153,20 @@ jobs:
         if: steps.progress.outputs.complete != 'true'
         run: python src/sample_manual_validation.py
 
-      - name: Analyse
+      - name: Run preregistered analysis only when collection is complete
         if: steps.progress.outputs.complete != 'true'
-        run: python src/analyze.py
+        run: |
+          python - <<'PY'
+          import pathlib, subprocess, sys, yaml
+          cfg = yaml.safe_load(pathlib.Path("config/protocol.yaml").read_text())
+          target = int(cfg["design"]["total_calls"])
+          cached = len(list(pathlib.Path("results/raw").glob("*.json")))
+          if cached < target:
+              print(f"collection incomplete ({cached}/{target}); skipping inferential analysis")
+              raise SystemExit(0)
+          print(f"collection complete ({cached}/{target}); running preregistered analysis")
+          subprocess.run([sys.executable, "src/analyze.py"], check=True)
+          PY
 
       - name: Commit results to main
         if: steps.progress.outputs.complete != 'true'
