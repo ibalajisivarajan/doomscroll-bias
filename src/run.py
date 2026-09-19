@@ -470,6 +470,16 @@ def call_model(
 
     last_error = "unknown"
     next_delay_override: float | None = None
+    # Structured per-attempt telemetry. Run 35422141274 (2026-09-19) showed
+    # Model B burning 107 retries for 67 successes with nothing in the log to
+    # prove whether that was 429/TPM throttling, 5xx, or transport timeouts --
+    # every one of those explanations was inference from wall-clock timing,
+    # not evidence. retry_events is kept small (bounded by max_retries) and
+    # carries no header/secret material, only what is needed to classify the
+    # retry: attempt number, HTTP status or transport-exception class, any
+    # Retry-After value the provider sent, and the delay actually slept.
+    retry_events: list[dict[str, Any]] = []
+    cell = f"{task.model_slot} {task.vignette_id} {task.variant} run={task.run_index}"
     for attempt in range(max_retries + 1):
         if daily_cap_tracker is not None and not daily_cap_tracker.try_consume():
             raise DailyCapExceeded(
@@ -488,6 +498,11 @@ def call_model(
             else:
                 delay = min(base**attempt, backoff_max) + random.uniform(0, jitter)
             stats.bump("retries")
+            print(
+                f"  retry   {cell}  attempt={attempt + 1}/{max_retries + 1}  "
+                f"{retry_events[-1]['outcome']} status={retry_events[-1]['http_status']} "
+                f"retry_after={retry_events[-1]['retry_after_s']}  sleeping={delay:.1f}s"
+            )
             time.sleep(delay)
         limiter.acquire()
         started = time.time()
@@ -495,16 +510,32 @@ def call_model(
             resp = session.post(url, headers=headers, json=payload, timeout=timeout)
         except requests.RequestException as exc:
             last_error = f"transport error: {exc.__class__.__name__}: {exc}"
+            retry_events.append({
+                "attempt": attempt + 1,
+                "outcome": "transport_error",
+                "http_status": None,
+                "error_class": exc.__class__.__name__,
+                "retry_after_s": None,
+            })
             continue
 
         if resp.status_code in retry_on:
-            retry_after = resp.headers.get("Retry-After")
-            if retry_after:
+            retry_after_hdr = resp.headers.get("Retry-After")
+            retry_after_s: float | None = None
+            if retry_after_hdr:
                 try:
-                    next_delay_override = min(float(retry_after), backoff_max)
+                    retry_after_s = min(float(retry_after_hdr), backoff_max)
+                    next_delay_override = retry_after_s
                 except ValueError:
                     pass
             last_error = f"HTTP {resp.status_code}: {resp.text[:300]}"
+            retry_events.append({
+                "attempt": attempt + 1,
+                "outcome": "retryable_http",
+                "http_status": resp.status_code,
+                "error_class": None,
+                "retry_after_s": retry_after_s,
+            })
             continue
 
         if resp.status_code >= 400:
@@ -516,12 +547,26 @@ def call_model(
             body = resp.json()
         except ValueError:
             last_error = f"response was not JSON: {resp.text[:300]}"
+            retry_events.append({
+                "attempt": attempt + 1,
+                "outcome": "malformed_response",
+                "http_status": resp.status_code,
+                "error_class": None,
+                "retry_after_s": None,
+            })
             continue
 
         try:
             content = body["choices"][0]["message"]["content"]
         except (KeyError, IndexError, TypeError):
             last_error = f"unexpected response shape: {json.dumps(body)[:300]}"
+            retry_events.append({
+                "attempt": attempt + 1,
+                "outcome": "malformed_response",
+                "http_status": resp.status_code,
+                "error_class": None,
+                "retry_after_s": None,
+            })
             continue
 
         return {
@@ -545,10 +590,19 @@ def call_model(
             "usage": body.get("usage"),
             "http_status": resp.status_code,
             "attempts": attempt + 1,
+            "retry_events": retry_events,
             "latency_s": round(time.time() - started, 3),
             "collected_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         }
 
+    if retry_events:
+        print(f"  exhausted retries on {cell}:")
+        for ev in retry_events:
+            print(
+                f"    attempt={ev['attempt']} outcome={ev['outcome']} "
+                f"status={ev['http_status']} error={ev['error_class']} "
+                f"retry_after={ev['retry_after_s']}"
+            )
     raise RuntimeError(f"exhausted {max_retries} retries; last error: {last_error}")
 
 
@@ -634,6 +688,109 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     return p.parse_args(argv)
 
 
+def classify_run_status(written: int, failed: int, capped: int) -> str:
+    """Decide SUCCESS / PARTIAL_SUCCESS / CAPPED_CLEAN / FAILURE for this dispatch.
+
+    Run 35422141274 (2026-09-19) turned a day that wrote 67 real responses
+    and safely hit its daily cap into a red GitHub Actions job, because one
+    non-retryable HTTP 400 on a single cell made the whole command exit 1 and
+    every downstream QC/Notion step (lacking always()) got skipped by
+    GitHub's implicit success() gate. That conflates two very different
+    situations: a single bad cell in an otherwise-productive run, and a run
+    where nothing worked at all (the signature of a revoked key or a broken
+    slot config, which check_models() cannot catch since it only checks that
+    the env var is *set*, not that the provider accepts it).
+
+    `attempted` deliberately excludes `cached` (no call was made) and
+    `capped` (no call was made; the daily budget was already spent) -- both
+    are "we chose not to attempt this", not "we attempted and something went
+    wrong". Only cells that actually reached the network count.
+
+    written == 0 with attempted > 0 is always systemic: every attempted cell
+    failed, so there is no cell-specific explanation left. With more than a
+    handful of attempts, a failure rate at or above 50% is treated the same
+    way even if a few cells did succeed, on the reasoning that isolated bad
+    luck should look like today's 1-failure-in-68 (~1.5%), not like half the
+    attempts going bad. Both thresholds are judgement calls, not measured
+    constants; they are conservative enough that today's actual run
+    (written=67, failed=1, attempted=68) lands clearly in PARTIAL_SUCCESS.
+    """
+    attempted = written + failed
+    if attempted == 0:
+        return "CAPPED_CLEAN" if capped else "SUCCESS"
+    failure_rate = failed / attempted
+    systemic = written == 0 or (attempted >= 5 and failure_rate >= 0.5)
+    if systemic:
+        return "FAILURE"
+    if failed > 0:
+        return "PARTIAL_SUCCESS"
+    return "CAPPED_CLEAN" if capped else "SUCCESS"
+
+
+def emit_run_summary(
+    status: str,
+    *,
+    model_slots: str,
+    planned: int,
+    cached: int,
+    written: int,
+    failed: int,
+    retries: int,
+    capped: int,
+    pending_remaining: int,
+) -> None:
+    """Surface the outcome to GitHub Actions without changing run.yml's gating.
+
+    The exit code this run returns is what actually decides whether the
+    downstream score/QC/Notion steps run -- they already key off GitHub's
+    implicit success() for every step that lacks always(), so making
+    classify_run_status() return something other than FAILURE for a
+    productive-but-imperfect day is the whole fix for that cascade. This
+    function only adds visibility into *why* the exit code was what it was:
+    step outputs (for the workflow to fold into the Notion sync note) and a
+    step summary table (for a human glancing at the Actions run).
+    """
+    print(
+        f"\nsummary : status={status} slots={model_slots} planned={planned} "
+        f"cached={cached} written={written} failed={failed} retries={retries} "
+        f"capped={capped} pending_remaining={pending_remaining}"
+    )
+
+    gh_output = os.environ.get("GITHUB_OUTPUT")
+    if gh_output:
+        try:
+            with open(gh_output, "a", encoding="utf-8") as fh:
+                for key, value in (
+                    ("status", status),
+                    ("model_slots", model_slots),
+                    ("cached", cached),
+                    ("written", written),
+                    ("failed", failed),
+                    ("retries", retries),
+                    ("capped", capped),
+                    ("pending_remaining", pending_remaining),
+                ):
+                    fh.write(f"{key}={value}\n")
+        except OSError as exc:
+            print(f"warning: could not write GITHUB_OUTPUT: {exc}", file=sys.stderr)
+
+    gh_summary = os.environ.get("GITHUB_STEP_SUMMARY")
+    if gh_summary:
+        try:
+            with open(gh_summary, "a", encoding="utf-8") as fh:
+                fh.write(f"### Collect {model_slots}: {status}\n\n")
+                fh.write(
+                    "| planned | cached | written | failed | retries | capped "
+                    "| pending remaining |\n|---|---|---|---|---|---|---|\n"
+                )
+                fh.write(
+                    f"| {planned} | {cached} | {written} | {failed} | {retries} "
+                    f"| {capped} | {pending_remaining} |\n\n"
+                )
+        except OSError as exc:
+            print(f"warning: could not write GITHUB_STEP_SUMMARY: {exc}", file=sys.stderr)
+
+
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
     config = load_config(args.config)
@@ -666,7 +823,8 @@ def main(argv: list[str] | None = None) -> int:
         )
 
     pending = [t for t in tasks if not t.cache_path(raw_dir).exists()]
-    print(f"cached   : {len(tasks) - len(pending)} already in {display_path(raw_dir)}")
+    initial_cached = len(tasks) - len(pending)
+    print(f"cached   : {initial_cached} already in {display_path(raw_dir)}")
 
     if args.dry_run:
         print(f"pending  : {len(pending)} (dry run: nothing called)")
@@ -680,8 +838,15 @@ def main(argv: list[str] | None = None) -> int:
     check_lock(config, args.allow_unlocked)
     check_models(tasks)
 
+    model_slots = ",".join(sorted({t.model_slot for t in tasks}))
+
     if not pending:
         print("nothing to do: every planned call is already cached.")
+        emit_run_summary(
+            "SUCCESS", model_slots=model_slots, planned=len(tasks),
+            cached=len(tasks), written=0, failed=0, retries=0, capped=0,
+            pending_remaining=0,
+        )
         return 0
     if args.limit is not None:
         held_back = max(0, len(pending) - max(0, args.limit))
@@ -690,6 +855,11 @@ def main(argv: list[str] | None = None) -> int:
             print(f"limit    : {held_back} pending call(s) held back by --limit {args.limit}")
         if not pending:
             print(f"nothing collected: --limit {args.limit} leaves no calls to make.")
+            emit_run_summary(
+                "SUCCESS", model_slots=model_slots, planned=len(tasks),
+                cached=initial_cached, written=0, failed=0,
+                retries=0, capped=0, pending_remaining=held_back,
+            )
             return 0
     print(f"pending  : {len(pending)} to collect\n")
 
@@ -781,7 +951,31 @@ def main(argv: list[str] | None = None) -> int:
             )
         if len(failures) > 20:
             print(f"  ... and {len(failures) - 20} more")
+
+    status = classify_run_status(stats.written, stats.failed, stats.capped)
+    pending_remaining = len(pending) - stats.written - stats.failed
+    emit_run_summary(
+        status, model_slots=model_slots, planned=len(tasks),
+        cached=initial_cached + stats.cached, written=stats.written,
+        failed=stats.failed, retries=stats.retries, capped=stats.capped,
+        pending_remaining=pending_remaining,
+    )
+    if status == "FAILURE":
+        print(
+            "\nFAILURE: every attempted call this dispatch failed "
+            f"({stats.failed}/{stats.written + stats.failed} attempted); "
+            "this looks systemic (bad credential, broken slot, or a "
+            "provider-side outage), not one unlucky cell. Failing the job "
+            "loudly rather than reporting partial success."
+        )
         return 1
+    if status == "PARTIAL_SUCCESS":
+        print(
+            f"\nPARTIAL_SUCCESS: {stats.written} real response(s) written "
+            f"despite {stats.failed} failed cell(s). Exiting 0 so downstream "
+            "scoring/QC/Notion sync still run on the cumulative data; failed "
+            "cells remain uncached and will be retried on the next dispatch."
+        )
     return 0
 
 

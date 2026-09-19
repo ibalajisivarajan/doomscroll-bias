@@ -89,7 +89,18 @@ jobs:
               fh.write(f"complete={'true' if complete else 'false'}\n")
           PY
 
+      # run.py exits 0 for SUCCESS, CAPPED_CLEAN and PARTIAL_SUCCESS (a
+      # productive dispatch that hit its daily cap and/or had an isolated
+      # per-cell failure), and 1 only for FAILURE (every attempted call this
+      # dispatch failed -- the signature of a broken credential or slot, not
+      # bad luck on one vignette). That exit code is what lets the
+      # score/QC/Notion steps below run via GitHub's implicit success() gate:
+      # a single hard-failed cell (as in run 35422141274) no longer skips
+      # them. `id:` lets the Notion-sync step read back which status this
+      # slot actually finished with, since job.status alone would just say
+      # "success" for both a clean run and a partial one.
       - name: Collect slot A responses
+        id: collect_a
         if: steps.progress.outputs.complete != 'true'
         env:
           MODEL_A_API_KEY_GROQ: ${{ secrets.MODEL_A_API_KEY_GROQ }}
@@ -107,7 +118,8 @@ jobs:
           python src/run.py $ARGS
 
       - name: Collect slot B responses
-        if: steps.progress.outputs.complete != 'true'
+        id: collect_b
+        if: steps.progress.outputs.complete != 'true' && always()
         env:
           MODEL_A_API_KEY_GROQ: ${{ secrets.MODEL_A_API_KEY_GROQ }}
           MODEL_B_API_KEY_GROQ: ${{ secrets.MODEL_B_API_KEY_GROQ }}
@@ -219,6 +231,12 @@ jobs:
           done
           exit 1
 
+      # job.status alone collapses "clean day" and "partial day (one failed
+      # cell, cap safely exhausted)" into the same "success" -- both exit the
+      # job 0 now. slotA/slotB carry what src/run.py's classify_run_status()
+      # actually decided (SUCCESS / PARTIAL_SUCCESS / CAPPED_CLEAN / FAILURE
+      # / SKIPPED if collection was already complete), so notion_sync.py can
+      # tell those apart in the Production Runs "Status" column.
       - name: Sync live dashboard and run history to Notion
         if: steps.progress.outputs.complete != 'true' && always()
         continue-on-error: true
@@ -227,7 +245,7 @@ jobs:
           NOTION_PAGE_ID: ${{ secrets.NOTION_PAGE_ID }}
         run: |
           python src/notion_sync.py \
-            --note "dispatch #${{ github.run_number }} (${{ job.status }}), trigger=${{ github.event_name }}, per_model_limit='${{ github.event.inputs.per_model_limit || '175' }}', allow_unlocked=${{ github.event.inputs.allow_unlocked || 'false' }}"
+            --note "dispatch #${{ github.run_number }} (${{ job.status }}), trigger=${{ github.event_name }}, slotA=${{ steps.collect_a.outputs.status || 'SKIPPED' }}, slotB=${{ steps.collect_b.outputs.status || 'SKIPPED' }}, per_model_limit='${{ github.event.inputs.per_model_limit || '175' }}', allow_unlocked=${{ github.event.inputs.allow_unlocked || 'false' }}"
 
       - name: Upload tables and figures
         if: always()

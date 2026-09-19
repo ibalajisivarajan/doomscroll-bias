@@ -393,7 +393,24 @@ statistics:
 rate_limits:
   max_concurrent: 1
   requests_per_minute: 6
-  max_retries: 6
+  # Lowered from 6 -> 3 after run 35422141274 (2026-09-19): Model B spent 107
+  # of its 175 daily attempts on retries for only 68 distinct cells attempted,
+  # leaving 107 vignette-cells never touched that day. Retries are counted
+  # against the same per-model daily cap as fresh cells (see
+  # daily_request_cap_per_model below), so every retry on an already-stuck
+  # cell is an attempt taken away from a cell that has never been tried. The
+  # collection log has no per-attempt HTTP-status telemetry from that run, so
+  # the exact retry cause (429/TPM throttling vs something else) cannot be
+  # proven from it alone -- src/run.py now logs attempt-level outcomes so a
+  # future run can prove it directly. Until that evidence exists, cutting
+  # worst-case attempts-per-cell from 7 to 4 is the conservative, reversible
+  # move: still gives a real transient error (one dropped connection, one
+  # 500) a couple of retries, while capping how much of the shared daily
+  # budget one persistently-throttled cell can absorb. Applied to both model
+  # slots, not just B: this run gave no evidence that A is structurally
+  # immune to the same throttling, only that it didn't happen to hit it
+  # today, so a model-specific ceiling is not yet justified by evidence.
+  max_retries: 3
   backoff_base_seconds: 2  # delay = base ** attempt + jitter, when Groq
                            # sends no Retry-After header to use instead
   backoff_max: 120         # cap on any single sleep

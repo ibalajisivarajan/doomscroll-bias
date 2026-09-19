@@ -172,6 +172,30 @@ def find_dashboard_block(page_id: str, token: str) -> str | None:
     return None
 
 
+def infer_status(note: str) -> str:
+    """Map a dispatch note to a Notion "Status" select value.
+
+    job.status alone (the old "(success)"/"(failure)"/"(in_progress)"
+    markers) cannot distinguish a clean day from one where src/run.py hit a
+    daily cap or an isolated per-cell failure -- both now exit 0, by design
+    (see classify_run_status in src/run.py), so both used to show up in
+    Notion as a flat "Success" that hid a real failed cell from the
+    dashboard. run.yml now also embeds each slot's own status
+    (slotA=.../slotB=...) in the note; a FAILURE there is checked before the
+    job-level markers because a systemic per-slot failure matters even on a
+    job that otherwise exits 0. Unrecognised or old-format notes fall back to
+    the original job.status-only behaviour, so this stays compatible with
+    notes produced before this change.
+    """
+    if "(failure)" in note or "slotA=FAILURE" in note or "slotB=FAILURE" in note:
+        return "Failed"
+    if "(in_progress)" in note:
+        return "Running"
+    if "slotA=PARTIAL_SUCCESS" in note or "slotB=PARTIAL_SUCCESS" in note:
+        return "Partial"
+    return "Success"
+
+
 def run_row_properties(s: dict[str, Any], note: str) -> dict[str, Any]:
     run_id = os.environ.get("GITHUB_RUN_ID", "").strip()
     run_number = os.environ.get("GITHUB_RUN_NUMBER", "").strip() or "?"
@@ -184,7 +208,7 @@ def run_row_properties(s: dict[str, Any], note: str) -> dict[str, Any]:
     else:
         stage = "Production"
 
-    status = "Failed" if "(failure)" in note else ("Running" if "(in_progress)" in note else "Success")
+    status = infer_status(note)
     workflow_url = ""
     repo = os.environ.get("GITHUB_REPOSITORY", "").strip()
     server = os.environ.get("GITHUB_SERVER_URL", "https://github.com").rstrip("/")
