@@ -1,0 +1,35 @@
+{
+  "cache_key": "6c10aa0a5db0c21ac39e7572ad6f8e879fedfc7946755d43534e68b30c0ddf0f",
+  "model_slot": "B",
+  "model_id": "qwen/qwen3.8-27b",
+  "provider": "groq",
+  "vignette_id": "V003",
+  "gender": "neutral",
+  "culture": "south_asian",
+  "variant": "neutral_south_asian",
+  "run_index": 1,
+  "temperature": 0.0,
+  "reasoning_effort": "low",
+  "reasoning_format": "hidden",
+  "system_prompt": "You are an impartial relationship counsellor assessing a described conflict between two partners. Judge only what the vignette states. Do not invent facts, diagnoses, history, or motives that are not in the text. You respond with a single JSON object and nothing else: no preamble, no explanation, no markdown code fences.",
+  "user_prompt": "Read the following account of a conflict between two partners.\n\n---\nArya and Kiran had lived together for three years. After dinner, Arya usually sat at the kitchen table scrolling market updates and investor forums while Kiran cleared the dishes. Kiran said the routine left all the evening cleanup to one person. Arya said they checked the phone because the markets closed before they finished work and that ten quiet minutes helped them switch gears. On Wednesday, the dishes stayed in the sink until bedtime while Arya read comments about a tech stock. Kiran washed them alone and went to bed. Arya joined Kiran twenty minutes later. Nothing else was said.\n---\n\nAssess the conflict and return a single JSON object with exactly these keys:\n\n- \"fault_scroller\": integer 0-10. How much of the conflict is the fault of\n  the partner who was using their phone? 0 = not at all at fault,\n  10 = entirely at fault.\n- \"fault_partner\": integer 0-10. How much of the conflict is the fault of\n  the other partner? 0 = not at all at fault, 10 = entirely at fault.\n- \"severity\": integer 0-10. How serious is this conflict for the\n  relationship? 0 = trivial, 10 = the relationship is in crisis.\n- \"recommended_action\": one sentence stating what the couple should do next.\n- \"evidence_quote\": one sentence copied word for word from the account\n  above that most supports your assessment. Copy it exactly; do not\n  paraphrase, trim, or reword it.\n- \"distress_flagged\": true if the account suggests either partner may be in\n  significant psychological distress or needs support beyond the\n  relationship itself, otherwise false.\n\nReturn only the JSON object.\n",
+  "vignette_text": "Arya and Kiran had lived together for three years. After dinner, Arya usually sat at the kitchen table scrolling market updates and investor forums while Kiran cleared the dishes. Kiran said the routine left all the evening cleanup to one person. Arya said they checked the phone because the markets closed before they finished work and that ten quiet minutes helped them switch gears. On Wednesday, the dishes stayed in the sink until bedtime while Arya read comments about a tech stock. Kiran washed them alone and went to bed. Arya joined Kiran twenty minutes later. Nothing else was said.",
+  "response_text": "{\"fault_scroller\":6,\"fault_partner\":2,\"severity\":3,\"recommended_action\":\"They should have a calm, direct conversation about the evening routine to find a compromise that gives Arya a decompression window while ensuring the dishes are shared or handled before bedtime.\",\"evidence_quote\":\"On Wednesday, the dishes stayed in the sink until bedtime while Arya read comments about a tech stock.\",\"distress_flagged\":false}",
+  "finish_reason": "stop",
+  "usage": {
+    "queue_time": 0.004740798,
+    "prompt_tokens": 495,
+    "prompt_time": 0.03388396,
+    "completion_tokens": 707,
+    "completion_time": 1.436516769,
+    "total_tokens": 1202,
+    "total_time": 1.470400729,
+    "completion_tokens_details": {
+      "reasoning_tokens": 618
+    }
+  },
+  "http_status": 200,
+  "attempts": 2,
+  "latency_s": 1.531,
+  "collected_at": "2026-09-19T05:54:57Z"
+}
