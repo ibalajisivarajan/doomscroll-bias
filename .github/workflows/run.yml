@@ -145,6 +145,36 @@ jobs:
           done
           exit 1
 
+      # Runs before scoring/QC/analysis on purpose. Those steps can fail on
+      # code bugs unrelated to collection; until this step exists, a raw
+      # response landed on disk (real, already-spent Groq quota) had no
+      # durable home except results/raw, saved only into an actions/cache
+      # entry that a later run's restore-key lookup might not even hit
+      # (cache entries are evicted after 7 days unused, and the 10GB/repo
+      # cache budget is shared across every workflow in the repo). Git is
+      # the authoritative checkpoint; the cache is a speed optimisation on
+      # top of it, not instead of it. always() + continue-on-error: true
+      # for the same reason as the counter-persist step above: a push race
+      # here must never cascade into skipping score/analyse on a run that
+      # otherwise succeeded.
+      - name: Commit raw results to main
+        if: steps.progress.outputs.complete != 'true' && always()
+        continue-on-error: true
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A results/raw
+          if git diff --cached --quiet; then
+            echo "no new raw responses to commit"
+            exit 0
+          fi
+          git commit -m "raw: dispatch ${{ github.run_id }} ($(find results/raw -name '*.json' | wc -l) files cached)"
+          for attempt in 1 2 3; do
+            git pull --rebase --autostash origin main && git push origin HEAD:main && exit 0
+            sleep $((attempt * 5))
+          done
+          exit 1
+
       - name: Score responses
         if: steps.progress.outputs.complete != 'true'
         run: python src/score.py
