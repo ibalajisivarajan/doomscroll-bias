@@ -7,9 +7,13 @@ name: run
 
 on:
   schedule:
-    # Groq free-tier daily quotas reset on the UTC day boundary. Run shortly
-    # after rollover so each model starts with a fresh per-model allowance.
+    # Primary daily collection plus a one-hour-later backup. GitHub documents
+    # that scheduled events can be delayed or, under sufficient load, dropped.
+    # The persisted per-model daily counters make the backup safe: if the
+    # primary already consumed today's allowance, the backup makes no extra
+    # model calls.
     - cron: "20 0 * * *"
+    - cron: "20 1 * * *"
   workflow_dispatch:
     inputs:
       per_model_limit:
