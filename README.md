@@ -145,6 +145,15 @@ that editing a vignette or the prompt template changes the key and forces
 re-collection instead of silently mixing responses to two different texts
 under one label.
 
+## Operational change log
+
+Production-engineering changes made after collection began are documented in
+[`docs/OPERATIONAL_AMENDMENTS.md`](docs/OPERATIONAL_AMENDMENTS.md). These entries
+record changes to collection mechanics such as retry handling, persistence, and
+workflow status semantics. They do **not** silently change the preregistered
+scientific design, prompts, model settings, hypotheses, scoring rules, or
+analysis plan.
+
 ## Running it in Actions
 
 `.github/workflows/run.yml` runs automatically once per UTC day and can also be
