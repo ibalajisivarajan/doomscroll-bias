@@ -7,13 +7,14 @@ name: run
 
 on:
   schedule:
-    # Primary daily collection plus a one-hour-later backup. GitHub documents
-    # that scheduled events can be delayed or, under sufficient load, dropped.
-    # The persisted per-model daily counters make the backup safe: if the
-    # primary already consumed today's allowance, the backup makes no extra
-    # model calls.
-    - cron: "20 0 * * *"
-    - cron: "20 1 * * *"
+    # Primary daily collection at 4:00 PM PST (UTC-8, fixed offset -- cron has
+    # no DST awareness, so this drifts to 5:00 PM PDT during daylight saving)
+    # plus a one-hour-later backup. GitHub documents that scheduled events can
+    # be delayed or, under sufficient load, dropped. The persisted per-model
+    # daily counters make the backup safe: if the primary already consumed
+    # today's allowance, the backup makes no extra model calls.
+    - cron: "0 0 * * *"
+    - cron: "0 1 * * *"
   workflow_dispatch:
     inputs:
       per_model_limit:
