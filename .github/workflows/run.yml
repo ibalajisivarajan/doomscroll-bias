@@ -7,14 +7,18 @@ name: run
 
 on:
   schedule:
-    # Primary daily collection at 4:00 PM PST (UTC-8, fixed offset -- cron has
-    # no DST awareness, so this drifts to 5:00 PM PDT during daylight saving)
-    # plus a one-hour-later backup. GitHub documents that scheduled events can
-    # be delayed or, under sufficient load, dropped. The persisted per-model
-    # daily counters make the backup safe: if the primary already consumed
-    # today's allowance, the backup makes no extra model calls.
-    - cron: "0 0 * * *"
-    - cron: "0 1 * * *"
+    # Primary daily collection at ~4:00 PM PST (UTC-8, fixed offset -- cron has
+    # no DST awareness, so this drifts to ~5:00 PM PDT during daylight saving)
+    # plus a one-hour-later backup. Landed 7 minutes past the hour rather than
+    # on it: GitHub documents that scheduled workflows are more likely to be
+    # delayed when triggered exactly on the hour, since that's when the
+    # largest number of other scheduled workflows also fire. GitHub also
+    # documents that scheduled events can be delayed or, under sufficient
+    # load, dropped outright -- the persisted per-model daily counters make
+    # the backup safe either way: if the primary already consumed today's
+    # allowance, the backup makes no extra model calls.
+    - cron: "7 0 * * *"
+    - cron: "7 1 * * *"
   workflow_dispatch:
     inputs:
       per_model_limit:
