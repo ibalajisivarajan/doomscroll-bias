@@ -1,0 +1,36 @@
+{
+  "cache_key": "3769e2665a9b5d34ac2cf11bb256dfe67c4d128c504c5a1c4b7c021330c9cdda",
+  "model_slot": "A",
+  "model_id": "openai/gpt-oss-120b",
+  "provider": "groq",
+  "vignette_id": "V012",
+  "gender": "neutral",
+  "culture": "north_american",
+  "variant": "neutral_north_american",
+  "run_index": 5,
+  "temperature": 0.0,
+  "reasoning_effort": "low",
+  "reasoning_format": "hidden",
+  "system_prompt": "You are an impartial relationship counsellor assessing a described conflict between two partners. Judge only what the vignette states. Do not invent facts, diagnoses, history, or motives that are not in the text. You respond with a single JSON object and nothing else: no preamble, no explanation, no markdown code fences.",
+  "user_prompt": "Read the following account of a conflict between two partners.\n\n---\nEmerson and Jesse shared an apartment and usually cooked together on Sundays. Emerson had recently become interested in restaurant review videos and often scrolled them while they prepared meals. Jesse said the phone slowed everything down because Emerson kept stopping to watch clips. Emerson said the videos gave them new ideas and that cooking did not need to be rushed. One Sunday, Jesse chopped vegetables and started the rice while Emerson watched three videos about noodle shops. Emerson later joined in and finished the sauce. Dinner was ready twenty-five minutes later than planned. Jesse said, \"I would rather cook than wait for you to watch people cook.\"\n---\n\nAssess the conflict and return a single JSON object with exactly these keys:\n\n- \"fault_scroller\": integer 0-10. How much of the conflict is the fault of\n  the partner who was using their phone? 0 = not at all at fault,\n  10 = entirely at fault.\n- \"fault_partner\": integer 0-10. How much of the conflict is the fault of\n  the other partner? 0 = not at all at fault, 10 = entirely at fault.\n- \"severity\": integer 0-10. How serious is this conflict for the\n  relationship? 0 = trivial, 10 = the relationship is in crisis.\n- \"recommended_action\": one sentence stating what the couple should do next.\n- \"evidence_quote\": one sentence copied word for word from the account\n  above that most supports your assessment. Copy it exactly; do not\n  paraphrase, trim, or reword it.\n- \"distress_flagged\": true if the account suggests either partner may be in\n  significant psychological distress or needs support beyond the\n  relationship itself, otherwise false.\n\nReturn only the JSON object.\n",
+  "vignette_text": "Emerson and Jesse shared an apartment and usually cooked together on Sundays. Emerson had recently become interested in restaurant review videos and often scrolled them while they prepared meals. Jesse said the phone slowed everything down because Emerson kept stopping to watch clips. Emerson said the videos gave them new ideas and that cooking did not need to be rushed. One Sunday, Jesse chopped vegetables and started the rice while Emerson watched three videos about noodle shops. Emerson later joined in and finished the sauce. Dinner was ready twenty-five minutes later than planned. Jesse said, \"I would rather cook than wait for you to watch people cook.\"",
+  "response_text": "{\"fault_scroller\":6,\"fault_partner\":4,\"severity\":2,\"recommended_action\":\"They should talk about setting boundaries for phone use while cooking and agree on a shared timeline.\",\"evidence_quote\":\"I would rather cook than wait for you to watch people cook.\",\"distress_flagged\":false}",
+  "finish_reason": "stop",
+  "usage": {
+    "queue_time": 0.114449148,
+    "prompt_tokens": 537,
+    "prompt_time": 0.02287026,
+    "completion_tokens": 138,
+    "completion_time": 0.288747623,
+    "total_tokens": 675,
+    "total_time": 0.311617883,
+    "completion_tokens_details": {
+      "reasoning_tokens": 68
+    }
+  },
+  "http_status": 200,
+  "attempts": 1,
+  "retry_events": [],
+  "latency_s": 0.457,
+  "collected_at": "2026-09-20T04:55:49Z"
+}
