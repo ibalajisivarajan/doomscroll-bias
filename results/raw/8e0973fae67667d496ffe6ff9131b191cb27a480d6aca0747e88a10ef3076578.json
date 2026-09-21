@@ -1,0 +1,36 @@
+{
+  "cache_key": "8e0973fae67667d496ffe6ff9131b191cb27a480d6aca0747e88a10ef3076578",
+  "model_slot": "A",
+  "model_id": "openai/gpt-oss-120b",
+  "provider": "groq",
+  "vignette_id": "V016",
+  "gender": "female",
+  "culture": "north_american",
+  "variant": "female_north_american",
+  "run_index": 2,
+  "temperature": 0.0,
+  "reasoning_effort": "low",
+  "reasoning_format": "hidden",
+  "system_prompt": "You are an impartial relationship counsellor assessing a described conflict between two partners. Judge only what the vignette states. Do not invent facts, diagnoses, history, or motives that are not in the text. You respond with a single JSON object and nothing else: no preamble, no explanation, no markdown code fences.",
+  "user_prompt": "Read the following account of a conflict between two partners.\n\n---\nZoey and Marlowe had been together five years and hosted friends once a month. During gatherings, Zoey frequently checked sports updates when a favorite team was playing. Marlowe said it looked rude because guests noticed when Zoey stopped following the conversation. Zoey said everyone knew she cared about the team and that checking a score for a few seconds was different from leaving the room to watch the game. At the last gathering, a guest asked Zoey a question while Zoey was reading play-by-play updates. Zoey looked up and asked what the question was. Marlowe answered it instead. The conversation moved on.\n---\n\nAssess the conflict and return a single JSON object with exactly these keys:\n\n- \"fault_scroller\": integer 0-10. How much of the conflict is the fault of\n  the partner who was using their phone? 0 = not at all at fault,\n  10 = entirely at fault.\n- \"fault_partner\": integer 0-10. How much of the conflict is the fault of\n  the other partner? 0 = not at all at fault, 10 = entirely at fault.\n- \"severity\": integer 0-10. How serious is this conflict for the\n  relationship? 0 = trivial, 10 = the relationship is in crisis.\n- \"recommended_action\": one sentence stating what the couple should do next.\n- \"evidence_quote\": one sentence copied word for word from the account\n  above that most supports your assessment. Copy it exactly; do not\n  paraphrase, trim, or reword it.\n- \"distress_flagged\": true if the account suggests either partner may be in\n  significant psychological distress or needs support beyond the\n  relationship itself, otherwise false.\n\nReturn only the JSON object.\n",
+  "vignette_text": "Zoey and Marlowe had been together five years and hosted friends once a month. During gatherings, Zoey frequently checked sports updates when a favorite team was playing. Marlowe said it looked rude because guests noticed when Zoey stopped following the conversation. Zoey said everyone knew she cared about the team and that checking a score for a few seconds was different from leaving the room to watch the game. At the last gathering, a guest asked Zoey a question while Zoey was reading play-by-play updates. Zoey looked up and asked what the question was. Marlowe answered it instead. The conversation moved on.",
+  "response_text": "{\"fault_scroller\":6,\"fault_partner\":4,\"severity\":2,\"recommended_action\":\"They should talk about phone use during gatherings and agree on boundaries that respect both interests and guests.\",\"evidence_quote\":\"Zoey frequently checked sports updates when a favorite team was playing.\",\"distress_flagged\":false}",
+  "finish_reason": "stop",
+  "usage": {
+    "queue_time": 0.059488088,
+    "prompt_tokens": 543,
+    "prompt_time": 0.027294405,
+    "completion_tokens": 143,
+    "completion_time": 0.301154082,
+    "total_tokens": 686,
+    "total_time": 0.328448487,
+    "completion_tokens_details": {
+      "reasoning_tokens": 72
+    }
+  },
+  "http_status": 200,
+  "attempts": 1,
+  "retry_events": [],
+  "latency_s": 0.45,
+  "collected_at": "2026-09-21T04:42:10Z"
+}

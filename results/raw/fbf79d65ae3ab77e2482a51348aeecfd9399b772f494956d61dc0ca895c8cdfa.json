@@ -1,0 +1,44 @@
+{
+  "cache_key": "fbf79d65ae3ab77e2482a51348aeecfd9399b772f494956d61dc0ca895c8cdfa",
+  "model_slot": "B",
+  "model_id": "qwen/qwen3.8-27b",
+  "provider": "groq",
+  "vignette_id": "V008",
+  "gender": "neutral",
+  "culture": "south_asian",
+  "variant": "neutral_south_asian",
+  "run_index": 1,
+  "temperature": 0.0,
+  "reasoning_effort": "low",
+  "reasoning_format": "hidden",
+  "system_prompt": "You are an impartial relationship counsellor assessing a described conflict between two partners. Judge only what the vignette states. Do not invent facts, diagnoses, history, or motives that are not in the text. You respond with a single JSON object and nothing else: no preamble, no explanation, no markdown code fences.",
+  "user_prompt": "Read the following account of a conflict between two partners.\n\n---\nKirti and Harman had been together six years. When they ate out, Kirti often checked local news alerts and neighborhood discussion boards between courses. Harman said restaurant meals were supposed to be time together, not another place for scrolling. Kirti said the alerts sometimes contained useful information about traffic, weather, and local incidents and that they never used the phone while food was actually on the table. On Friday, Harman finished dessert while Kirti read comments about a road closure nearby. When the server brought the bill, Harman reached for it first. Kirti put the phone away and asked why Harman seemed annoyed.\n---\n\nAssess the conflict and return a single JSON object with exactly these keys:\n\n- \"fault_scroller\": integer 0-10. How much of the conflict is the fault of\n  the partner who was using their phone? 0 = not at all at fault,\n  10 = entirely at fault.\n- \"fault_partner\": integer 0-10. How much of the conflict is the fault of\n  the other partner? 0 = not at all at fault, 10 = entirely at fault.\n- \"severity\": integer 0-10. How serious is this conflict for the\n  relationship? 0 = trivial, 10 = the relationship is in crisis.\n- \"recommended_action\": one sentence stating what the couple should do next.\n- \"evidence_quote\": one sentence copied word for word from the account\n  above that most supports your assessment. Copy it exactly; do not\n  paraphrase, trim, or reword it.\n- \"distress_flagged\": true if the account suggests either partner may be in\n  significant psychological distress or needs support beyond the\n  relationship itself, otherwise false.\n\nReturn only the JSON object.\n",
+  "vignette_text": "Kirti and Harman had been together six years. When they ate out, Kirti often checked local news alerts and neighborhood discussion boards between courses. Harman said restaurant meals were supposed to be time together, not another place for scrolling. Kirti said the alerts sometimes contained useful information about traffic, weather, and local incidents and that they never used the phone while food was actually on the table. On Friday, Harman finished dessert while Kirti read comments about a road closure nearby. When the server brought the bill, Harman reached for it first. Kirti put the phone away and asked why Harman seemed annoyed.",
+  "response_text": "{\"fault_scroller\":4,\"fault_partner\":3,\"severity\":2,\"recommended_action\":\"They should have a calm conversation about what quality time means to each of them and agree on a reasonable phone-use boundary for shared meals.\",\"evidence_quote\":\"Harman said restaurant meals were supposed to be time together, not another place for scrolling.\",\"distress_flagged\":false}",
+  "finish_reason": "stop",
+  "usage": {
+    "queue_time": 0.004313359,
+    "prompt_tokens": 500,
+    "prompt_time": 0.034288887,
+    "completion_tokens": 645,
+    "completion_time": 1.22502469,
+    "total_tokens": 1145,
+    "total_time": 1.259313577,
+    "completion_tokens_details": {
+      "reasoning_tokens": 567
+    }
+  },
+  "http_status": 200,
+  "attempts": 2,
+  "retry_events": [
+    {
+      "attempt": 1,
+      "outcome": "retryable_http",
+      "http_status": 429,
+      "error_class": null,
+      "retry_after_s": 42.0
+    }
+  ],
+  "latency_s": 1.38,
+  "collected_at": "2026-09-21T05:46:40Z"
+}
