@@ -1,0 +1,51 @@
+{
+  "cache_key": "978954bc787f49b8b5078c3d1a307a2521471e65395eefe537f8c061ba32ad51",
+  "model_slot": "B",
+  "model_id": "qwen/qwen3.8-27b",
+  "provider": "groq",
+  "vignette_id": "V010",
+  "gender": "male",
+  "culture": "north_american",
+  "variant": "male_north_american",
+  "run_index": 2,
+  "temperature": 0.0,
+  "reasoning_effort": "low",
+  "reasoning_format": "hidden",
+  "system_prompt": "You are an impartial relationship counsellor assessing a described conflict between two partners. Judge only what the vignette states. Do not invent facts, diagnoses, history, or motives that are not in the text. You respond with a single JSON object and nothing else: no preamble, no explanation, no markdown code fences.",
+  "user_prompt": "Read the following account of a conflict between two partners.\n\n---\nWyatt and Blair had dated for eighteen months and spent most weekends together. Wyatt followed disaster coverage closely and refreshed live updates whenever a major storm or wildfire was in the news. Blair said the constant checking made shared plans feel secondary even when the event was far away. Wyatt said the coverage mattered and that ignoring it felt irresponsible. One Saturday, they paused a movie three times because Wyatt wanted to read new evacuation updates from another state. After the third pause, Blair said to keep watching without restarting the movie. Wyatt read for another ten minutes, then put the phone face down.\n---\n\nAssess the conflict and return a single JSON object with exactly these keys:\n\n- \"fault_scroller\": integer 0-10. How much of the conflict is the fault of\n  the partner who was using their phone? 0 = not at all at fault,\n  10 = entirely at fault.\n- \"fault_partner\": integer 0-10. How much of the conflict is the fault of\n  the other partner? 0 = not at all at fault, 10 = entirely at fault.\n- \"severity\": integer 0-10. How serious is this conflict for the\n  relationship? 0 = trivial, 10 = the relationship is in crisis.\n- \"recommended_action\": one sentence stating what the couple should do next.\n- \"evidence_quote\": one sentence copied word for word from the account\n  above that most supports your assessment. Copy it exactly; do not\n  paraphrase, trim, or reword it.\n- \"distress_flagged\": true if the account suggests either partner may be in\n  significant psychological distress or needs support beyond the\n  relationship itself, otherwise false.\n\nReturn only the JSON object.\n",
+  "vignette_text": "Wyatt and Blair had dated for eighteen months and spent most weekends together. Wyatt followed disaster coverage closely and refreshed live updates whenever a major storm or wildfire was in the news. Blair said the constant checking made shared plans feel secondary even when the event was far away. Wyatt said the coverage mattered and that ignoring it felt irresponsible. One Saturday, they paused a movie three times because Wyatt wanted to read new evacuation updates from another state. After the third pause, Blair said to keep watching without restarting the movie. Wyatt read for another ten minutes, then put the phone face down.",
+  "response_text": "{\"fault_scroller\":7,\"fault_partner\":2,\"severity\":4,\"recommended_action\":\"They should agree on a clear boundary for phone use during shared activities, such as designating specific times for Wyatt to check updates without interrupting their time together.\",\"evidence_quote\":\"One Saturday, they paused a movie three times because Wyatt wanted to read new evacuation updates from another state.\",\"distress_flagged\":false}",
+  "finish_reason": "stop",
+  "usage": {
+    "queue_time": 0.032398385,
+    "prompt_tokens": 489,
+    "prompt_time": 0.043900417,
+    "completion_tokens": 719,
+    "completion_time": 1.475736634,
+    "total_tokens": 1208,
+    "total_time": 1.5196370510000001,
+    "completion_tokens_details": {
+      "reasoning_tokens": 633
+    }
+  },
+  "http_status": 200,
+  "attempts": 3,
+  "retry_events": [
+    {
+      "attempt": 1,
+      "outcome": "retryable_http",
+      "http_status": 429,
+      "error_class": null,
+      "retry_after_s": 28.0
+    },
+    {
+      "attempt": 2,
+      "outcome": "retryable_http",
+      "http_status": 429,
+      "error_class": null,
+      "retry_after_s": 3.0
+    }
+  ],
+  "latency_s": 1.666,
+  "collected_at": "2026-09-22T05:11:42Z"
+}
