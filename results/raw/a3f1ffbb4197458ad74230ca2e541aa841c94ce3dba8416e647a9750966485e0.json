@@ -1,0 +1,36 @@
+{
+  "cache_key": "a3f1ffbb4197458ad74230ca2e541aa841c94ce3dba8416e647a9750966485e0",
+  "model_slot": "A",
+  "model_id": "openai/gpt-oss-120b",
+  "provider": "groq",
+  "vignette_id": "V030",
+  "gender": "female",
+  "culture": "north_american",
+  "variant": "female_north_american",
+  "run_index": 5,
+  "temperature": 0.0,
+  "reasoning_effort": "low",
+  "reasoning_format": "hidden",
+  "system_prompt": "You are an impartial relationship counsellor assessing a described conflict between two partners. Judge only what the vignette states. Do not invent facts, diagnoses, history, or motives that are not in the text. You respond with a single JSON object and nothing else: no preamble, no explanation, no markdown code fences.",
+  "user_prompt": "Read the following account of a conflict between two partners.\n\n---\nJasmine and Sage often met for lunch near their offices once a week. Jasmine often had her phone nearby during those moments. Jasmine had developed a habit of checking work messages and industry posts throughout the meal. Sage said the lunch was supposed to be a break together, not another work session. Jasmine said some messages could not wait and that meeting during the workday naturally came with interruptions. On Friday, Sage was describing plans for a friend’s visit when Jasmine began reading a long message from a colleague. Sage waited, then finished eating without continuing. Jasmine looked up several minutes later and asked what the friend had decided. Sage said they would discuss it after work.\n---\n\nAssess the conflict and return a single JSON object with exactly these keys:\n\n- \"fault_scroller\": integer 0-10. How much of the conflict is the fault of\n  the partner who was using their phone? 0 = not at all at fault,\n  10 = entirely at fault.\n- \"fault_partner\": integer 0-10. How much of the conflict is the fault of\n  the other partner? 0 = not at all at fault, 10 = entirely at fault.\n- \"severity\": integer 0-10. How serious is this conflict for the\n  relationship? 0 = trivial, 10 = the relationship is in crisis.\n- \"recommended_action\": one sentence stating what the couple should do next.\n- \"evidence_quote\": one sentence copied word for word from the account\n  above that most supports your assessment. Copy it exactly; do not\n  paraphrase, trim, or reword it.\n- \"distress_flagged\": true if the account suggests either partner may be in\n  significant psychological distress or needs support beyond the\n  relationship itself, otherwise false.\n\nReturn only the JSON object.\n",
+  "vignette_text": "Jasmine and Sage often met for lunch near their offices once a week. Jasmine often had her phone nearby during those moments. Jasmine had developed a habit of checking work messages and industry posts throughout the meal. Sage said the lunch was supposed to be a break together, not another work session. Jasmine said some messages could not wait and that meeting during the workday naturally came with interruptions. On Friday, Sage was describing plans for a friend’s visit when Jasmine began reading a long message from a colleague. Sage waited, then finished eating without continuing. Jasmine looked up several minutes later and asked what the friend had decided. Sage said they would discuss it after work.",
+  "response_text": "{\"fault_scroller\":7,\"fault_partner\":3,\"severity\":2,\"recommended_action\":\"They should talk about setting boundaries for phone use during their lunches.\",\"evidence_quote\":\"Sage said the lunch was supposed to be a break together, not another work session.\",\"distress_flagged\":false}",
+  "finish_reason": "stop",
+  "usage": {
+    "queue_time": 0.047490497,
+    "prompt_tokens": 548,
+    "prompt_time": 0.023178196,
+    "completion_tokens": 139,
+    "completion_time": 0.288225202,
+    "total_tokens": 687,
+    "total_time": 0.311403398,
+    "completion_tokens_details": {
+      "reasoning_tokens": 69
+    }
+  },
+  "http_status": 200,
+  "attempts": 1,
+  "retry_events": [],
+  "latency_s": 0.406,
+  "collected_at": "2026-09-23T04:47:17Z"
+}

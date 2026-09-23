@@ -1,0 +1,36 @@
+{
+  "cache_key": "47f8294b732f40057a97ac705f24e8392d06702d4f737cf28007b78f3dd60ae1",
+  "model_slot": "A",
+  "model_id": "openai/gpt-oss-120b",
+  "provider": "groq",
+  "vignette_id": "V025",
+  "gender": "neutral",
+  "culture": "north_american",
+  "variant": "neutral_north_american",
+  "run_index": 2,
+  "temperature": 0.0,
+  "reasoning_effort": "low",
+  "reasoning_format": "hidden",
+  "system_prompt": "You are an impartial relationship counsellor assessing a described conflict between two partners. Judge only what the vignette states. Do not invent facts, diagnoses, history, or motives that are not in the text. You respond with a single JSON object and nothing else: no preamble, no explanation, no markdown code fences.",
+  "user_prompt": "Read the following account of a conflict between two partners.\n\n---\nBellamy and Terry were dating long-distance and spoke by video most evenings. Bellamy tended to keep their phone close at hand. During recent calls, Bellamy often opened shopping apps and scrolled through sales while Terry described the day. Terry could tell when Bellamy was reading because the responses became shorter and delayed. Bellamy said browsing made the calls feel relaxed rather than formal and that they still spent nearly an hour together. On Sunday, Terry told a story about a difficult meeting and paused when Bellamy did not react. Bellamy looked up and asked Terry to repeat the last part. Terry finished the story more briefly and ended the call ten minutes earlier than usual.\n---\n\nAssess the conflict and return a single JSON object with exactly these keys:\n\n- \"fault_scroller\": integer 0-10. How much of the conflict is the fault of\n  the partner who was using their phone? 0 = not at all at fault,\n  10 = entirely at fault.\n- \"fault_partner\": integer 0-10. How much of the conflict is the fault of\n  the other partner? 0 = not at all at fault, 10 = entirely at fault.\n- \"severity\": integer 0-10. How serious is this conflict for the\n  relationship? 0 = trivial, 10 = the relationship is in crisis.\n- \"recommended_action\": one sentence stating what the couple should do next.\n- \"evidence_quote\": one sentence copied word for word from the account\n  above that most supports your assessment. Copy it exactly; do not\n  paraphrase, trim, or reword it.\n- \"distress_flagged\": true if the account suggests either partner may be in\n  significant psychological distress or needs support beyond the\n  relationship itself, otherwise false.\n\nReturn only the JSON object.\n",
+  "vignette_text": "Bellamy and Terry were dating long-distance and spoke by video most evenings. Bellamy tended to keep their phone close at hand. During recent calls, Bellamy often opened shopping apps and scrolled through sales while Terry described the day. Terry could tell when Bellamy was reading because the responses became shorter and delayed. Bellamy said browsing made the calls feel relaxed rather than formal and that they still spent nearly an hour together. On Sunday, Terry told a story about a difficult meeting and paused when Bellamy did not react. Bellamy looked up and asked Terry to repeat the last part. Terry finished the story more briefly and ended the call ten minutes earlier than usual.",
+  "response_text": "{\"fault_scroller\":7,\"fault_partner\":3,\"severity\":4,\"recommended_action\":\"They should talk openly about phone use during calls and agree on boundaries to ensure attentive conversation.\",\"evidence_quote\":\"During recent calls, Bellamy often opened shopping apps and scrolled through sales while Terry described the day.\",\"distress_flagged\":false}",
+  "finish_reason": "stop",
+  "usage": {
+    "queue_time": 0.121502544,
+    "prompt_tokens": 550,
+    "prompt_time": 0.022140672,
+    "completion_tokens": 152,
+    "completion_time": 0.315588598,
+    "total_tokens": 702,
+    "total_time": 0.33772927,
+    "completion_tokens_details": {
+      "reasoning_tokens": 74
+    }
+  },
+  "http_status": 200,
+  "attempts": 1,
+  "retry_events": [],
+  "latency_s": 0.502,
+  "collected_at": "2026-09-23T04:23:27Z"
+}

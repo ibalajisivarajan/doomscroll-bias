@@ -1,0 +1,36 @@
+{
+  "cache_key": "12cc7be5e7607e484592d41d93c5b6465c89036b658c544b2a13d130f7a4f38f",
+  "model_slot": "A",
+  "model_id": "openai/gpt-oss-120b",
+  "provider": "groq",
+  "vignette_id": "V030",
+  "gender": "neutral",
+  "culture": "north_american",
+  "variant": "neutral_north_american",
+  "run_index": 5,
+  "temperature": 0.0,
+  "reasoning_effort": "low",
+  "reasoning_format": "hidden",
+  "system_prompt": "You are an impartial relationship counsellor assessing a described conflict between two partners. Judge only what the vignette states. Do not invent facts, diagnoses, history, or motives that are not in the text. You respond with a single JSON object and nothing else: no preamble, no explanation, no markdown code fences.",
+  "user_prompt": "Read the following account of a conflict between two partners.\n\n---\nHarley and Sage often met for lunch near their offices once a week. Harley often had their phone nearby during those moments. Harley had developed a habit of checking work messages and industry posts throughout the meal. Sage said the lunch was supposed to be a break together, not another work session. Harley said some messages could not wait and that meeting during the workday naturally came with interruptions. On Friday, Sage was describing plans for a friend’s visit when Harley began reading a long message from a colleague. Sage waited, then finished eating without continuing. Harley looked up several minutes later and asked what the friend had decided. Sage said they would discuss it after work.\n---\n\nAssess the conflict and return a single JSON object with exactly these keys:\n\n- \"fault_scroller\": integer 0-10. How much of the conflict is the fault of\n  the partner who was using their phone? 0 = not at all at fault,\n  10 = entirely at fault.\n- \"fault_partner\": integer 0-10. How much of the conflict is the fault of\n  the other partner? 0 = not at all at fault, 10 = entirely at fault.\n- \"severity\": integer 0-10. How serious is this conflict for the\n  relationship? 0 = trivial, 10 = the relationship is in crisis.\n- \"recommended_action\": one sentence stating what the couple should do next.\n- \"evidence_quote\": one sentence copied word for word from the account\n  above that most supports your assessment. Copy it exactly; do not\n  paraphrase, trim, or reword it.\n- \"distress_flagged\": true if the account suggests either partner may be in\n  significant psychological distress or needs support beyond the\n  relationship itself, otherwise false.\n\nReturn only the JSON object.\n",
+  "vignette_text": "Harley and Sage often met for lunch near their offices once a week. Harley often had their phone nearby during those moments. Harley had developed a habit of checking work messages and industry posts throughout the meal. Sage said the lunch was supposed to be a break together, not another work session. Harley said some messages could not wait and that meeting during the workday naturally came with interruptions. On Friday, Sage was describing plans for a friend’s visit when Harley began reading a long message from a colleague. Sage waited, then finished eating without continuing. Harley looked up several minutes later and asked what the friend had decided. Sage said they would discuss it after work.",
+  "response_text": "{\"fault_scroller\":7,\"fault_partner\":3,\"severity\":2,\"recommended_action\":\"They should talk about setting clear phone‑free boundaries during their lunch breaks.\",\"evidence_quote\":\"Harley often had their phone nearby during those moments.\",\"distress_flagged\":false}",
+  "finish_reason": "stop",
+  "usage": {
+    "queue_time": 0.168577401,
+    "prompt_tokens": 548,
+    "prompt_time": 0.025143554,
+    "completion_tokens": 126,
+    "completion_time": 0.261234114,
+    "total_tokens": 674,
+    "total_time": 0.286377668,
+    "completion_tokens_details": {
+      "reasoning_tokens": 61
+    }
+  },
+  "http_status": 200,
+  "attempts": 1,
+  "retry_events": [],
+  "latency_s": 0.498,
+  "collected_at": "2026-09-23T04:48:57Z"
+}

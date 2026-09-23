@@ -1,0 +1,36 @@
+{
+  "cache_key": "8319548d8a29ecc5248d8630bddc3b605d34284dfbbf50c1a9dd75940d5db999",
+  "model_slot": "A",
+  "model_id": "openai/gpt-oss-120b",
+  "provider": "groq",
+  "vignette_id": "V026",
+  "gender": "neutral",
+  "culture": "north_american",
+  "variant": "neutral_north_american",
+  "run_index": 5,
+  "temperature": 0.0,
+  "reasoning_effort": "low",
+  "reasoning_format": "hidden",
+  "system_prompt": "You are an impartial relationship counsellor assessing a described conflict between two partners. Judge only what the vignette states. Do not invent facts, diagnoses, history, or motives that are not in the text. You respond with a single JSON object and nothing else: no preamble, no explanation, no markdown code fences.",
+  "user_prompt": "Read the following account of a conflict between two partners.\n\n---\nBriar and Dakota had recently moved into a house and were still deciding how to divide weekend chores. Briar regularly kept their phone beside Briar. On Saturday mornings, Briar often sat at the kitchen island scrolling home renovation videos before starting anything. Dakota preferred to begin early and said waiting made the whole day feel stalled. Briar said the videos were useful because the house needed work and that Dakota turned every weekend into a checklist. Last Saturday, Dakota started cleaning the garage alone while Briar watched reviews of storage systems. Briar joined forty minutes later with an idea for new shelving. Dakota said the garage needed sorting before they bought anything else.\n---\n\nAssess the conflict and return a single JSON object with exactly these keys:\n\n- \"fault_scroller\": integer 0-10. How much of the conflict is the fault of\n  the partner who was using their phone? 0 = not at all at fault,\n  10 = entirely at fault.\n- \"fault_partner\": integer 0-10. How much of the conflict is the fault of\n  the other partner? 0 = not at all at fault, 10 = entirely at fault.\n- \"severity\": integer 0-10. How serious is this conflict for the\n  relationship? 0 = trivial, 10 = the relationship is in crisis.\n- \"recommended_action\": one sentence stating what the couple should do next.\n- \"evidence_quote\": one sentence copied word for word from the account\n  above that most supports your assessment. Copy it exactly; do not\n  paraphrase, trim, or reword it.\n- \"distress_flagged\": true if the account suggests either partner may be in\n  significant psychological distress or needs support beyond the\n  relationship itself, otherwise false.\n\nReturn only the JSON object.\n",
+  "vignette_text": "Briar and Dakota had recently moved into a house and were still deciding how to divide weekend chores. Briar regularly kept their phone beside Briar. On Saturday mornings, Briar often sat at the kitchen island scrolling home renovation videos before starting anything. Dakota preferred to begin early and said waiting made the whole day feel stalled. Briar said the videos were useful because the house needed work and that Dakota turned every weekend into a checklist. Last Saturday, Dakota started cleaning the garage alone while Briar watched reviews of storage systems. Briar joined forty minutes later with an idea for new shelving. Dakota said the garage needed sorting before they bought anything else.",
+  "response_text": "{\"fault_scroller\":4,\"fault_partner\":6,\"severity\":2,\"recommended_action\":\"They should discuss and agree on a shared weekend chore schedule that balances planning and immediate action.\",\"evidence_quote\":\"Dakota said the garage needed sorting before they bought anything else.\",\"distress_flagged\":false}",
+  "finish_reason": "stop",
+  "usage": {
+    "queue_time": 0.121529218,
+    "prompt_tokens": 546,
+    "prompt_time": 0.02397356,
+    "completion_tokens": 142,
+    "completion_time": 0.295916059,
+    "total_tokens": 688,
+    "total_time": 0.319889619,
+    "completion_tokens_details": {
+      "reasoning_tokens": 72
+    }
+  },
+  "http_status": 200,
+  "attempts": 1,
+  "retry_events": [],
+  "latency_s": 0.484,
+  "collected_at": "2026-09-23T04:28:57Z"
+}

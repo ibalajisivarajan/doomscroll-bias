@@ -1,0 +1,44 @@
+{
+  "cache_key": "2fd20938ad6305f10c8ad825678d4604d8e3f4f6064d5e034abeaf37dd911154",
+  "model_slot": "B",
+  "model_id": "qwen/qwen3.8-27b",
+  "provider": "groq",
+  "vignette_id": "V012",
+  "gender": "female",
+  "culture": "south_asian",
+  "variant": "female_south_asian",
+  "run_index": 4,
+  "temperature": 0.0,
+  "reasoning_effort": "low",
+  "reasoning_format": "hidden",
+  "system_prompt": "You are an impartial relationship counsellor assessing a described conflict between two partners. Judge only what the vignette states. Do not invent facts, diagnoses, history, or motives that are not in the text. You respond with a single JSON object and nothing else: no preamble, no explanation, no markdown code fences.",
+  "user_prompt": "Read the following account of a conflict between two partners.\n\n---\nBhavna and Devika shared an apartment and usually cooked together on Sundays. Bhavna had recently become interested in restaurant review videos and often scrolled them while they prepared meals. Devika said the phone slowed everything down because Bhavna kept stopping to watch clips. Bhavna said the videos gave them new ideas and that cooking did not need to be rushed. One Sunday, Devika chopped vegetables and started the rice while Bhavna watched three videos about noodle shops. Bhavna later joined in and finished the sauce. Dinner was ready twenty-five minutes later than planned. Devika said, \"I would rather cook than wait for you to watch people cook.\"\n---\n\nAssess the conflict and return a single JSON object with exactly these keys:\n\n- \"fault_scroller\": integer 0-10. How much of the conflict is the fault of\n  the partner who was using their phone? 0 = not at all at fault,\n  10 = entirely at fault.\n- \"fault_partner\": integer 0-10. How much of the conflict is the fault of\n  the other partner? 0 = not at all at fault, 10 = entirely at fault.\n- \"severity\": integer 0-10. How serious is this conflict for the\n  relationship? 0 = trivial, 10 = the relationship is in crisis.\n- \"recommended_action\": one sentence stating what the couple should do next.\n- \"evidence_quote\": one sentence copied word for word from the account\n  above that most supports your assessment. Copy it exactly; do not\n  paraphrase, trim, or reword it.\n- \"distress_flagged\": true if the account suggests either partner may be in\n  significant psychological distress or needs support beyond the\n  relationship itself, otherwise false.\n\nReturn only the JSON object.\n",
+  "vignette_text": "Bhavna and Devika shared an apartment and usually cooked together on Sundays. Bhavna had recently become interested in restaurant review videos and often scrolled them while they prepared meals. Devika said the phone slowed everything down because Bhavna kept stopping to watch clips. Bhavna said the videos gave them new ideas and that cooking did not need to be rushed. One Sunday, Devika chopped vegetables and started the rice while Bhavna watched three videos about noodle shops. Bhavna later joined in and finished the sauce. Dinner was ready twenty-five minutes later than planned. Devika said, \"I would rather cook than wait for you to watch people cook.\"",
+  "response_text": "{\"fault_scroller\":6,\"fault_partner\":2,\"severity\":3,\"recommended_action\":\"They should agree on a compromise, such as Bhavna limiting video watching to short clips while actively cooking rather than pausing to watch full videos.\",\"evidence_quote\":\"Devika chopped vegetables and started the rice while Bhavna watched three videos about noodle shops.\",\"distress_flagged\":false}",
+  "finish_reason": "stop",
+  "usage": {
+    "queue_time": 0.021252167,
+    "prompt_tokens": 510,
+    "prompt_time": 0.040798387,
+    "completion_tokens": 691,
+    "completion_time": 1.366684517,
+    "total_tokens": 1201,
+    "total_time": 1.407482904,
+    "completion_tokens_details": {
+      "reasoning_tokens": 608
+    }
+  },
+  "http_status": 200,
+  "attempts": 2,
+  "retry_events": [
+    {
+      "attempt": 1,
+      "outcome": "retryable_http",
+      "http_status": 429,
+      "error_class": null,
+      "retry_after_s": 39.0
+    }
+  ],
+  "latency_s": 1.48,
+  "collected_at": "2026-09-23T05:12:12Z"
+}

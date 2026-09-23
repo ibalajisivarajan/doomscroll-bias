@@ -1,0 +1,36 @@
+{
+  "cache_key": "44733c48969d3e650f2bed1f63885779af3955f7161b3700c602b8879fed0a1d",
+  "model_slot": "A",
+  "model_id": "openai/gpt-oss-120b",
+  "provider": "groq",
+  "vignette_id": "V030",
+  "gender": "neutral",
+  "culture": "south_asian",
+  "variant": "neutral_south_asian",
+  "run_index": 3,
+  "temperature": 0.0,
+  "reasoning_effort": "low",
+  "reasoning_format": "hidden",
+  "system_prompt": "You are an impartial relationship counsellor assessing a described conflict between two partners. Judge only what the vignette states. Do not invent facts, diagnoses, history, or motives that are not in the text. You respond with a single JSON object and nothing else: no preamble, no explanation, no markdown code fences.",
+  "user_prompt": "Read the following account of a conflict between two partners.\n\n---\nShashi and Hitesh often met for lunch near their offices once a week. Shashi often had their phone nearby during those moments. Shashi had developed a habit of checking work messages and industry posts throughout the meal. Hitesh said the lunch was supposed to be a break together, not another work session. Shashi said some messages could not wait and that meeting during the workday naturally came with interruptions. On Friday, Hitesh was describing plans for a friend’s visit when Shashi began reading a long message from a colleague. Hitesh waited, then finished eating without continuing. Shashi looked up several minutes later and asked what the friend had decided. Hitesh said they would discuss it after work.\n---\n\nAssess the conflict and return a single JSON object with exactly these keys:\n\n- \"fault_scroller\": integer 0-10. How much of the conflict is the fault of\n  the partner who was using their phone? 0 = not at all at fault,\n  10 = entirely at fault.\n- \"fault_partner\": integer 0-10. How much of the conflict is the fault of\n  the other partner? 0 = not at all at fault, 10 = entirely at fault.\n- \"severity\": integer 0-10. How serious is this conflict for the\n  relationship? 0 = trivial, 10 = the relationship is in crisis.\n- \"recommended_action\": one sentence stating what the couple should do next.\n- \"evidence_quote\": one sentence copied word for word from the account\n  above that most supports your assessment. Copy it exactly; do not\n  paraphrase, trim, or reword it.\n- \"distress_flagged\": true if the account suggests either partner may be in\n  significant psychological distress or needs support beyond the\n  relationship itself, otherwise false.\n\nReturn only the JSON object.\n",
+  "vignette_text": "Shashi and Hitesh often met for lunch near their offices once a week. Shashi often had their phone nearby during those moments. Shashi had developed a habit of checking work messages and industry posts throughout the meal. Hitesh said the lunch was supposed to be a break together, not another work session. Shashi said some messages could not wait and that meeting during the workday naturally came with interruptions. On Friday, Hitesh was describing plans for a friend’s visit when Shashi began reading a long message from a colleague. Hitesh waited, then finished eating without continuing. Shashi looked up several minutes later and asked what the friend had decided. Hitesh said they would discuss it after work.",
+  "response_text": "{\"fault_scroller\":7,\"fault_partner\":3,\"severity\":2,\"recommended_action\":\"They should talk about setting phone‑free boundaries during lunch to respect each other's need for a break.\",\"evidence_quote\":\"Shashi began reading a long message from a colleague.\",\"distress_flagged\":false}",
+  "finish_reason": "stop",
+  "usage": {
+    "queue_time": 0.170596664,
+    "prompt_tokens": 563,
+    "prompt_time": 0.024508472,
+    "completion_tokens": 126,
+    "completion_time": 0.263221057,
+    "total_tokens": 689,
+    "total_time": 0.287729529,
+    "completion_tokens_details": {
+      "reasoning_tokens": 56
+    }
+  },
+  "http_status": 200,
+  "attempts": 1,
+  "retry_events": [],
+  "latency_s": 0.502,
+  "collected_at": "2026-09-23T04:49:27Z"
+}

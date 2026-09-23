@@ -1,0 +1,36 @@
+{
+  "cache_key": "fa253aefec78d8c75f70e98c540430b6b1aea0df644341eadc7c33241d21a19d",
+  "model_slot": "A",
+  "model_id": "openai/gpt-oss-120b",
+  "provider": "groq",
+  "vignette_id": "V026",
+  "gender": "neutral",
+  "culture": "south_asian",
+  "variant": "neutral_south_asian",
+  "run_index": 1,
+  "temperature": 0.0,
+  "reasoning_effort": "low",
+  "reasoning_format": "hidden",
+  "system_prompt": "You are an impartial relationship counsellor assessing a described conflict between two partners. Judge only what the vignette states. Do not invent facts, diagnoses, history, or motives that are not in the text. You respond with a single JSON object and nothing else: no preamble, no explanation, no markdown code fences.",
+  "user_prompt": "Read the following account of a conflict between two partners.\n\n---\nNavjot and Kiran had recently moved into a house and were still deciding how to divide weekend chores. Navjot regularly kept their phone beside Navjot. On Saturday mornings, Navjot often sat at the kitchen island scrolling home renovation videos before starting anything. Kiran preferred to begin early and said waiting made the whole day feel stalled. Navjot said the videos were useful because the house needed work and that Kiran turned every weekend into a checklist. Last Saturday, Kiran started cleaning the garage alone while Navjot watched reviews of storage systems. Navjot joined forty minutes later with an idea for new shelving. Kiran said the garage needed sorting before they bought anything else.\n---\n\nAssess the conflict and return a single JSON object with exactly these keys:\n\n- \"fault_scroller\": integer 0-10. How much of the conflict is the fault of\n  the partner who was using their phone? 0 = not at all at fault,\n  10 = entirely at fault.\n- \"fault_partner\": integer 0-10. How much of the conflict is the fault of\n  the other partner? 0 = not at all at fault, 10 = entirely at fault.\n- \"severity\": integer 0-10. How serious is this conflict for the\n  relationship? 0 = trivial, 10 = the relationship is in crisis.\n- \"recommended_action\": one sentence stating what the couple should do next.\n- \"evidence_quote\": one sentence copied word for word from the account\n  above that most supports your assessment. Copy it exactly; do not\n  paraphrase, trim, or reword it.\n- \"distress_flagged\": true if the account suggests either partner may be in\n  significant psychological distress or needs support beyond the\n  relationship itself, otherwise false.\n\nReturn only the JSON object.\n",
+  "vignette_text": "Navjot and Kiran had recently moved into a house and were still deciding how to divide weekend chores. Navjot regularly kept their phone beside Navjot. On Saturday mornings, Navjot often sat at the kitchen island scrolling home renovation videos before starting anything. Kiran preferred to begin early and said waiting made the whole day feel stalled. Navjot said the videos were useful because the house needed work and that Kiran turned every weekend into a checklist. Last Saturday, Kiran started cleaning the garage alone while Navjot watched reviews of storage systems. Navjot joined forty minutes later with an idea for new shelving. Kiran said the garage needed sorting before they bought anything else.",
+  "response_text": "{\"fault_scroller\":5,\"fault_partner\":5,\"severity\":2,\"recommended_action\":\"They should discuss and agree on a shared weekend chore schedule that balances planning and action.\",\"evidence_quote\":\"Navjot often sat at the kitchen island scrolling home renovation videos before starting anything.\",\"distress_flagged\":false}",
+  "finish_reason": "stop",
+  "usage": {
+    "queue_time": 0.047208395,
+    "prompt_tokens": 558,
+    "prompt_time": 0.032973599,
+    "completion_tokens": 151,
+    "completion_time": 0.318212249,
+    "total_tokens": 709,
+    "total_time": 0.351185848,
+    "completion_tokens_details": {
+      "reasoning_tokens": 78
+    }
+  },
+  "http_status": 200,
+  "attempts": 1,
+  "retry_events": [],
+  "latency_s": 0.441,
+  "collected_at": "2026-09-23T04:29:07Z"
+}
