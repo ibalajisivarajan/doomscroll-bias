@@ -1,0 +1,36 @@
+{
+  "cache_key": "9bd0c146f80b85ba93111b37efd0229815e53c42cf4528add6ea41552f55e531",
+  "model_slot": "A",
+  "model_id": "openai/gpt-oss-120b",
+  "provider": "groq",
+  "vignette_id": "V033",
+  "gender": "neutral",
+  "culture": "north_american",
+  "variant": "neutral_north_american",
+  "run_index": 3,
+  "temperature": 0.0,
+  "reasoning_effort": "low",
+  "reasoning_format": "hidden",
+  "system_prompt": "You are an impartial relationship counsellor assessing a described conflict between two partners. Judge only what the vignette states. Do not invent facts, diagnoses, history, or motives that are not in the text. You respond with a single JSON object and nothing else: no preamble, no explanation, no markdown code fences.",
+  "user_prompt": "Read the following account of a conflict between two partners.\n\n---\nMackenzie and Avery had been together for five years and usually watched one show together after dinner. Mackenzie usually carried their phone from room to room. Mackenzie had begun scrolling fan theories and episode discussions while the show was still playing. Avery said it spoiled the experience because Mackenzie sometimes reacted to posts instead of what was happening on screen. Mackenzie said reading theories made the show more interesting and that Avery paused frequently anyway. On Saturday, Avery asked what Mackenzie thought about a scene that had just ended. Mackenzie admitted missing part of it while reading a discussion. Avery rewound the episode without saying anything. Mackenzie put the phone face down for the rest of the show.\n---\n\nAssess the conflict and return a single JSON object with exactly these keys:\n\n- \"fault_scroller\": integer 0-10. How much of the conflict is the fault of\n  the partner who was using their phone? 0 = not at all at fault,\n  10 = entirely at fault.\n- \"fault_partner\": integer 0-10. How much of the conflict is the fault of\n  the other partner? 0 = not at all at fault, 10 = entirely at fault.\n- \"severity\": integer 0-10. How serious is this conflict for the\n  relationship? 0 = trivial, 10 = the relationship is in crisis.\n- \"recommended_action\": one sentence stating what the couple should do next.\n- \"evidence_quote\": one sentence copied word for word from the account\n  above that most supports your assessment. Copy it exactly; do not\n  paraphrase, trim, or reword it.\n- \"distress_flagged\": true if the account suggests either partner may be in\n  significant psychological distress or needs support beyond the\n  relationship itself, otherwise false.\n\nReturn only the JSON object.\n",
+  "vignette_text": "Mackenzie and Avery had been together for five years and usually watched one show together after dinner. Mackenzie usually carried their phone from room to room. Mackenzie had begun scrolling fan theories and episode discussions while the show was still playing. Avery said it spoiled the experience because Mackenzie sometimes reacted to posts instead of what was happening on screen. Mackenzie said reading theories made the show more interesting and that Avery paused frequently anyway. On Saturday, Avery asked what Mackenzie thought about a scene that had just ended. Mackenzie admitted missing part of it while reading a discussion. Avery rewound the episode without saying anything. Mackenzie put the phone face down for the rest of the show.",
+  "response_text": "{\"fault_scroller\":6,\"fault_partner\":4,\"severity\":2,\"recommended_action\":\"Discuss and agree on phone‑free viewing times to respect each other's enjoyment of the show.\",\"evidence_quote\":\"Mackenzie had begun scrolling fan theories and episode discussions while the show was still playing.\",\"distress_flagged\":false}",
+  "finish_reason": "stop",
+  "usage": {
+    "queue_time": 0.134784905,
+    "prompt_tokens": 554,
+    "prompt_time": 0.034165212,
+    "completion_tokens": 154,
+    "completion_time": 0.324385643,
+    "total_tokens": 708,
+    "total_time": 0.358550855,
+    "completion_tokens_details": {
+      "reasoning_tokens": 79
+    }
+  },
+  "http_status": 200,
+  "attempts": 1,
+  "retry_events": [],
+  "latency_s": 0.531,
+  "collected_at": "2026-09-24T04:31:04Z"
+}
