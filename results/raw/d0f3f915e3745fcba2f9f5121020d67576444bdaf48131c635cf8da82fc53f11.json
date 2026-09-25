@@ -1,0 +1,36 @@
+{
+  "cache_key": "d0f3f915e3745fcba2f9f5121020d67576444bdaf48131c635cf8da82fc53f11",
+  "model_slot": "B",
+  "model_id": "qwen/qwen3.8-27b",
+  "provider": "groq",
+  "vignette_id": "V017",
+  "gender": "male",
+  "culture": "north_american",
+  "variant": "male_north_american",
+  "run_index": 5,
+  "temperature": 0.0,
+  "reasoning_effort": "low",
+  "reasoning_format": "hidden",
+  "system_prompt": "You are an impartial relationship counsellor assessing a described conflict between two partners. Judge only what the vignette states. Do not invent facts, diagnoses, history, or motives that are not in the text. You respond with a single JSON object and nothing else: no preamble, no explanation, no markdown code fences.",
+  "user_prompt": "Read the following account of a conflict between two partners.\n\n---\nCole and Devon had recently moved into a larger apartment. Cole enjoyed browsing resale apps for furniture and spent long stretches comparing listings. Devon said the browsing was excessive because most rooms already had what they needed. Cole said secondhand deals disappeared quickly and that checking often was the only way to find good prices. On Saturday morning, they had planned to unpack three remaining boxes. Cole spent thirty-five minutes messaging a seller about a bookshelf while Devon opened the first box alone. Cole later helped unpack the other two. The bookshelf sold to someone else before Cole could arrange pickup.\n---\n\nAssess the conflict and return a single JSON object with exactly these keys:\n\n- \"fault_scroller\": integer 0-10. How much of the conflict is the fault of\n  the partner who was using their phone? 0 = not at all at fault,\n  10 = entirely at fault.\n- \"fault_partner\": integer 0-10. How much of the conflict is the fault of\n  the other partner? 0 = not at all at fault, 10 = entirely at fault.\n- \"severity\": integer 0-10. How serious is this conflict for the\n  relationship? 0 = trivial, 10 = the relationship is in crisis.\n- \"recommended_action\": one sentence stating what the couple should do next.\n- \"evidence_quote\": one sentence copied word for word from the account\n  above that most supports your assessment. Copy it exactly; do not\n  paraphrase, trim, or reword it.\n- \"distress_flagged\": true if the account suggests either partner may be in\n  significant psychological distress or needs support beyond the\n  relationship itself, otherwise false.\n\nReturn only the JSON object.\n",
+  "vignette_text": "Cole and Devon had recently moved into a larger apartment. Cole enjoyed browsing resale apps for furniture and spent long stretches comparing listings. Devon said the browsing was excessive because most rooms already had what they needed. Cole said secondhand deals disappeared quickly and that checking often was the only way to find good prices. On Saturday morning, they had planned to unpack three remaining boxes. Cole spent thirty-five minutes messaging a seller about a bookshelf while Devon opened the first box alone. Cole later helped unpack the other two. The bookshelf sold to someone else before Cole could arrange pickup.",
+  "response_text": "{\"fault_scroller\":4,\"fault_partner\":3,\"severity\":2,\"recommended_action\":\"Agree on a reasonable time limit for browsing resale apps and commit to following through on shared plans like unpacking together.\",\"evidence_quote\":\"Cole spent thirty-five minutes messaging a seller about a bookshelf while Devon opened the first box alone.\",\"distress_flagged\":false}",
+  "finish_reason": "stop",
+  "usage": {
+    "queue_time": 0.020044951,
+    "prompt_tokens": 488,
+    "prompt_time": 0.040601224,
+    "completion_tokens": 704,
+    "completion_time": 1.3842127770000001,
+    "total_tokens": 1192,
+    "total_time": 1.424814001,
+    "completion_tokens_details": {
+      "reasoning_tokens": 627
+    }
+  },
+  "http_status": 200,
+  "attempts": 1,
+  "retry_events": [],
+  "latency_s": 1.509,
+  "collected_at": "2026-09-25T05:12:53Z"
+}

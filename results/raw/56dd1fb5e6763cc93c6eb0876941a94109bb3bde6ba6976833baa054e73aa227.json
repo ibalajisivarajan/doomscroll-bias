@@ -1,0 +1,36 @@
+{
+  "cache_key": "56dd1fb5e6763cc93c6eb0876941a94109bb3bde6ba6976833baa054e73aa227",
+  "model_slot": "A",
+  "model_id": "openai/gpt-oss-120b",
+  "provider": "groq",
+  "vignette_id": "V039",
+  "gender": "female",
+  "culture": "north_american",
+  "variant": "female_north_american",
+  "run_index": 1,
+  "temperature": 0.0,
+  "reasoning_effort": "low",
+  "reasoning_format": "hidden",
+  "system_prompt": "You are an impartial relationship counsellor assessing a described conflict between two partners. Judge only what the vignette states. Do not invent facts, diagnoses, history, or motives that are not in the text. You respond with a single JSON object and nothing else: no preamble, no explanation, no markdown code fences.",
+  "user_prompt": "Read the following account of a conflict between two partners.\n\n---\nVictoria and Val had been together for nine years and spent Saturday mornings doing errands. Victoria usually carried her phone from room to room. Victoria often scrolled deal forums while they moved through stores, checking whether items were cheaper elsewhere. Val appreciated saving money but disliked stopping in every aisle while Victoria compared prices. Victoria said rushing through purchases wasted money and that Val complained later when something went on sale. At a home goods store, Val stood beside a cart while Victoria read comments about a coffee maker for several minutes. Val eventually walked to the next aisle alone. Victoria found Val there and said the comparison had actually ruled the coffee maker out.\n---\n\nAssess the conflict and return a single JSON object with exactly these keys:\n\n- \"fault_scroller\": integer 0-10. How much of the conflict is the fault of\n  the partner who was using their phone? 0 = not at all at fault,\n  10 = entirely at fault.\n- \"fault_partner\": integer 0-10. How much of the conflict is the fault of\n  the other partner? 0 = not at all at fault, 10 = entirely at fault.\n- \"severity\": integer 0-10. How serious is this conflict for the\n  relationship? 0 = trivial, 10 = the relationship is in crisis.\n- \"recommended_action\": one sentence stating what the couple should do next.\n- \"evidence_quote\": one sentence copied word for word from the account\n  above that most supports your assessment. Copy it exactly; do not\n  paraphrase, trim, or reword it.\n- \"distress_flagged\": true if the account suggests either partner may be in\n  significant psychological distress or needs support beyond the\n  relationship itself, otherwise false.\n\nReturn only the JSON object.\n",
+  "vignette_text": "Victoria and Val had been together for nine years and spent Saturday mornings doing errands. Victoria usually carried her phone from room to room. Victoria often scrolled deal forums while they moved through stores, checking whether items were cheaper elsewhere. Val appreciated saving money but disliked stopping in every aisle while Victoria compared prices. Victoria said rushing through purchases wasted money and that Val complained later when something went on sale. At a home goods store, Val stood beside a cart while Victoria read comments about a coffee maker for several minutes. Val eventually walked to the next aisle alone. Victoria found Val there and said the comparison had actually ruled the coffee maker out.",
+  "response_text": "{\"fault_scroller\":6,\"fault_partner\":4,\"severity\":2,\"recommended_action\":\"They should discuss and agree on a balanced shopping pace and limited phone use during errands.\",\"evidence_quote\":\"Victoria often scrolled deal forums while they moved through stores, checking whether items were cheaper elsewhere.\",\"distress_flagged\":false}",
+  "finish_reason": "stop",
+  "usage": {
+    "queue_time": 0.157790221,
+    "prompt_tokens": 542,
+    "prompt_time": 0.03396037,
+    "completion_tokens": 147,
+    "completion_time": 0.305344822,
+    "total_tokens": 689,
+    "total_time": 0.339305192,
+    "completion_tokens_details": {
+      "reasoning_tokens": 72
+    }
+  },
+  "http_status": 200,
+  "attempts": 1,
+  "retry_events": [],
+  "latency_s": 0.563,
+  "collected_at": "2026-09-25T04:41:20Z"
+}

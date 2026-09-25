@@ -1,0 +1,36 @@
+{
+  "cache_key": "a2aaa086f03e6389aab577edd3d7d32ab470017d87e0b6c7c3677a4637480bbc",
+  "model_slot": "A",
+  "model_id": "openai/gpt-oss-120b",
+  "provider": "groq",
+  "vignette_id": "V038",
+  "gender": "neutral",
+  "culture": "north_american",
+  "variant": "neutral_north_american",
+  "run_index": 1,
+  "temperature": 0.0,
+  "reasoning_effort": "low",
+  "reasoning_format": "hidden",
+  "system_prompt": "You are an impartial relationship counsellor assessing a described conflict between two partners. Judge only what the vignette states. Do not invent facts, diagnoses, history, or motives that are not in the text. You respond with a single JSON object and nothing else: no preamble, no explanation, no markdown code fences.",
+  "user_prompt": "Read the following account of a conflict between two partners.\n\n---\nWren and Sam had recently started saving for a vacation. Wren regularly kept their phone beside Wren. Wren enjoyed scrolling travel videos and hotel reviews in the evenings and often sent Sam links while they were sitting together. Sam said the constant planning made the trip feel like another project and wanted some evenings without discussing it. Wren said comparing options early could save money and that Sam had asked Wren to handle most of the research. On Thursday, Sam was telling Wren about a coworker when Wren interrupted to show a hotel room tour. Sam watched the clip, then said the coworker story no longer mattered. Wren apologized and closed the travel app.\n---\n\nAssess the conflict and return a single JSON object with exactly these keys:\n\n- \"fault_scroller\": integer 0-10. How much of the conflict is the fault of\n  the partner who was using their phone? 0 = not at all at fault,\n  10 = entirely at fault.\n- \"fault_partner\": integer 0-10. How much of the conflict is the fault of\n  the other partner? 0 = not at all at fault, 10 = entirely at fault.\n- \"severity\": integer 0-10. How serious is this conflict for the\n  relationship? 0 = trivial, 10 = the relationship is in crisis.\n- \"recommended_action\": one sentence stating what the couple should do next.\n- \"evidence_quote\": one sentence copied word for word from the account\n  above that most supports your assessment. Copy it exactly; do not\n  paraphrase, trim, or reword it.\n- \"distress_flagged\": true if the account suggests either partner may be in\n  significant psychological distress or needs support beyond the\n  relationship itself, otherwise false.\n\nReturn only the JSON object.\n",
+  "vignette_text": "Wren and Sam had recently started saving for a vacation. Wren regularly kept their phone beside Wren. Wren enjoyed scrolling travel videos and hotel reviews in the evenings and often sent Sam links while they were sitting together. Sam said the constant planning made the trip feel like another project and wanted some evenings without discussing it. Wren said comparing options early could save money and that Sam had asked Wren to handle most of the research. On Thursday, Sam was telling Wren about a coworker when Wren interrupted to show a hotel room tour. Sam watched the clip, then said the coworker story no longer mattered. Wren apologized and closed the travel app.",
+  "response_text": "{\"fault_scroller\":7,\"fault_partner\":3,\"severity\":3,\"recommended_action\":\"They should discuss and set clear boundaries for vacation planning time versus personal conversation time.\",\"evidence_quote\":\"Wren interrupted to show a hotel room tour.\",\"distress_flagged\":false}",
+  "finish_reason": "stop",
+  "usage": {
+    "queue_time": 0.088154337,
+    "prompt_tokens": 551,
+    "prompt_time": 0.032506708,
+    "completion_tokens": 139,
+    "completion_time": 0.290585083,
+    "total_tokens": 690,
+    "total_time": 0.323091791,
+    "completion_tokens_details": {
+      "reasoning_tokens": 74
+    }
+  },
+  "http_status": 200,
+  "attempts": 1,
+  "retry_events": [],
+  "latency_s": 0.47,
+  "collected_at": "2026-09-25T04:38:00Z"
+}
