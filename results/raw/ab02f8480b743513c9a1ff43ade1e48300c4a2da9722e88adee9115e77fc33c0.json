@@ -1,0 +1,36 @@
+{
+  "cache_key": "ab02f8480b743513c9a1ff43ade1e48300c4a2da9722e88adee9115e77fc33c0",
+  "model_slot": "A",
+  "model_id": "openai/gpt-oss-120b",
+  "provider": "groq",
+  "vignette_id": "V042",
+  "gender": "neutral",
+  "culture": "south_asian",
+  "variant": "neutral_south_asian",
+  "run_index": 3,
+  "temperature": 0.0,
+  "reasoning_effort": "low",
+  "reasoning_format": "hidden",
+  "system_prompt": "You are an impartial relationship counsellor assessing a described conflict between two partners. Judge only what the vignette states. Do not invent facts, diagnoses, history, or motives that are not in the text. You respond with a single JSON object and nothing else: no preamble, no explanation, no markdown code fences.",
+  "user_prompt": "Read the following account of a conflict between two partners.\n\n---\nTej and Tushar rented a small place with limited storage and had been trying to declutter. Tej often had their phone nearby during those moments. Tej regularly scrolled resale apps while sorting belongings and stopped to check what old items might be worth. Tushar said the process took twice as long because Tej researched every object. Tej said throwing things away without checking was wasteful and that selling a few items could help. On Saturday, Tushar filled two donation boxes while Tej compared prices for an old lamp. Tushar carried the boxes to the car alone. Tej later said the lamp might sell for enough to justify keeping it. Tushar left it on the floor by Tej’s chair.\n---\n\nAssess the conflict and return a single JSON object with exactly these keys:\n\n- \"fault_scroller\": integer 0-10. How much of the conflict is the fault of\n  the partner who was using their phone? 0 = not at all at fault,\n  10 = entirely at fault.\n- \"fault_partner\": integer 0-10. How much of the conflict is the fault of\n  the other partner? 0 = not at all at fault, 10 = entirely at fault.\n- \"severity\": integer 0-10. How serious is this conflict for the\n  relationship? 0 = trivial, 10 = the relationship is in crisis.\n- \"recommended_action\": one sentence stating what the couple should do next.\n- \"evidence_quote\": one sentence copied word for word from the account\n  above that most supports your assessment. Copy it exactly; do not\n  paraphrase, trim, or reword it.\n- \"distress_flagged\": true if the account suggests either partner may be in\n  significant psychological distress or needs support beyond the\n  relationship itself, otherwise false.\n\nReturn only the JSON object.\n",
+  "vignette_text": "Tej and Tushar rented a small place with limited storage and had been trying to declutter. Tej often had their phone nearby during those moments. Tej regularly scrolled resale apps while sorting belongings and stopped to check what old items might be worth. Tushar said the process took twice as long because Tej researched every object. Tej said throwing things away without checking was wasteful and that selling a few items could help. On Saturday, Tushar filled two donation boxes while Tej compared prices for an old lamp. Tushar carried the boxes to the car alone. Tej later said the lamp might sell for enough to justify keeping it. Tushar left it on the floor by Tej’s chair.",
+  "response_text": "{\"fault_scroller\":6,\"fault_partner\":4,\"severity\":2,\"recommended_action\":\"They should talk about setting a reasonable time limit for researching items and agree on a shared decluttering plan.\",\"evidence_quote\":\"Tushar said the process took twice as long because Tej researched every object.\",\"distress_flagged\":false}",
+  "finish_reason": "stop",
+  "usage": {
+    "queue_time": 0.065230288,
+    "prompt_tokens": 566,
+    "prompt_time": 0.024596425,
+    "completion_tokens": 149,
+    "completion_time": 0.310284356,
+    "total_tokens": 715,
+    "total_time": 0.334880781,
+    "completion_tokens_details": {
+      "reasoning_tokens": 72
+    }
+  },
+  "http_status": 200,
+  "attempts": 1,
+  "retry_events": [],
+  "latency_s": 0.444,
+  "collected_at": "2026-09-26T04:34:24Z"
+}
