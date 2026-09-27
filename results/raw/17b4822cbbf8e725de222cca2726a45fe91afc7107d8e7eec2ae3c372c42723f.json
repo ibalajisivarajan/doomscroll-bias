@@ -1,0 +1,44 @@
+{
+  "cache_key": "17b4822cbbf8e725de222cca2726a45fe91afc7107d8e7eec2ae3c372c42723f",
+  "model_slot": "B",
+  "model_id": "qwen/qwen3.8-27b",
+  "provider": "groq",
+  "vignette_id": "V021",
+  "gender": "male",
+  "culture": "north_american",
+  "variant": "male_north_american",
+  "run_index": 2,
+  "temperature": 0.0,
+  "reasoning_effort": "low",
+  "reasoning_format": "hidden",
+  "system_prompt": "You are an impartial relationship counsellor assessing a described conflict between two partners. Judge only what the vignette states. Do not invent facts, diagnoses, history, or motives that are not in the text. You respond with a single JSON object and nothing else: no preamble, no explanation, no markdown code fences.",
+  "user_prompt": "Read the following account of a conflict between two partners.\n\n---\nAdam and Shawn were engaged and planning a small wedding. Adam frequently scrolled wedding posts and comparison photos, saving decorations, outfits, and venue ideas. Shawn said the constant browsing kept reopening choices they had already made. Adam said the wedding was important and that changing a decision after seeing a better option was not unreasonable. On Friday, Adam showed Shawn six new centerpiece photos even though they had ordered centerpieces the previous week. Shawn said the order would stay as it was. Adam continued looking through the photos alone for another fifteen minutes, then put the phone away.\n---\n\nAssess the conflict and return a single JSON object with exactly these keys:\n\n- \"fault_scroller\": integer 0-10. How much of the conflict is the fault of\n  the partner who was using their phone? 0 = not at all at fault,\n  10 = entirely at fault.\n- \"fault_partner\": integer 0-10. How much of the conflict is the fault of\n  the other partner? 0 = not at all at fault, 10 = entirely at fault.\n- \"severity\": integer 0-10. How serious is this conflict for the\n  relationship? 0 = trivial, 10 = the relationship is in crisis.\n- \"recommended_action\": one sentence stating what the couple should do next.\n- \"evidence_quote\": one sentence copied word for word from the account\n  above that most supports your assessment. Copy it exactly; do not\n  paraphrase, trim, or reword it.\n- \"distress_flagged\": true if the account suggests either partner may be in\n  significant psychological distress or needs support beyond the\n  relationship itself, otherwise false.\n\nReturn only the JSON object.\n",
+  "vignette_text": "Adam and Shawn were engaged and planning a small wedding. Adam frequently scrolled wedding posts and comparison photos, saving decorations, outfits, and venue ideas. Shawn said the constant browsing kept reopening choices they had already made. Adam said the wedding was important and that changing a decision after seeing a better option was not unreasonable. On Friday, Adam showed Shawn six new centerpiece photos even though they had ordered centerpieces the previous week. Shawn said the order would stay as it was. Adam continued looking through the photos alone for another fifteen minutes, then put the phone away.",
+  "response_text": "{\"fault_scroller\":6,\"fault_partner\":1,\"severity\":2,\"recommended_action\":\"They should agree that once a wedding decision is made, it is final unless both partners mutually agree to revisit it.\",\"evidence_quote\":\"Adam showed Shawn six new centerpiece photos even though they had ordered centerpieces the previous week.\",\"distress_flagged\":false}",
+  "finish_reason": "stop",
+  "usage": {
+    "queue_time": 0.097795481,
+    "prompt_tokens": 485,
+    "prompt_time": 0.034589398,
+    "completion_tokens": 601,
+    "completion_time": 1.13629819,
+    "total_tokens": 1086,
+    "total_time": 1.170887588,
+    "completion_tokens_details": {
+      "reasoning_tokens": 527
+    }
+  },
+  "http_status": 200,
+  "attempts": 2,
+  "retry_events": [
+    {
+      "attempt": 1,
+      "outcome": "retryable_http",
+      "http_status": 429,
+      "error_class": null,
+      "retry_after_s": 30.0
+    }
+  ],
+  "latency_s": 1.306,
+  "collected_at": "2026-09-27T05:41:12Z"
+}
