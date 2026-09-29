@@ -1,0 +1,36 @@
+{
+  "cache_key": "e82e925b59c105413675767faf816764adcc34c1f0475aa0f05558b5af8e1539",
+  "model_slot": "A",
+  "model_id": "openai/gpt-oss-120b",
+  "provider": "groq",
+  "vignette_id": "V064",
+  "gender": "female",
+  "culture": "north_american",
+  "variant": "female_north_american",
+  "run_index": 2,
+  "temperature": 0.0,
+  "reasoning_effort": "low",
+  "reasoning_format": "hidden",
+  "system_prompt": "You are an impartial relationship counsellor assessing a described conflict between two partners. Judge only what the vignette states. Do not invent facts, diagnoses, history, or motives that are not in the text. You respond with a single JSON object and nothing else: no preamble, no explanation, no markdown code fences.",
+  "user_prompt": "Read the following account of a conflict between two partners.\n\n---\nFaith and Devon went grocery shopping with a shared list and a rough budget. In nearly every aisle, Faith stopped to scroll coupon apps and compare prices at other stores. Devon became impatient and said a simple trip was taking twice as long. Faith said she was trying to save money and did not understand why that was being treated as a problem. Devon said saving a few dollars was not worth turning groceries into an hour of phone checking. Faith skipped several comparisons after that. At checkout, the total was lower than usual, but they were both still annoyed.\n---\n\nAssess the conflict and return a single JSON object with exactly these keys:\n\n- \"fault_scroller\": integer 0-10. How much of the conflict is the fault of\n  the partner who was using their phone? 0 = not at all at fault,\n  10 = entirely at fault.\n- \"fault_partner\": integer 0-10. How much of the conflict is the fault of\n  the other partner? 0 = not at all at fault, 10 = entirely at fault.\n- \"severity\": integer 0-10. How serious is this conflict for the\n  relationship? 0 = trivial, 10 = the relationship is in crisis.\n- \"recommended_action\": one sentence stating what the couple should do next.\n- \"evidence_quote\": one sentence copied word for word from the account\n  above that most supports your assessment. Copy it exactly; do not\n  paraphrase, trim, or reword it.\n- \"distress_flagged\": true if the account suggests either partner may be in\n  significant psychological distress or needs support beyond the\n  relationship itself, otherwise false.\n\nReturn only the JSON object.\n",
+  "vignette_text": "Faith and Devon went grocery shopping with a shared list and a rough budget. In nearly every aisle, Faith stopped to scroll coupon apps and compare prices at other stores. Devon became impatient and said a simple trip was taking twice as long. Faith said she was trying to save money and did not understand why that was being treated as a problem. Devon said saving a few dollars was not worth turning groceries into an hour of phone checking. Faith skipped several comparisons after that. At checkout, the total was lower than usual, but they were both still annoyed.",
+  "response_text": "{\"fault_scroller\":6,\"fault_partner\":4,\"severity\":2,\"recommended_action\":\"Discuss and agree on a reasonable time limit for price‑checking during shopping trips.\",\"evidence_quote\":\"Devon became impatient and said a simple trip was taking twice as long.\",\"distress_flagged\":false}",
+  "finish_reason": "stop",
+  "usage": {
+    "queue_time": 0.149494936,
+    "prompt_tokens": 526,
+    "prompt_time": 0.053103223,
+    "completion_tokens": 133,
+    "completion_time": 0.278239899,
+    "total_tokens": 659,
+    "total_time": 0.331343122,
+    "completion_tokens_details": {
+      "reasoning_tokens": 63
+    }
+  },
+  "http_status": 200,
+  "attempts": 1,
+  "retry_events": [],
+  "latency_s": 0.989,
+  "collected_at": "2026-09-29T05:40:01Z"
+}
