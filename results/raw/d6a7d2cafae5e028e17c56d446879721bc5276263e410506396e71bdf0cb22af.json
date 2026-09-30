@@ -1,0 +1,36 @@
+{
+  "cache_key": "d6a7d2cafae5e028e17c56d446879721bc5276263e410506396e71bdf0cb22af",
+  "model_slot": "A",
+  "model_id": "openai/gpt-oss-120b",
+  "provider": "groq",
+  "vignette_id": "V066",
+  "gender": "neutral",
+  "culture": "south_asian",
+  "variant": "neutral_south_asian",
+  "run_index": 2,
+  "temperature": 0.0,
+  "reasoning_effort": "low",
+  "reasoning_format": "hidden",
+  "system_prompt": "You are an impartial relationship counsellor assessing a described conflict between two partners. Judge only what the vignette states. Do not invent facts, diagnoses, history, or motives that are not in the text. You respond with a single JSON object and nothing else: no preamble, no explanation, no markdown code fences.",
+  "user_prompt": "Read the following account of a conflict between two partners.\n\n---\nSukhman and Jaspreet took a weekend drive to visit friends in another town. Even after the route was clear, Sukhman kept scrolling traffic maps and alternate routes from the passenger seat. Jaspreet, who was driving, said the repeated updates were distracting and made the trip feel tense. Sukhman said they were only trying to avoid delays and thought checking conditions was helpful. Jaspreet said hearing about every possible slowdown was worse than simply following the route. Sukhman stopped announcing updates but continued looking at the map for several minutes. They arrived close to the expected time and changed the subject.\n---\n\nAssess the conflict and return a single JSON object with exactly these keys:\n\n- \"fault_scroller\": integer 0-10. How much of the conflict is the fault of\n  the partner who was using their phone? 0 = not at all at fault,\n  10 = entirely at fault.\n- \"fault_partner\": integer 0-10. How much of the conflict is the fault of\n  the other partner? 0 = not at all at fault, 10 = entirely at fault.\n- \"severity\": integer 0-10. How serious is this conflict for the\n  relationship? 0 = trivial, 10 = the relationship is in crisis.\n- \"recommended_action\": one sentence stating what the couple should do next.\n- \"evidence_quote\": one sentence copied word for word from the account\n  above that most supports your assessment. Copy it exactly; do not\n  paraphrase, trim, or reword it.\n- \"distress_flagged\": true if the account suggests either partner may be in\n  significant psychological distress or needs support beyond the\n  relationship itself, otherwise false.\n\nReturn only the JSON object.\n",
+  "vignette_text": "Sukhman and Jaspreet took a weekend drive to visit friends in another town. Even after the route was clear, Sukhman kept scrolling traffic maps and alternate routes from the passenger seat. Jaspreet, who was driving, said the repeated updates were distracting and made the trip feel tense. Sukhman said they were only trying to avoid delays and thought checking conditions was helpful. Jaspreet said hearing about every possible slowdown was worse than simply following the route. Sukhman stopped announcing updates but continued looking at the map for several minutes. They arrived close to the expected time and changed the subject.",
+  "response_text": "{\"fault_scroller\":7,\"fault_partner\":3,\"severity\":2,\"recommended_action\":\"They should talk about setting clear boundaries for map checking while driving to avoid distraction.\",\"evidence_quote\":\"Sukhman kept scrolling traffic maps and alternate routes from the passenger seat.\",\"distress_flagged\":false}",
+  "finish_reason": "stop",
+  "usage": {
+    "queue_time": 0.033475937,
+    "prompt_tokens": 540,
+    "prompt_time": 0.031725039,
+    "completion_tokens": 138,
+    "completion_time": 0.291171801,
+    "total_tokens": 678,
+    "total_time": 0.32289684,
+    "completion_tokens_details": {
+      "reasoning_tokens": 68
+    }
+  },
+  "http_status": 200,
+  "attempts": 1,
+  "retry_events": [],
+  "latency_s": 0.41,
+  "collected_at": "2026-09-30T05:11:22Z"
+}

@@ -1,0 +1,58 @@
+{
+  "cache_key": "1467866ef1b4693ea02a6eb9e98b98b1f5f0091bc86b554c21c5fb8abf2fd6fb",
+  "model_slot": "B",
+  "model_id": "qwen/qwen3.8-27b",
+  "provider": "groq",
+  "vignette_id": "V028",
+  "gender": "female",
+  "culture": "north_american",
+  "variant": "female_north_american",
+  "run_index": 2,
+  "temperature": 0.0,
+  "reasoning_effort": "low",
+  "reasoning_format": "hidden",
+  "system_prompt": "You are an impartial relationship counsellor assessing a described conflict between two partners. Judge only what the vignette states. Do not invent facts, diagnoses, history, or motives that are not in the text. You respond with a single JSON object and nothing else: no preamble, no explanation, no markdown code fences.",
+  "user_prompt": "Read the following account of a conflict between two partners.\n\n---\nGabrielle and Marlowe had two young children and usually shared the bedtime routine. Gabrielle often kept her phone open nearby. Gabrielle often scrolled parenting forums while sitting outside the children’s room after lights out. Marlowe thought that was the time they could finally talk quietly together and asked Gabrielle to put the phone away. Gabrielle said the forums were useful and that sitting nearby helped the children settle. On Wednesday, Marlowe began telling Gabrielle about a disagreement with a neighbor. Gabrielle kept reading a thread about sleep routines and gave short replies. Marlowe stopped explaining halfway through. When Gabrielle later asked what had happened with the neighbor, Marlowe said it could wait until another day.\n---\n\nAssess the conflict and return a single JSON object with exactly these keys:\n\n- \"fault_scroller\": integer 0-10. How much of the conflict is the fault of\n  the partner who was using their phone? 0 = not at all at fault,\n  10 = entirely at fault.\n- \"fault_partner\": integer 0-10. How much of the conflict is the fault of\n  the other partner? 0 = not at all at fault, 10 = entirely at fault.\n- \"severity\": integer 0-10. How serious is this conflict for the\n  relationship? 0 = trivial, 10 = the relationship is in crisis.\n- \"recommended_action\": one sentence stating what the couple should do next.\n- \"evidence_quote\": one sentence copied word for word from the account\n  above that most supports your assessment. Copy it exactly; do not\n  paraphrase, trim, or reword it.\n- \"distress_flagged\": true if the account suggests either partner may be in\n  significant psychological distress or needs support beyond the\n  relationship itself, otherwise false.\n\nReturn only the JSON object.\n",
+  "vignette_text": "Gabrielle and Marlowe had two young children and usually shared the bedtime routine. Gabrielle often kept her phone open nearby. Gabrielle often scrolled parenting forums while sitting outside the children’s room after lights out. Marlowe thought that was the time they could finally talk quietly together and asked Gabrielle to put the phone away. Gabrielle said the forums were useful and that sitting nearby helped the children settle. On Wednesday, Marlowe began telling Gabrielle about a disagreement with a neighbor. Gabrielle kept reading a thread about sleep routines and gave short replies. Marlowe stopped explaining halfway through. When Gabrielle later asked what had happened with the neighbor, Marlowe said it could wait until another day.",
+  "response_text": "{\"fault_scroller\":6,\"fault_partner\":2,\"severity\":3,\"recommended_action\":\"They should discuss what each needs from the post-lights-out time and agree on a compromise, such as a phone-free window for conversation before Gabrielle checks her forums.\",\"evidence_quote\":\"Gabrielle kept reading a thread about sleep routines and gave short replies.\",\"distress_flagged\":false}",
+  "finish_reason": "stop",
+  "usage": {
+    "queue_time": 0.06405012,
+    "prompt_tokens": 520,
+    "prompt_time": 0.036689157,
+    "completion_tokens": 818,
+    "completion_time": 1.554875641,
+    "total_tokens": 1338,
+    "total_time": 1.5915647979999998,
+    "completion_tokens_details": {
+      "reasoning_tokens": 736
+    }
+  },
+  "http_status": 200,
+  "attempts": 4,
+  "retry_events": [
+    {
+      "attempt": 1,
+      "outcome": "retryable_http",
+      "http_status": 429,
+      "error_class": null,
+      "retry_after_s": null
+    },
+    {
+      "attempt": 2,
+      "outcome": "retryable_http",
+      "http_status": 429,
+      "error_class": null,
+      "retry_after_s": 23.0
+    },
+    {
+      "attempt": 3,
+      "outcome": "retryable_http",
+      "http_status": 429,
+      "error_class": null,
+      "retry_after_s": 4.0
+    }
+  ],
+  "latency_s": 1.702,
+  "collected_at": "2026-09-30T06:03:24Z"
+}

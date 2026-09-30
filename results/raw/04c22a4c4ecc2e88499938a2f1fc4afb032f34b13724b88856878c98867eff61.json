@@ -1,0 +1,36 @@
+{
+  "cache_key": "04c22a4c4ecc2e88499938a2f1fc4afb032f34b13724b88856878c98867eff61",
+  "model_slot": "A",
+  "model_id": "openai/gpt-oss-120b",
+  "provider": "groq",
+  "vignette_id": "V069",
+  "gender": "neutral",
+  "culture": "north_american",
+  "variant": "neutral_north_american",
+  "run_index": 2,
+  "temperature": 0.0,
+  "reasoning_effort": "low",
+  "reasoning_format": "hidden",
+  "system_prompt": "You are an impartial relationship counsellor assessing a described conflict between two partners. Judge only what the vignette states. Do not invent facts, diagnoses, history, or motives that are not in the text. You respond with a single JSON object and nothing else: no preamble, no explanation, no markdown code fences.",
+  "user_prompt": "Read the following account of a conflict between two partners.\n\n---\nParis and Robin were getting their children ready for school when Paris began scrolling fitness statistics from the previous day and comparing step counts with friends. Robin packed lunches and called upstairs for the children to get dressed. Robin said the timing made it look as though Paris had opted out of the morning rush. Paris said they had already completed several tasks and they were only checking the app for a few minutes. Robin said those few minutes always seemed to happen during the busiest part of the morning. Paris put the phone down and helped find a missing shoe. They left on time.\n---\n\nAssess the conflict and return a single JSON object with exactly these keys:\n\n- \"fault_scroller\": integer 0-10. How much of the conflict is the fault of\n  the partner who was using their phone? 0 = not at all at fault,\n  10 = entirely at fault.\n- \"fault_partner\": integer 0-10. How much of the conflict is the fault of\n  the other partner? 0 = not at all at fault, 10 = entirely at fault.\n- \"severity\": integer 0-10. How serious is this conflict for the\n  relationship? 0 = trivial, 10 = the relationship is in crisis.\n- \"recommended_action\": one sentence stating what the couple should do next.\n- \"evidence_quote\": one sentence copied word for word from the account\n  above that most supports your assessment. Copy it exactly; do not\n  paraphrase, trim, or reword it.\n- \"distress_flagged\": true if the account suggests either partner may be in\n  significant psychological distress or needs support beyond the\n  relationship itself, otherwise false.\n\nReturn only the JSON object.\n",
+  "vignette_text": "Paris and Robin were getting their children ready for school when Paris began scrolling fitness statistics from the previous day and comparing step counts with friends. Robin packed lunches and called upstairs for the children to get dressed. Robin said the timing made it look as though Paris had opted out of the morning rush. Paris said they had already completed several tasks and they were only checking the app for a few minutes. Robin said those few minutes always seemed to happen during the busiest part of the morning. Paris put the phone down and helped find a missing shoe. They left on time.",
+  "response_text": "{\"fault_scroller\":4,\"fault_partner\":6,\"severity\":2,\"recommended_action\":\"They should talk about morning priorities and agree on limited phone use during rush times.\",\"evidence_quote\":\"Robin said those few minutes always seemed to happen during the busiest part of the morning.\",\"distress_flagged\":false}",
+  "finish_reason": "stop",
+  "usage": {
+    "queue_time": 0.243700885,
+    "prompt_tokens": 528,
+    "prompt_time": 0.02099356,
+    "completion_tokens": 144,
+    "completion_time": 0.305767047,
+    "total_tokens": 672,
+    "total_time": 0.326760607,
+    "completion_tokens_details": {
+      "reasoning_tokens": 72
+    }
+  },
+  "http_status": 200,
+  "attempts": 1,
+  "retry_events": [],
+  "latency_s": 0.608,
+  "collected_at": "2026-09-30T05:25:32Z"
+}
