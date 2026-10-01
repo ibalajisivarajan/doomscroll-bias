@@ -1,0 +1,36 @@
+{
+  "cache_key": "18afa52e6de29ea64996690c221a0b7c3536359fc16ff7bd817ca81d9c6eb646",
+  "model_slot": "A",
+  "model_id": "openai/gpt-oss-120b",
+  "provider": "groq",
+  "vignette_id": "V074",
+  "gender": "male",
+  "culture": "north_american",
+  "variant": "male_north_american",
+  "run_index": 5,
+  "temperature": 0.0,
+  "reasoning_effort": "low",
+  "reasoning_format": "hidden",
+  "system_prompt": "You are an impartial relationship counsellor assessing a described conflict between two partners. Judge only what the vignette states. Do not invent facts, diagnoses, history, or motives that are not in the text. You respond with a single JSON object and nothing else: no preamble, no explanation, no markdown code fences.",
+  "user_prompt": "Read the following account of a conflict between two partners.\n\n---\nJeremy and Rowan were waiting for a short flight at the airport. Instead of talking, Jeremy spent most of the wait scrolling hotel reviews and restaurant lists for the destination. Rowan said they had already planned enough and wanted to enjoy the trip without optimizing every detail. Jeremy said he found planning relaxing and thought the information could make the weekend better. Rowan said it made the trip feel like a checklist before it had even started. Jeremy saved two places and closed the app. When boarding began, they walked to the gate together and discussed where to eat that evening.\n---\n\nAssess the conflict and return a single JSON object with exactly these keys:\n\n- \"fault_scroller\": integer 0-10. How much of the conflict is the fault of\n  the partner who was using their phone? 0 = not at all at fault,\n  10 = entirely at fault.\n- \"fault_partner\": integer 0-10. How much of the conflict is the fault of\n  the other partner? 0 = not at all at fault, 10 = entirely at fault.\n- \"severity\": integer 0-10. How serious is this conflict for the\n  relationship? 0 = trivial, 10 = the relationship is in crisis.\n- \"recommended_action\": one sentence stating what the couple should do next.\n- \"evidence_quote\": one sentence copied word for word from the account\n  above that most supports your assessment. Copy it exactly; do not\n  paraphrase, trim, or reword it.\n- \"distress_flagged\": true if the account suggests either partner may be in\n  significant psychological distress or needs support beyond the\n  relationship itself, otherwise false.\n\nReturn only the JSON object.\n",
+  "vignette_text": "Jeremy and Rowan were waiting for a short flight at the airport. Instead of talking, Jeremy spent most of the wait scrolling hotel reviews and restaurant lists for the destination. Rowan said they had already planned enough and wanted to enjoy the trip without optimizing every detail. Jeremy said he found planning relaxing and thought the information could make the weekend better. Rowan said it made the trip feel like a checklist before it had even started. Jeremy saved two places and closed the app. When boarding began, they walked to the gate together and discussed where to eat that evening.",
+  "response_text": "{\"fault_scroller\":4,\"fault_partner\":3,\"severity\":2,\"recommended_action\":\"They should discuss how much planning feels comfortable for both and agree on a balance for future trips.\",\"evidence_quote\":\"Rowan said it made the trip feel like a checklist before it had even started.\",\"distress_flagged\":false}",
+  "finish_reason": "stop",
+  "usage": {
+    "queue_time": 0.012604208,
+    "prompt_tokens": 526,
+    "prompt_time": 0.102679397,
+    "completion_tokens": 137,
+    "completion_time": 0.291236618,
+    "total_tokens": 663,
+    "total_time": 0.393916015,
+    "completion_tokens_details": {
+      "reasoning_tokens": 62
+    }
+  },
+  "http_status": 200,
+  "attempts": 1,
+  "retry_events": [],
+  "latency_s": 0.549,
+  "collected_at": "2026-10-01T05:33:19Z"
+}
