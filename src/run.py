@@ -822,6 +822,18 @@ def main(argv: list[str] | None = None) -> int:
             f"{len(vignettes)} are authored so far."
         )
 
+    # Resolved and printed before the --dry-run early return so a dry run
+    # can confirm the effective per-slot pace without making any call.
+    rate_limits_cfg = config["rate_limits"]
+    default_rpm = float(rate_limits_cfg["requests_per_minute"])
+    rpm_overrides = rate_limits_cfg.get("requests_per_minute_by_model") or {}
+    rpm_by_slot = {
+        slot: float(rpm_overrides.get(slot, default_rpm))
+        for slot in sorted({t.model_slot for t in tasks})
+    }
+    for slot, rpm in rpm_by_slot.items():
+        print(f"rate limit {slot}: {rpm:.0f} requests/minute")
+
     pending = [t for t in tasks if not t.cache_path(raw_dir).exists()]
     initial_cached = len(tasks) - len(pending)
     print(f"cached   : {initial_cached} already in {display_path(raw_dir)}")
@@ -865,9 +877,21 @@ def main(argv: list[str] | None = None) -> int:
 
     limits = config["rate_limits"]
     concurrency = max(1, int(limits["max_concurrent"]))
-    limiter = RateLimiter(float(limits["requests_per_minute"]))
     stats = Stats()
     failures: list[tuple[Task, str]] = []
+
+    # Historically one RateLimiter was shared process-wide, so slot B's 429s
+    # (see rate_limits.requests_per_minute_by_model in protocol.yaml) would
+    # have forced the same slow pace onto slot A even though A has never
+    # needed it: of 2,830 slot-A responses collected since the 2026-09-19
+    # retry-telemetry change, 0 carried a retry_events entry, against
+    # 994/1,154 for slot B (1,366 retries, all HTTP 429). One limiter per
+    # model slot lets each slot's own call stream get its own pace instead
+    # of a single shared one. rpm_by_slot was already resolved and printed
+    # above, before the --dry-run early return.
+    limiters: dict[str, RateLimiter] = {
+        slot: RateLimiter(rpm) for slot, rpm in rpm_by_slot.items()
+    }
 
     # Groq publishes daily limits per selected model, so quota accounting must
     # also be per model. A single shared counter would let the first slot consume
@@ -908,7 +932,7 @@ def main(argv: list[str] | None = None) -> int:
         with ThreadPoolExecutor(max_workers=concurrency) as pool:
             futures = [
                 pool.submit(
-                    process, t, raw_dir, session, config, limiter, stats,
+                    process, t, raw_dir, session, config, limiters[t.model_slot], stats,
                     daily_cap_trackers.get(t.model_slot), deadline,
                 )
                 for t in pending

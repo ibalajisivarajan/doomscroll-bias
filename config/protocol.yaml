@@ -393,6 +393,25 @@ statistics:
 rate_limits:
   max_concurrent: 1
   requests_per_minute: 6
+  # OPERATIONAL AMENDMENT (2026-10-04): per-model override, B: 6 -> 2 req/min.
+  # Cause: the 2026-09-19 retry-telemetry change (see below) has since proven
+  # the retry cause it could only infer at the time. Of every raw response
+  # collected since that change, slot A (0/2,830) has never once carried a
+  # retry_events entry; slot B has on 994/1,154 (86%) of them, 1,366 retry
+  # events total, every single one HTTP 429 -- Groq is rate-limiting B's
+  # qwen endpoint specifically, not A's, and not on 5xx/transport grounds.
+  # requests_per_minute was one process-wide limiter shared by both slots, so
+  # slot B's throttling could only be addressed by slowing slot A down too,
+  # which A has never needed. requests_per_minute_by_model below overrides
+  # the default per slot; src/run.py now builds one RateLimiter per model
+  # slot instead of one shared instance. What did NOT change: max_tokens
+  # (1024, locked inference setting), max_retries (3), backoff settings,
+  # daily_request_cap_per_model (175), max_collection_minutes (300), or
+  # slot A's pacing (still 6 req/min, the requests_per_minute default).
+  # Reversible: delete the requests_per_minute_by_model key (or set B back to
+  # 6) to return to a single shared rate for both slots.
+  requests_per_minute_by_model:
+    B: 2
   # Lowered from 6 -> 3 after run 35422141274 (2026-09-19): Model B spent 107
   # of its 175 daily attempts on retries for only 68 distinct cells attempted,
   # leaving 107 vignette-cells never touched that day. Retries are counted

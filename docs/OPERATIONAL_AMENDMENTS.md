@@ -150,6 +150,68 @@ The preregistered inferential analysis remains gated until the complete
 
 ---
 
+## 2026-10-04 — Per-model request pacing (Model B: 6 -> 2 req/min)
+
+**Change commit:** (this commit)  
+**Affected files:** `config/protocol.yaml`, `src/run.py`  
+**Field:** `rate_limits.requests_per_minute_by_model` (new, optional)
+
+**Before:** one process-wide `RateLimiter` shared by both model slots at
+`requests_per_minute: 6`.  
+**After:** one `RateLimiter` per model slot. Slot A keeps the default
+(6 req/min, unchanged). Slot B is overridden to 2 req/min via
+`requests_per_minute_by_model: {B: 2}`.
+
+### Triggering production evidence
+
+The 2026-09-19 retry-telemetry change could only infer the retry cause from
+wall-clock timing. By 2026-10-04, production collection had accumulated 3,984
+raw responses (2,830 on slot A, 1,154 on slot B) carrying that telemetry,
+which proves it directly:
+
+- Slot A: 0 of 2,830 written responses carry any `retry_events` entry.
+- Slot B: 994 of 1,154 (86%) carry at least one `retry_events` entry, 1,366
+  retry events in total, **every one of them HTTP 429**. Zero 5xx, zero
+  transport errors, on either slot.
+
+Groq is rate-limiting slot B's `qwen/qwen3.8-27b` endpoint specifically, not
+slot A's `openai/gpt-oss-120b` endpoint, and the mechanism is confirmed as
+provider-side rate limiting rather than server errors or network issues.
+
+### Rationale
+
+With a single shared rate limiter, slowing the request pace enough to stop
+slot B's 429s would also have slowed slot A, which has never needed it and
+was collecting cleanly at 6 req/min. Giving each model slot its own
+`RateLimiter` instance lets the pace be set per the evidence for that slot
+alone. `max_concurrent: 1` is unchanged, so requests still run strictly
+sequentially; a 2 req/min slot-B limiter spaces consecutive slot-B requests
+>= 30s apart without affecting slot A's spacing (>= 10s apart, from the
+unchanged default).
+
+### Scientific impact assessment
+
+Operational collection-pacing change only. Unchanged: both model checkpoints,
+provider endpoint family, system/user prompts, temperature (0), seed,
+reasoning settings, `max_tokens` (1024, locked), the 120-vignette x
+6-condition x 5-run design, 7,200-response target, `max_retries` (3),
+`daily_request_cap_per_model` (175), `max_collection_minutes` (300), scoring
+rules, hypotheses H1-H4, and the final statistical analysis plan (still
+gated on the complete 7,200-response corpus).
+
+Already-collected responses are not regenerated, modified, or discarded.
+Nothing about a successful call's payload changes -- only how long the
+collector waits between slot B's requests.
+
+### Reversibility
+
+Delete `rate_limits.requests_per_minute_by_model` (or set `B: 6`) to return
+both slots to a single shared rate. No code change is required to revert;
+`src/run.py` falls back to `requests_per_minute` for any slot without an
+override.
+
+---
+
 ## Interpretation rule
 
 Entries in this file should be treated as part of the provenance record for the
