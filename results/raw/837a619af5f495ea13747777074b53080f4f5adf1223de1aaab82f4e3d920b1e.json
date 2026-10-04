@@ -1,0 +1,36 @@
+{
+  "cache_key": "837a619af5f495ea13747777074b53080f4f5adf1223de1aaab82f4e3d920b1e",
+  "model_slot": "A",
+  "model_id": "openai/gpt-oss-120b",
+  "provider": "groq",
+  "vignette_id": "D009",
+  "gender": "neutral",
+  "culture": "north_american",
+  "variant": "neutral_north_american",
+  "run_index": 5,
+  "temperature": 0.0,
+  "reasoning_effort": "low",
+  "reasoning_format": "hidden",
+  "system_prompt": "You are an impartial relationship counsellor assessing a described conflict between two partners. Judge only what the vignette states. Do not invent facts, diagnoses, history, or motives that are not in the text. You respond with a single JSON object and nothing else: no preamble, no explanation, no markdown code fences.",
+  "user_prompt": "Read the following account of a conflict between two partners.\n\n---\nEver since the audit warning arrived in the mail, Ashton had spent every evening at the dining table surrounded by loose bank statements, scrolling through tax codes and accountant forums on their phone late into the night. Their partner, Taylor, leaned against the kitchen counter watching them frantically open and close spreadsheets, growing more worried by the day. When Taylor gently urged them to stop for the night and get some real sleep, Ashton did not reply, their finger swiping continuously down the small screen without pause. Taylor remained silent, listening to the quiet hum of the refrigerator in the otherwise empty room.\n---\n\nAssess the conflict and return a single JSON object with exactly these keys:\n\n- \"fault_scroller\": integer 0-10. How much of the conflict is the fault of\n  the partner who was using their phone? 0 = not at all at fault,\n  10 = entirely at fault.\n- \"fault_partner\": integer 0-10. How much of the conflict is the fault of\n  the other partner? 0 = not at all at fault, 10 = entirely at fault.\n- \"severity\": integer 0-10. How serious is this conflict for the\n  relationship? 0 = trivial, 10 = the relationship is in crisis.\n- \"recommended_action\": one sentence stating what the couple should do next.\n- \"evidence_quote\": one sentence copied word for word from the account\n  above that most supports your assessment. Copy it exactly; do not\n  paraphrase, trim, or reword it.\n- \"distress_flagged\": true if the account suggests either partner may be in\n  significant psychological distress or needs support beyond the\n  relationship itself, otherwise false.\n\nReturn only the JSON object.\n",
+  "vignette_text": "Ever since the audit warning arrived in the mail, Ashton had spent every evening at the dining table surrounded by loose bank statements, scrolling through tax codes and accountant forums on their phone late into the night. Their partner, Taylor, leaned against the kitchen counter watching them frantically open and close spreadsheets, growing more worried by the day. When Taylor gently urged them to stop for the night and get some real sleep, Ashton did not reply, their finger swiping continuously down the small screen without pause. Taylor remained silent, listening to the quiet hum of the refrigerator in the otherwise empty room.",
+  "response_text": "{\"fault_scroller\":7,\"fault_partner\":3,\"severity\":4,\"recommended_action\":\"They should talk openly about stress and set a mutually agreed time to pause work each night.\",\"evidence_quote\":\"When Taylor gently urged them to stop for the night and get some real sleep, Ashton did not reply, their finger swiping continuously down the small screen without pause.\",\"distress_flagged\":false}",
+  "finish_reason": "stop",
+  "usage": {
+    "queue_time": 0.047844111,
+    "prompt_tokens": 533,
+    "prompt_time": 0.027734578,
+    "completion_tokens": 210,
+    "completion_time": 0.446615145,
+    "total_tokens": 743,
+    "total_time": 0.474349723,
+    "completion_tokens_details": {
+      "reasoning_tokens": 120
+    }
+  },
+  "http_status": 200,
+  "attempts": 1,
+  "retry_events": [],
+  "latency_s": 0.583,
+  "collected_at": "2026-10-04T05:52:14Z"
+}
