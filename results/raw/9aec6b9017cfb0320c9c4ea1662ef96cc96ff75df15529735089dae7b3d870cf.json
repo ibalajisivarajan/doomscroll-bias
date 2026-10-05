@@ -1,0 +1,36 @@
+{
+  "cache_key": "9aec6b9017cfb0320c9c4ea1662ef96cc96ff75df15529735089dae7b3d870cf",
+  "model_slot": "A",
+  "model_id": "openai/gpt-oss-120b",
+  "provider": "groq",
+  "vignette_id": "D015",
+  "gender": "male",
+  "culture": "north_american",
+  "variant": "male_north_american",
+  "run_index": 3,
+  "temperature": 0.0,
+  "reasoning_effort": "low",
+  "reasoning_format": "hidden",
+  "system_prompt": "You are an impartial relationship counsellor assessing a described conflict between two partners. Judge only what the vignette states. Do not invent facts, diagnoses, history, or motives that are not in the text. You respond with a single JSON object and nothing else: no preamble, no explanation, no markdown code fences.",
+  "user_prompt": "Read the following account of a conflict between two partners.\n\n---\nFelix had been coordinating most of the care for an aging parent whose dementia had worsened over the past year. At home with Terry, Felix often scrolled caregiver groups, memory-care advice, and arguments about when families should consider residential care. Terry understood why the information mattered but worried that Felix never seemed to leave the caregiving role. One Saturday morning, Terry made coffee and suggested a walk before the next family visit. Felix said yes, then kept reading posts about wandering and nighttime confusion. Forty minutes passed. Terry went outside alone and returned to find Felix in the same chair, still holding the phone.\n---\n\nAssess the conflict and return a single JSON object with exactly these keys:\n\n- \"fault_scroller\": integer 0-10. How much of the conflict is the fault of\n  the partner who was using their phone? 0 = not at all at fault,\n  10 = entirely at fault.\n- \"fault_partner\": integer 0-10. How much of the conflict is the fault of\n  the other partner? 0 = not at all at fault, 10 = entirely at fault.\n- \"severity\": integer 0-10. How serious is this conflict for the\n  relationship? 0 = trivial, 10 = the relationship is in crisis.\n- \"recommended_action\": one sentence stating what the couple should do next.\n- \"evidence_quote\": one sentence copied word for word from the account\n  above that most supports your assessment. Copy it exactly; do not\n  paraphrase, trim, or reword it.\n- \"distress_flagged\": true if the account suggests either partner may be in\n  significant psychological distress or needs support beyond the\n  relationship itself, otherwise false.\n\nReturn only the JSON object.\n",
+  "vignette_text": "Felix had been coordinating most of the care for an aging parent whose dementia had worsened over the past year. At home with Terry, Felix often scrolled caregiver groups, memory-care advice, and arguments about when families should consider residential care. Terry understood why the information mattered but worried that Felix never seemed to leave the caregiving role. One Saturday morning, Terry made coffee and suggested a walk before the next family visit. Felix said yes, then kept reading posts about wandering and nighttime confusion. Forty minutes passed. Terry went outside alone and returned to find Felix in the same chair, still holding the phone.",
+  "response_text": "{\"fault_scroller\":7,\"fault_partner\":3,\"severity\":4,\"recommended_action\":\"They should discuss and agree on dedicated caregiving time versus shared downtime, setting clear expectations for breaks together.\",\"evidence_quote\":\"Forty minutes passed. Terry went outside alone and returned to find Felix in the same chair, still holding the phone.\",\"distress_flagged\":false}",
+  "finish_reason": "stop",
+  "usage": {
+    "queue_time": 0.114631852,
+    "prompt_tokens": 538,
+    "prompt_time": 0.023672638,
+    "completion_tokens": 170,
+    "completion_time": 0.350108846,
+    "total_tokens": 708,
+    "total_time": 0.373781484,
+    "completion_tokens_details": {
+      "reasoning_tokens": 86
+    }
+  },
+  "http_status": 200,
+  "attempts": 1,
+  "retry_events": [],
+  "latency_s": 0.576,
+  "collected_at": "2026-10-05T05:32:44Z"
+}
