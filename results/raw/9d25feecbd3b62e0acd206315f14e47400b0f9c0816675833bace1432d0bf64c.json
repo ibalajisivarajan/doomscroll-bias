@@ -1,0 +1,44 @@
+{
+  "cache_key": "9d25feecbd3b62e0acd206315f14e47400b0f9c0816675833bace1432d0bf64c",
+  "model_slot": "B",
+  "model_id": "qwen/qwen3.8-27b",
+  "provider": "groq",
+  "vignette_id": "V046",
+  "gender": "female",
+  "culture": "north_american",
+  "variant": "female_north_american",
+  "run_index": 2,
+  "temperature": 0.0,
+  "reasoning_effort": "low",
+  "reasoning_format": "hidden",
+  "system_prompt": "You are an impartial relationship counsellor assessing a described conflict between two partners. Judge only what the vignette states. Do not invent facts, diagnoses, history, or motives that are not in the text. You respond with a single JSON object and nothing else: no preamble, no explanation, no markdown code fences.",
+  "user_prompt": "Read the following account of a conflict between two partners.\n\n---\nIngrid and Peyton had a habit of sitting on the porch after dinner during warmer months. Ingrid often kept her phone open nearby. Ingrid often scrolled astronomy and space news while Peyton talked about neighbors, work, or weekend plans. Peyton liked that Ingrid had a hobby but said the porch time had become mostly silent. Ingrid said Peyton did not always want to talk either and that reading beside each other could still count as being together. One evening, Peyton pointed out a bright object in the sky. Ingrid checked an astronomy app instead of looking up immediately. Peyton laughed and went inside for water. Ingrid stayed outside reading about the object.\n---\n\nAssess the conflict and return a single JSON object with exactly these keys:\n\n- \"fault_scroller\": integer 0-10. How much of the conflict is the fault of\n  the partner who was using their phone? 0 = not at all at fault,\n  10 = entirely at fault.\n- \"fault_partner\": integer 0-10. How much of the conflict is the fault of\n  the other partner? 0 = not at all at fault, 10 = entirely at fault.\n- \"severity\": integer 0-10. How serious is this conflict for the\n  relationship? 0 = trivial, 10 = the relationship is in crisis.\n- \"recommended_action\": one sentence stating what the couple should do next.\n- \"evidence_quote\": one sentence copied word for word from the account\n  above that most supports your assessment. Copy it exactly; do not\n  paraphrase, trim, or reword it.\n- \"distress_flagged\": true if the account suggests either partner may be in\n  significant psychological distress or needs support beyond the\n  relationship itself, otherwise false.\n\nReturn only the JSON object.\n",
+  "vignette_text": "Ingrid and Peyton had a habit of sitting on the porch after dinner during warmer months. Ingrid often kept her phone open nearby. Ingrid often scrolled astronomy and space news while Peyton talked about neighbors, work, or weekend plans. Peyton liked that Ingrid had a hobby but said the porch time had become mostly silent. Ingrid said Peyton did not always want to talk either and that reading beside each other could still count as being together. One evening, Peyton pointed out a bright object in the sky. Ingrid checked an astronomy app instead of looking up immediately. Peyton laughed and went inside for water. Ingrid stayed outside reading about the object.",
+  "response_text": "{\"fault_scroller\":4,\"fault_partner\":3,\"severity\":2,\"recommended_action\":\"They should briefly discuss what 'being together' means to each person and agree on a balance between parallel activity and conversation during porch time.\",\"evidence_quote\":\"Peyton liked that Ingrid had a hobby but said the porch time had become mostly silent.\",\"distress_flagged\":false}",
+  "finish_reason": "stop",
+  "usage": {
+    "queue_time": 0.00434663,
+    "prompt_tokens": 505,
+    "prompt_time": 0.042156002,
+    "completion_tokens": 700,
+    "completion_time": 1.461299793,
+    "total_tokens": 1205,
+    "total_time": 1.503455795,
+    "completion_tokens_details": {
+      "reasoning_tokens": 620
+    }
+  },
+  "http_status": 200,
+  "attempts": 2,
+  "retry_events": [
+    {
+      "attempt": 1,
+      "outcome": "retryable_http",
+      "http_status": 429,
+      "error_class": null,
+      "retry_after_s": 5.0
+    }
+  ],
+  "latency_s": 1.545,
+  "collected_at": "2026-10-06T07:48:17Z"
+}

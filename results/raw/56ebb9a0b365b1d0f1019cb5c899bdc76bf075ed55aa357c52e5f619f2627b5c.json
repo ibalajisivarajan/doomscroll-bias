@@ -1,0 +1,36 @@
+{
+  "cache_key": "56ebb9a0b365b1d0f1019cb5c899bdc76bf075ed55aa357c52e5f619f2627b5c",
+  "model_slot": "A",
+  "model_id": "openai/gpt-oss-120b",
+  "provider": "groq",
+  "vignette_id": "D019",
+  "gender": "neutral",
+  "culture": "north_american",
+  "variant": "neutral_north_american",
+  "run_index": 3,
+  "temperature": 0.0,
+  "reasoning_effort": "low",
+  "reasoning_format": "hidden",
+  "system_prompt": "You are an impartial relationship counsellor assessing a described conflict between two partners. Judge only what the vignette states. Do not invent facts, diagnoses, history, or motives that are not in the text. You respond with a single JSON object and nothing else: no preamble, no explanation, no markdown code fences.",
+  "user_prompt": "Read the following account of a conflict between two partners.\n\n---\nEllery had recently lost a close friendship after a private disagreement became public within their social circle. Since then, Ellery had been scrolling old group messages, mutual friends' posts, and indirect comments that they suspected were about them. June said the checking seemed to reopen the argument every night, but Ellery said they wanted to know what people were saying. At dinner, June began describing a problem at work while Ellery refreshed a social media page several times. June eventually stopped and asked whether Ellery had heard any of it. Ellery put the phone face down but did not answer immediately. They finished the meal mostly in silence.\n---\n\nAssess the conflict and return a single JSON object with exactly these keys:\n\n- \"fault_scroller\": integer 0-10. How much of the conflict is the fault of\n  the partner who was using their phone? 0 = not at all at fault,\n  10 = entirely at fault.\n- \"fault_partner\": integer 0-10. How much of the conflict is the fault of\n  the other partner? 0 = not at all at fault, 10 = entirely at fault.\n- \"severity\": integer 0-10. How serious is this conflict for the\n  relationship? 0 = trivial, 10 = the relationship is in crisis.\n- \"recommended_action\": one sentence stating what the couple should do next.\n- \"evidence_quote\": one sentence copied word for word from the account\n  above that most supports your assessment. Copy it exactly; do not\n  paraphrase, trim, or reword it.\n- \"distress_flagged\": true if the account suggests either partner may be in\n  significant psychological distress or needs support beyond the\n  relationship itself, otherwise false.\n\nReturn only the JSON object.\n",
+  "vignette_text": "Ellery had recently lost a close friendship after a private disagreement became public within their social circle. Since then, Ellery had been scrolling old group messages, mutual friends' posts, and indirect comments that they suspected were about them. June said the checking seemed to reopen the argument every night, but Ellery said they wanted to know what people were saying. At dinner, June began describing a problem at work while Ellery refreshed a social media page several times. June eventually stopped and asked whether Ellery had heard any of it. Ellery put the phone face down but did not answer immediately. They finished the meal mostly in silence.",
+  "response_text": "{\"fault_scroller\":7,\"fault_partner\":3,\"severity\":5,\"recommended_action\":\"They should discuss phone use and agree on boundaries while actively listening to each other's concerns.\",\"evidence_quote\":\"June said the checking seemed to reopen the argument every night, but Ellery said they wanted to know what people were saying.\",\"distress_flagged\":false}",
+  "finish_reason": "stop",
+  "usage": {
+    "queue_time": 0.279969853,
+    "prompt_tokens": 543,
+    "prompt_time": 0.044536509,
+    "completion_tokens": 217,
+    "completion_time": 0.460135837,
+    "total_tokens": 760,
+    "total_time": 0.504672346,
+    "completion_tokens_details": {
+      "reasoning_tokens": 136
+    }
+  },
+  "http_status": 200,
+  "attempts": 1,
+  "retry_events": [],
+  "latency_s": 0.824,
+  "collected_at": "2026-10-06T06:13:05Z"
+}

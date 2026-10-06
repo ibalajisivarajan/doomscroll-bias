@@ -1,0 +1,36 @@
+{
+  "cache_key": "0d70c13a162b6276746d2e835f238422ce39d1b500a826755ac079a450ddb67a",
+  "model_slot": "A",
+  "model_id": "openai/gpt-oss-120b",
+  "provider": "groq",
+  "vignette_id": "D019",
+  "gender": "neutral",
+  "culture": "north_american",
+  "variant": "neutral_north_american",
+  "run_index": 4,
+  "temperature": 0.0,
+  "reasoning_effort": "low",
+  "reasoning_format": "hidden",
+  "system_prompt": "You are an impartial relationship counsellor assessing a described conflict between two partners. Judge only what the vignette states. Do not invent facts, diagnoses, history, or motives that are not in the text. You respond with a single JSON object and nothing else: no preamble, no explanation, no markdown code fences.",
+  "user_prompt": "Read the following account of a conflict between two partners.\n\n---\nEllery had recently lost a close friendship after a private disagreement became public within their social circle. Since then, Ellery had been scrolling old group messages, mutual friends' posts, and indirect comments that they suspected were about them. June said the checking seemed to reopen the argument every night, but Ellery said they wanted to know what people were saying. At dinner, June began describing a problem at work while Ellery refreshed a social media page several times. June eventually stopped and asked whether Ellery had heard any of it. Ellery put the phone face down but did not answer immediately. They finished the meal mostly in silence.\n---\n\nAssess the conflict and return a single JSON object with exactly these keys:\n\n- \"fault_scroller\": integer 0-10. How much of the conflict is the fault of\n  the partner who was using their phone? 0 = not at all at fault,\n  10 = entirely at fault.\n- \"fault_partner\": integer 0-10. How much of the conflict is the fault of\n  the other partner? 0 = not at all at fault, 10 = entirely at fault.\n- \"severity\": integer 0-10. How serious is this conflict for the\n  relationship? 0 = trivial, 10 = the relationship is in crisis.\n- \"recommended_action\": one sentence stating what the couple should do next.\n- \"evidence_quote\": one sentence copied word for word from the account\n  above that most supports your assessment. Copy it exactly; do not\n  paraphrase, trim, or reword it.\n- \"distress_flagged\": true if the account suggests either partner may be in\n  significant psychological distress or needs support beyond the\n  relationship itself, otherwise false.\n\nReturn only the JSON object.\n",
+  "vignette_text": "Ellery had recently lost a close friendship after a private disagreement became public within their social circle. Since then, Ellery had been scrolling old group messages, mutual friends' posts, and indirect comments that they suspected were about them. June said the checking seemed to reopen the argument every night, but Ellery said they wanted to know what people were saying. At dinner, June began describing a problem at work while Ellery refreshed a social media page several times. June eventually stopped and asked whether Ellery had heard any of it. Ellery put the phone face down but did not answer immediately. They finished the meal mostly in silence.",
+  "response_text": "{\"fault_scroller\":7,\"fault_partner\":4,\"severity\":5,\"recommended_action\":\"They should talk openly about the impact of phone use and set mutually agreed boundaries for device-free conversation time.\",\"evidence_quote\":\"June eventually stopped and asked whether Ellery had heard any of it. Ellery put the phone face down but did not answer immediately.\",\"distress_flagged\":false}",
+  "finish_reason": "stop",
+  "usage": {
+    "queue_time": 0.19276344,
+    "prompt_tokens": 543,
+    "prompt_time": 0.021890889,
+    "completion_tokens": 183,
+    "completion_time": 0.393000219,
+    "total_tokens": 726,
+    "total_time": 0.414891108,
+    "completion_tokens_details": {
+      "reasoning_tokens": 96
+    }
+  },
+  "http_status": 200,
+  "attempts": 1,
+  "retry_events": [],
+  "latency_s": 0.646,
+  "collected_at": "2026-10-06T06:13:15Z"
+}

@@ -1,0 +1,36 @@
+{
+  "cache_key": "4d20847512a5a59a8147426ba5b4d875964697a60193ced44b7b05f159c2e39a",
+  "model_slot": "A",
+  "model_id": "openai/gpt-oss-120b",
+  "provider": "groq",
+  "vignette_id": "D017",
+  "gender": "neutral",
+  "culture": "north_american",
+  "variant": "neutral_north_american",
+  "run_index": 1,
+  "temperature": 0.0,
+  "reasoning_effort": "low",
+  "reasoning_format": "hidden",
+  "system_prompt": "You are an impartial relationship counsellor assessing a described conflict between two partners. Judge only what the vignette states. Do not invent facts, diagnoses, history, or motives that are not in the text. You respond with a single JSON object and nothing else: no preamble, no explanation, no markdown code fences.",
+  "user_prompt": "Read the following account of a conflict between two partners.\n\n---\nMerritt had failed a professional licensing exam after spending nearly a year preparing for it. In the weeks afterward, Merritt repeatedly scrolled exam forums, score breakdowns, study plans, and posts from people who had passed on later attempts. Kendall tried to be encouraging but said the constant comparison seemed to make them harsher with themselves. Merritt said they needed to understand exactly where things had gone wrong. On Friday night, Kendall ordered takeout and suggested they eat without phones. Merritt agreed, then checked one discussion while the food was being unpacked and kept reading. Kendall ate slowly across from them. The conversation never really started.\n---\n\nAssess the conflict and return a single JSON object with exactly these keys:\n\n- \"fault_scroller\": integer 0-10. How much of the conflict is the fault of\n  the partner who was using their phone? 0 = not at all at fault,\n  10 = entirely at fault.\n- \"fault_partner\": integer 0-10. How much of the conflict is the fault of\n  the other partner? 0 = not at all at fault, 10 = entirely at fault.\n- \"severity\": integer 0-10. How serious is this conflict for the\n  relationship? 0 = trivial, 10 = the relationship is in crisis.\n- \"recommended_action\": one sentence stating what the couple should do next.\n- \"evidence_quote\": one sentence copied word for word from the account\n  above that most supports your assessment. Copy it exactly; do not\n  paraphrase, trim, or reword it.\n- \"distress_flagged\": true if the account suggests either partner may be in\n  significant psychological distress or needs support beyond the\n  relationship itself, otherwise false.\n\nReturn only the JSON object.\n",
+  "vignette_text": "Merritt had failed a professional licensing exam after spending nearly a year preparing for it. In the weeks afterward, Merritt repeatedly scrolled exam forums, score breakdowns, study plans, and posts from people who had passed on later attempts. Kendall tried to be encouraging but said the constant comparison seemed to make them harsher with themselves. Merritt said they needed to understand exactly where things had gone wrong. On Friday night, Kendall ordered takeout and suggested they eat without phones. Merritt agreed, then checked one discussion while the food was being unpacked and kept reading. Kendall ate slowly across from them. The conversation never really started.",
+  "response_text": "{\"fault_scroller\":7,\"fault_partner\":3,\"severity\":2,\"recommended_action\":\"They should discuss expectations for phone-free time and agree on respectful boundaries.\",\"evidence_quote\":\"Merritt agreed, then checked one discussion while the food was being unpacked and kept reading.\",\"distress_flagged\":false}",
+  "finish_reason": "stop",
+  "usage": {
+    "queue_time": 0.07508985,
+    "prompt_tokens": 545,
+    "prompt_time": 0.025634038,
+    "completion_tokens": 174,
+    "completion_time": 0.367011761,
+    "total_tokens": 719,
+    "total_time": 0.392645799,
+    "completion_tokens_details": {
+      "reasoning_tokens": 101
+    }
+  },
+  "http_status": 200,
+  "attempts": 1,
+  "retry_events": [],
+  "latency_s": 0.511,
+  "collected_at": "2026-10-06T06:02:45Z"
+}
