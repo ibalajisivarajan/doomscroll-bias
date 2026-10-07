@@ -1,0 +1,36 @@
+{
+  "cache_key": "143a3cafaec01b451bff2d21fbba4b77d7d6e28aaa3cb96aec21957e32b92963",
+  "model_slot": "A",
+  "model_id": "openai/gpt-oss-120b",
+  "provider": "groq",
+  "vignette_id": "C007",
+  "gender": "neutral",
+  "culture": "north_american",
+  "variant": "neutral_north_american",
+  "run_index": 1,
+  "temperature": 0.0,
+  "reasoning_effort": "low",
+  "reasoning_format": "hidden",
+  "system_prompt": "You are an impartial relationship counsellor assessing a described conflict between two partners. Judge only what the vignette states. Do not invent facts, diagnoses, history, or motives that are not in the text. You respond with a single JSON object and nothing else: no preamble, no explanation, no markdown code fences.",
+  "user_prompt": "Read the following account of a conflict between two partners.\n\n---\nFrankie was watching their two-year-old while Sidney showered, but sat scrolling a thread about a stock crash instead of staying in the room like they had agreed to. The toddler climbed onto a kitchen chair, reached for a mug left on the counter, and fell, splitting her lip open on the tile floor. Sidney came out of the bathroom to crying and a wad of paper towels already soaked through with blood. Sidney asked exactly where Frankie had been sitting the whole time. Frankie said they had only looked away from her for a second.\n---\n\nAssess the conflict and return a single JSON object with exactly these keys:\n\n- \"fault_scroller\": integer 0-10. How much of the conflict is the fault of\n  the partner who was using their phone? 0 = not at all at fault,\n  10 = entirely at fault.\n- \"fault_partner\": integer 0-10. How much of the conflict is the fault of\n  the other partner? 0 = not at all at fault, 10 = entirely at fault.\n- \"severity\": integer 0-10. How serious is this conflict for the\n  relationship? 0 = trivial, 10 = the relationship is in crisis.\n- \"recommended_action\": one sentence stating what the couple should do next.\n- \"evidence_quote\": one sentence copied word for word from the account\n  above that most supports your assessment. Copy it exactly; do not\n  paraphrase, trim, or reword it.\n- \"distress_flagged\": true if the account suggests either partner may be in\n  significant psychological distress or needs support beyond the\n  relationship itself, otherwise false.\n\nReturn only the JSON object.\n",
+  "vignette_text": "Frankie was watching their two-year-old while Sidney showered, but sat scrolling a thread about a stock crash instead of staying in the room like they had agreed to. The toddler climbed onto a kitchen chair, reached for a mug left on the counter, and fell, splitting her lip open on the tile floor. Sidney came out of the bathroom to crying and a wad of paper towels already soaked through with blood. Sidney asked exactly where Frankie had been sitting the whole time. Frankie said they had only looked away from her for a second.",
+  "response_text": "{\"fault_scroller\":8,\"fault_partner\":2,\"severity\":6,\"recommended_action\":\"Frankie should apologize, acknowledge the lapse in supervision, and both partners should establish clear, enforceable childcare expectations moving forward.\",\"evidence_quote\":\"Frankie was watching their two-year-old while Sidney showered, but sat scrolling a thread about a stock crash instead of staying in the room like they had agreed to.\",\"distress_flagged\":false}",
+  "finish_reason": "stop",
+  "usage": {
+    "queue_time": 0.148525117,
+    "prompt_tokens": 524,
+    "prompt_time": 0.02520729,
+    "completion_tokens": 213,
+    "completion_time": 0.446149313,
+    "total_tokens": 737,
+    "total_time": 0.471356603,
+    "completion_tokens_details": {
+      "reasoning_tokens": 115
+    }
+  },
+  "http_status": 200,
+  "attempts": 1,
+  "retry_events": [],
+  "latency_s": 0.678,
+  "collected_at": "2026-10-07T05:56:46Z"
+}

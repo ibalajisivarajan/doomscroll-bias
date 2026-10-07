@@ -1,0 +1,36 @@
+{
+  "cache_key": "7cba4ce4376b8a9758d77400dd7dc427529fddbabb02699e7ff6e52dd2256ce4",
+  "model_slot": "A",
+  "model_id": "openai/gpt-oss-120b",
+  "provider": "groq",
+  "vignette_id": "C006",
+  "gender": "male",
+  "culture": "north_american",
+  "variant": "male_north_american",
+  "run_index": 5,
+  "temperature": 0.0,
+  "reasoning_effort": "low",
+  "reasoning_format": "hidden",
+  "system_prompt": "You are an impartial relationship counsellor assessing a described conflict between two partners. Judge only what the vignette states. Do not invent facts, diagnoses, history, or motives that are not in the text. You respond with a single JSON object and nothing else: no preamble, no explanation, no markdown code fences.",
+  "user_prompt": "Read the following account of a conflict between two partners.\n\n---\nPreston had promised to drive Reese's father to his cardiology follow-up appointment at ten sharp, since Reese was stuck in back-to-back meetings all morning. At nine forty-five, Preston was still on the couch scrolling a thread about a data breach and hadn't even left the house yet. He arrived twenty minutes late; the clinic had already given the slot away, and the next available opening was six weeks out. Reese asked how he had lost track of the time so badly. Preston said the thread had more updates coming in than usual that morning.\n---\n\nAssess the conflict and return a single JSON object with exactly these keys:\n\n- \"fault_scroller\": integer 0-10. How much of the conflict is the fault of\n  the partner who was using their phone? 0 = not at all at fault,\n  10 = entirely at fault.\n- \"fault_partner\": integer 0-10. How much of the conflict is the fault of\n  the other partner? 0 = not at all at fault, 10 = entirely at fault.\n- \"severity\": integer 0-10. How serious is this conflict for the\n  relationship? 0 = trivial, 10 = the relationship is in crisis.\n- \"recommended_action\": one sentence stating what the couple should do next.\n- \"evidence_quote\": one sentence copied word for word from the account\n  above that most supports your assessment. Copy it exactly; do not\n  paraphrase, trim, or reword it.\n- \"distress_flagged\": true if the account suggests either partner may be in\n  significant psychological distress or needs support beyond the\n  relationship itself, otherwise false.\n\nReturn only the JSON object.\n",
+  "vignette_text": "Preston had promised to drive Reese's father to his cardiology follow-up appointment at ten sharp, since Reese was stuck in back-to-back meetings all morning. At nine forty-five, Preston was still on the couch scrolling a thread about a data breach and hadn't even left the house yet. He arrived twenty minutes late; the clinic had already given the slot away, and the next available opening was six weeks out. Reese asked how he had lost track of the time so badly. Preston said the thread had more updates coming in than usual that morning.",
+  "response_text": "{\"fault_scroller\":9,\"fault_partner\":1,\"severity\":4,\"recommended_action\":\"Preston should apologize sincerely and they should agree on clear reminders for future appointments.\",\"evidence_quote\":\"At nine forty-five, Preston was still on the couch scrolling a thread about a data breach and hadn't even left the house yet.\",\"distress_flagged\":false}",
+  "finish_reason": "stop",
+  "usage": {
+    "queue_time": 0.074219272,
+    "prompt_tokens": 526,
+    "prompt_time": 0.02436876,
+    "completion_tokens": 171,
+    "completion_time": 0.353888837,
+    "total_tokens": 697,
+    "total_time": 0.378257597,
+    "completion_tokens_details": {
+      "reasoning_tokens": 90
+    }
+  },
+  "http_status": 200,
+  "attempts": 1,
+  "retry_events": [],
+  "latency_s": 0.49,
+  "collected_at": "2026-10-07T05:49:06Z"
+}

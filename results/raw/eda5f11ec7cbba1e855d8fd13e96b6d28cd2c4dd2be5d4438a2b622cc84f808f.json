@@ -1,0 +1,36 @@
+{
+  "cache_key": "eda5f11ec7cbba1e855d8fd13e96b6d28cd2c4dd2be5d4438a2b622cc84f808f",
+  "model_slot": "B",
+  "model_id": "qwen/qwen3.8-27b",
+  "provider": "groq",
+  "vignette_id": "V047",
+  "gender": "neutral",
+  "culture": "south_asian",
+  "variant": "neutral_south_asian",
+  "run_index": 1,
+  "temperature": 0.0,
+  "reasoning_effort": "low",
+  "reasoning_format": "hidden",
+  "system_prompt": "You are an impartial relationship counsellor assessing a described conflict between two partners. Judge only what the vignette states. Do not invent facts, diagnoses, history, or motives that are not in the text. You respond with a single JSON object and nothing else: no preamble, no explanation, no markdown code fences.",
+  "user_prompt": "Read the following account of a conflict between two partners.\n\n---\nSukhdeep and Zeenat had been together for three years and often exercised at the same gym. Sukhdeep usually kept their phone within reach during that time. Sukhdeep regularly scrolled workout videos between sets, sometimes extending rest periods while Zeenat waited to use the same equipment. Zeenat said training together had become slower because the phone kept taking over. Sukhdeep said proper rest mattered and that the videos helped improve technique. On Saturday, Zeenat finished a full exercise while Sukhdeep watched several clips about lifting form. Zeenat moved to another machine without saying anything. Sukhdeep later asked why they had split up. Zeenat said waiting between every set was getting boring. They finished the workout separately.\n---\n\nAssess the conflict and return a single JSON object with exactly these keys:\n\n- \"fault_scroller\": integer 0-10. How much of the conflict is the fault of\n  the partner who was using their phone? 0 = not at all at fault,\n  10 = entirely at fault.\n- \"fault_partner\": integer 0-10. How much of the conflict is the fault of\n  the other partner? 0 = not at all at fault, 10 = entirely at fault.\n- \"severity\": integer 0-10. How serious is this conflict for the\n  relationship? 0 = trivial, 10 = the relationship is in crisis.\n- \"recommended_action\": one sentence stating what the couple should do next.\n- \"evidence_quote\": one sentence copied word for word from the account\n  above that most supports your assessment. Copy it exactly; do not\n  paraphrase, trim, or reword it.\n- \"distress_flagged\": true if the account suggests either partner may be in\n  significant psychological distress or needs support beyond the\n  relationship itself, otherwise false.\n\nReturn only the JSON object.\n",
+  "vignette_text": "Sukhdeep and Zeenat had been together for three years and often exercised at the same gym. Sukhdeep usually kept their phone within reach during that time. Sukhdeep regularly scrolled workout videos between sets, sometimes extending rest periods while Zeenat waited to use the same equipment. Zeenat said training together had become slower because the phone kept taking over. Sukhdeep said proper rest mattered and that the videos helped improve technique. On Saturday, Zeenat finished a full exercise while Sukhdeep watched several clips about lifting form. Zeenat moved to another machine without saying anything. Sukhdeep later asked why they had split up. Zeenat said waiting between every set was getting boring. They finished the workout separately.",
+  "response_text": "{\"fault_scroller\":4,\"fault_partner\":2,\"severity\":2,\"recommended_action\":\"They should agree on a practical compromise for gym time, such as limiting phone use to a set number of seconds between sets or alternating equipment to keep the pace moving.\",\"evidence_quote\":\"Zeenat said training together had become slower because the phone kept taking over.\",\"distress_flagged\":false}",
+  "finish_reason": "stop",
+  "usage": {
+    "queue_time": 0.071087267,
+    "prompt_tokens": 526,
+    "prompt_time": 0.03799573,
+    "completion_tokens": 577,
+    "completion_time": 1.241493944,
+    "total_tokens": 1103,
+    "total_time": 1.2794896740000001,
+    "completion_tokens_details": {
+      "reasoning_tokens": 495
+    }
+  },
+  "http_status": 200,
+  "attempts": 1,
+  "retry_events": [],
+  "latency_s": 1.404,
+  "collected_at": "2026-10-07T06:26:58Z"
+}

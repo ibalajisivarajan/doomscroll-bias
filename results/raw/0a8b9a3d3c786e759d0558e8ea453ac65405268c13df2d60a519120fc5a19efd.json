@@ -1,0 +1,44 @@
+{
+  "cache_key": "0a8b9a3d3c786e759d0558e8ea453ac65405268c13df2d60a519120fc5a19efd",
+  "model_slot": "B",
+  "model_id": "qwen/qwen3.8-27b",
+  "provider": "groq",
+  "vignette_id": "V049",
+  "gender": "neutral",
+  "culture": "north_american",
+  "variant": "neutral_north_american",
+  "run_index": 2,
+  "temperature": 0.0,
+  "reasoning_effort": "low",
+  "reasoning_format": "hidden",
+  "system_prompt": "You are an impartial relationship counsellor assessing a described conflict between two partners. Judge only what the vignette states. Do not invent facts, diagnoses, history, or motives that are not in the text. You respond with a single JSON object and nothing else: no preamble, no explanation, no markdown code fences.",
+  "user_prompt": "Read the following account of a conflict between two partners.\n\n---\nBrett and Celine had been married for eleven years and usually spent Sunday mornings doing separate things in the same room. Brett tended to keep their phone close at hand. Brett had recently started scrolling online auctions and calling Celine over whenever an unusual item appeared. Celine enjoyed some of the finds but said being summoned every few minutes made it hard to focus on a crossword. Brett said Celine could ignore the requests and that sharing interesting things was part of spending time together. That Sunday, Brett called Celine over three times in twenty minutes. On the fourth time, Celine said to send the link instead. Brett did and continued browsing quietly.\n---\n\nAssess the conflict and return a single JSON object with exactly these keys:\n\n- \"fault_scroller\": integer 0-10. How much of the conflict is the fault of\n  the partner who was using their phone? 0 = not at all at fault,\n  10 = entirely at fault.\n- \"fault_partner\": integer 0-10. How much of the conflict is the fault of\n  the other partner? 0 = not at all at fault, 10 = entirely at fault.\n- \"severity\": integer 0-10. How serious is this conflict for the\n  relationship? 0 = trivial, 10 = the relationship is in crisis.\n- \"recommended_action\": one sentence stating what the couple should do next.\n- \"evidence_quote\": one sentence copied word for word from the account\n  above that most supports your assessment. Copy it exactly; do not\n  paraphrase, trim, or reword it.\n- \"distress_flagged\": true if the account suggests either partner may be in\n  significant psychological distress or needs support beyond the\n  relationship itself, otherwise false.\n\nReturn only the JSON object.\n",
+  "vignette_text": "Brett and Celine had been married for eleven years and usually spent Sunday mornings doing separate things in the same room. Brett tended to keep their phone close at hand. Brett had recently started scrolling online auctions and calling Celine over whenever an unusual item appeared. Celine enjoyed some of the finds but said being summoned every few minutes made it hard to focus on a crossword. Brett said Celine could ignore the requests and that sharing interesting things was part of spending time together. That Sunday, Brett called Celine over three times in twenty minutes. On the fourth time, Celine said to send the link instead. Brett did and continued browsing quietly.",
+  "response_text": "{\"fault_scroller\":4,\"fault_partner\":1,\"severity\":2,\"recommended_action\":\"They should agree that Brett can share auction finds by sending links rather than physically summoning Celine, respecting her need for uninterrupted focus time.\",\"evidence_quote\":\"Brett said Celine could ignore the requests and that sharing interesting things was part of spending time together.\",\"distress_flagged\":false}",
+  "finish_reason": "stop",
+  "usage": {
+    "queue_time": 0.096407369,
+    "prompt_tokens": 504,
+    "prompt_time": 0.040370744,
+    "completion_tokens": 755,
+    "completion_time": 1.5087594229999999,
+    "total_tokens": 1259,
+    "total_time": 1.549130167,
+    "completion_tokens_details": {
+      "reasoning_tokens": 673
+    }
+  },
+  "http_status": 200,
+  "attempts": 2,
+  "retry_events": [
+    {
+      "attempt": 1,
+      "outcome": "retryable_http",
+      "http_status": 429,
+      "error_class": null,
+      "retry_after_s": 14.0
+    }
+  ],
+  "latency_s": 1.692,
+  "collected_at": "2026-10-07T07:07:58Z"
+}

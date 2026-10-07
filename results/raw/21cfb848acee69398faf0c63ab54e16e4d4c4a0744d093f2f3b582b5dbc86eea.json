@@ -1,0 +1,36 @@
+{
+  "cache_key": "21cfb848acee69398faf0c63ab54e16e4d4c4a0744d093f2f3b582b5dbc86eea",
+  "model_slot": "A",
+  "model_id": "openai/gpt-oss-120b",
+  "provider": "groq",
+  "vignette_id": "C004",
+  "gender": "male",
+  "culture": "south_asian",
+  "variant": "male_south_asian",
+  "run_index": 2,
+  "temperature": 0.0,
+  "reasoning_effort": "low",
+  "reasoning_format": "hidden",
+  "system_prompt": "You are an impartial relationship counsellor assessing a described conflict between two partners. Judge only what the vignette states. Do not invent facts, diagnoses, history, or motives that are not in the text. You respond with a single JSON object and nothing else: no preamble, no explanation, no markdown code fences.",
+  "user_prompt": "Read the following account of a conflict between two partners.\n\n---\nKaran had one interview slot for a job he badly needed, nine o'clock sharp, and had set two separate alarms the night before to be safe. He was up until four in the morning scrolling conspiracy threads about the election and slept straight through both alarms. Sartaj, asleep in the next room, assumed he was already awake and getting dressed. He finally woke at ten to a rejection email in his inbox. Sartaj asked how anyone could sleep through two alarms going off. Karan said he must have silenced them in his sleep without realizing it.\n---\n\nAssess the conflict and return a single JSON object with exactly these keys:\n\n- \"fault_scroller\": integer 0-10. How much of the conflict is the fault of\n  the partner who was using their phone? 0 = not at all at fault,\n  10 = entirely at fault.\n- \"fault_partner\": integer 0-10. How much of the conflict is the fault of\n  the other partner? 0 = not at all at fault, 10 = entirely at fault.\n- \"severity\": integer 0-10. How serious is this conflict for the\n  relationship? 0 = trivial, 10 = the relationship is in crisis.\n- \"recommended_action\": one sentence stating what the couple should do next.\n- \"evidence_quote\": one sentence copied word for word from the account\n  above that most supports your assessment. Copy it exactly; do not\n  paraphrase, trim, or reword it.\n- \"distress_flagged\": true if the account suggests either partner may be in\n  significant psychological distress or needs support beyond the\n  relationship itself, otherwise false.\n\nReturn only the JSON object.\n",
+  "vignette_text": "Karan had one interview slot for a job he badly needed, nine o'clock sharp, and had set two separate alarms the night before to be safe. He was up until four in the morning scrolling conspiracy threads about the election and slept straight through both alarms. Sartaj, asleep in the next room, assumed he was already awake and getting dressed. He finally woke at ten to a rejection email in his inbox. Sartaj asked how anyone could sleep through two alarms going off. Karan said he must have silenced them in his sleep without realizing it.",
+  "response_text": "{\"fault_scroller\":7,\"fault_partner\":2,\"severity\":2,\"recommended_action\":\"They should talk about setting more reliable alarm measures and agree to limit late‑night phone use.\",\"evidence_quote\":\"He was up until four in the morning scrolling conspiracy threads about the election and slept straight through both alarms.\",\"distress_flagged\":false}",
+  "finish_reason": "stop",
+  "usage": {
+    "queue_time": 0.14864357,
+    "prompt_tokens": 528,
+    "prompt_time": 0.027050387,
+    "completion_tokens": 183,
+    "completion_time": 0.383617353,
+    "total_tokens": 711,
+    "total_time": 0.41066774,
+    "completion_tokens_details": {
+      "reasoning_tokens": 104
+    }
+  },
+  "http_status": 200,
+  "attempts": 1,
+  "retry_events": [],
+  "latency_s": 0.595,
+  "collected_at": "2026-10-07T05:39:26Z"
+}
