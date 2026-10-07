@@ -212,6 +212,79 @@ override.
 
 ---
 
+## 2026-10-07 — Per-model request pacing tuned (Model B: 2 -> 1 req/min)
+
+**Change commit:** (this commit)  
+**Affected file:** `config/protocol.yaml`  
+**Field:** `rate_limits.requests_per_minute_by_model`
+
+**Before:** `{B: 2}` (slot A unchanged at the default 6 req/min).  
+**After:** `{B: 1}` (slot A still unchanged at the default 6 req/min). No
+`src/run.py` change: the per-slot `RateLimiter` introduced on 2026-10-04
+already resolves `requests_per_minute_by_model` overrides at the per-task
+level, so only the config value moves.
+
+### Triggering production evidence
+
+Three full nights at `B: 2` (2026-10-05, -06, -07) were measured directly
+from the committed raw responses and their `retry_events` telemetry:
+
+| night | slot B written | slot B retries | slot B attempts | retry share | HTTP status |
+|---|---|---|---|---|---|
+| 1 (`c02c590`) | 95 | 80 | 175 | 46% | 429 only |
+| 2 (`ab07959`) | 118 | 57 | 175 | 33% | 429 only |
+| 3 (`94bf656`) | 117 | 58 | 175 | 33% | 429 only |
+
+The 2026-10-04 fix is working -- slot B's fresh-response rate roughly
+doubled (+95/+118/+117 per night vs +65/night before any per-model pacing)
+-- but on the two settled nights roughly one third of slot B's 175 daily
+attempts are still spent on retries rather than new cells, and every single
+logged retry across all three nights is HTTP 429. Zero 5xx, zero transport
+errors. Slot A is unaffected: it hit its 175/day cap on all three nights.
+
+### Rationale
+
+Every retry being HTTP 429 with no other error class confirms the
+remaining waste is still provider-side rate limiting on slot B's
+`qwen/qwen3.8-27b` endpoint, and wider per-request spacing is the only free
+lever left against it (the org-level Groq limits for that model --
+30 RPM / 1K req/day / 8K TPM / 200K tokens/day -- leave room to go slower
+without approaching a different ceiling). Halving slot B's rate from 2 to 1
+req/min does not raise `daily_request_cap_per_model`; 175 fresh
+responses/day stays the hard ceiling for slot B regardless of how the pace
+is tuned, since that cap is set by Groq's daily token budget, not by
+request pacing.
+
+Runtime sanity: 175 attempts at 1/min is approximately 3 hours for slot B,
+plus roughly 0.5 hours for slot A while it is still collecting, for a
+~3.5-hour total -- inside `max_collection_minutes: 300` and the workflow's
+350-minute job timeout. Once slot A completes (expected ~2026-10-08),
+nightly runs become slot-B-only at roughly 3 hours, comfortably inside both
+budgets. No `.github/workflows/run.yml` change was needed or made.
+
+### Scientific impact assessment
+
+Operational collection-pacing change only. Unchanged: both model
+checkpoints, provider endpoint family, system/user prompts, temperature
+(0), seed, reasoning settings, `max_tokens` (1024, locked), the 120-vignette
+x 6-condition x 5-run design, 7,200-response target, `max_retries` (3),
+`daily_request_cap_per_model` (175), `max_collection_minutes` (300), slot
+A's pacing (6 req/min, unchanged), scoring rules, hypotheses H1-H4, and the
+final statistical analysis plan (still gated on the complete 7,200-response
+corpus).
+
+Already-collected responses are not regenerated, modified, or discarded.
+Nothing about a successful call's payload changes -- only how long the
+collector waits between slot B's requests.
+
+### Reversibility
+
+Set `requests_per_minute_by_model: {B: 2}` (or delete the key entirely, for
+a single shared 6 req/min rate on both slots) to revert. No code change is
+required either way.
+
+---
+
 ## Interpretation rule
 
 Entries in this file should be treated as part of the provenance record for the

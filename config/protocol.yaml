@@ -410,8 +410,28 @@ rate_limits:
   # slot A's pacing (still 6 req/min, the requests_per_minute default).
   # Reversible: delete the requests_per_minute_by_model key (or set B back to
   # 6) to return to a single shared rate for both slots.
+  #
+  # OPERATIONAL AMENDMENT (2026-10-07): per-model override, B: 2 -> 1 req/min.
+  # Cause: three full nights at 2 req/min (2026-10-05/06/07) show the 2026-
+  # 10-04 fix working -- slot B added +95, +118, +117 fresh responses/night
+  # (was +65/night before any per-model pacing) -- but roughly one third of
+  # B's 175 daily attempts are still lost to HTTP 429 retries on the two
+  # settled nights (80/175=46% night 1, 57/175=33% night 2, 58/175=33% night
+  # 3; every retry logged is still HTTP 429, zero 5xx/transport, confirming
+  # the throttle is still provider-side rate limiting on B's endpoint, not
+  # something else). Wider per-request spacing is still the only free lever
+  # against it. Change: B: 2 -> 1 req/min. What did NOT change: slot A's
+  # pacing (still 6 req/min, unaffected -- A hit its 175/day cap all three
+  # nights and finishes ~2026-10-08), max_tokens (1024, locked), max_retries
+  # (3), daily_request_cap_per_model (175, this change cannot and does not
+  # raise it -- 175 fresh/day stays the hard ceiling regardless of pacing),
+  # max_collection_minutes (300). Runtime sanity: 175 attempts at 1/min ~= 3h
+  # for slot B; once slot A finishes (~2026-10-08) nightly runs become B-only
+  # and still fit well inside the 300-minute budget and the workflow's
+  # 350-minute job timeout. Reversible: set B back to 2 (or delete the key
+  # to fall back to the shared 6 req/min default for both slots).
   requests_per_minute_by_model:
-    B: 2
+    B: 1
   # Lowered from 6 -> 3 after run 35422141274 (2026-09-19): Model B spent 107
   # of its 175 daily attempts on retries for only 68 distinct cells attempted,
   # leaving 107 vignette-cells never touched that day. Retries are counted
