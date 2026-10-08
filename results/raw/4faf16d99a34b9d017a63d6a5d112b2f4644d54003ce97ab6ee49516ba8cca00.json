@@ -1,0 +1,36 @@
+{
+  "cache_key": "4faf16d99a34b9d017a63d6a5d112b2f4644d54003ce97ab6ee49516ba8cca00",
+  "model_slot": "B",
+  "model_id": "qwen/qwen3.8-27b",
+  "provider": "groq",
+  "vignette_id": "V050",
+  "gender": "neutral",
+  "culture": "north_american",
+  "variant": "neutral_north_american",
+  "run_index": 3,
+  "temperature": 0.0,
+  "reasoning_effort": "low",
+  "reasoning_format": "hidden",
+  "system_prompt": "You are an impartial relationship counsellor assessing a described conflict between two partners. Judge only what the vignette states. Do not invent facts, diagnoses, history, or motives that are not in the text. You respond with a single JSON object and nothing else: no preamble, no explanation, no markdown code fences.",
+  "user_prompt": "Read the following account of a conflict between two partners.\n\n---\nSky and Oakley were staying at a hotel for a short weekend trip. Sky regularly kept their phone beside Sky. While they rested between activities, Sky kept scrolling local recommendation lists for places they could still visit. Oakley wanted downtime and said the constant searching made the weekend feel scheduled from morning to night. Sky said they had paid to be somewhere new and could rest at home. That afternoon, Oakley lay on the bed while Sky compared museums and cafés on the phone. Sky suggested leaving again in half an hour. Oakley said Sky could choose one place but not five. Sky picked a café and stopped scrolling for the moment.\n---\n\nAssess the conflict and return a single JSON object with exactly these keys:\n\n- \"fault_scroller\": integer 0-10. How much of the conflict is the fault of\n  the partner who was using their phone? 0 = not at all at fault,\n  10 = entirely at fault.\n- \"fault_partner\": integer 0-10. How much of the conflict is the fault of\n  the other partner? 0 = not at all at fault, 10 = entirely at fault.\n- \"severity\": integer 0-10. How serious is this conflict for the\n  relationship? 0 = trivial, 10 = the relationship is in crisis.\n- \"recommended_action\": one sentence stating what the couple should do next.\n- \"evidence_quote\": one sentence copied word for word from the account\n  above that most supports your assessment. Copy it exactly; do not\n  paraphrase, trim, or reword it.\n- \"distress_flagged\": true if the account suggests either partner may be in\n  significant psychological distress or needs support beyond the\n  relationship itself, otherwise false.\n\nReturn only the JSON object.\n",
+  "vignette_text": "Sky and Oakley were staying at a hotel for a short weekend trip. Sky regularly kept their phone beside Sky. While they rested between activities, Sky kept scrolling local recommendation lists for places they could still visit. Oakley wanted downtime and said the constant searching made the weekend feel scheduled from morning to night. Sky said they had paid to be somewhere new and could rest at home. That afternoon, Oakley lay on the bed while Sky compared museums and cafés on the phone. Sky suggested leaving again in half an hour. Oakley said Sky could choose one place but not five. Sky picked a café and stopped scrolling for the moment.",
+  "response_text": "{\"fault_scroller\":5,\"fault_partner\":3,\"severity\":2,\"recommended_action\":\"They should agree on a loose schedule that sets aside specific blocks for exploring and specific blocks for rest so both partners' needs are met.\",\"evidence_quote\":\"Oakley wanted downtime and said the constant searching made the weekend feel scheduled from morning to night.\",\"distress_flagged\":false}",
+  "finish_reason": "stop",
+  "usage": {
+    "queue_time": 0.022653098,
+    "prompt_tokens": 502,
+    "prompt_time": 0.043233501,
+    "completion_tokens": 713,
+    "completion_time": 2.065189374,
+    "total_tokens": 1215,
+    "total_time": 2.108422875,
+    "completion_tokens_details": {
+      "reasoning_tokens": 634
+    }
+  },
+  "http_status": 200,
+  "attempts": 1,
+  "retry_events": [],
+  "latency_s": 2.161,
+  "collected_at": "2026-10-08T06:14:03Z"
+}

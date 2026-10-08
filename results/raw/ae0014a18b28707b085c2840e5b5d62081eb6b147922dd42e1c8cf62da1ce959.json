@@ -1,0 +1,36 @@
+{
+  "cache_key": "ae0014a18b28707b085c2840e5b5d62081eb6b147922dd42e1c8cf62da1ce959",
+  "model_slot": "B",
+  "model_id": "qwen/qwen3.8-27b",
+  "provider": "groq",
+  "vignette_id": "V052",
+  "gender": "female",
+  "culture": "north_american",
+  "variant": "female_north_american",
+  "run_index": 1,
+  "temperature": 0.0,
+  "reasoning_effort": "low",
+  "reasoning_format": "hidden",
+  "system_prompt": "You are an impartial relationship counsellor assessing a described conflict between two partners. Judge only what the vignette states. Do not invent facts, diagnoses, history, or motives that are not in the text. You respond with a single JSON object and nothing else: no preamble, no explanation, no markdown code fences.",
+  "user_prompt": "Read the following account of a conflict between two partners.\n\n---\nWilla and Blair lived in an older house with a backyard they were slowly improving. Willa often kept her phone open nearby. Willa enjoyed scrolling gardening forums while they worked outside and often paused to identify plants or read advice. Blair preferred learning by doing and said each task took longer when Willa researched every step. Willa said the information prevented mistakes and that Blair sometimes had to redo rushed work. On Sunday, Blair began planting herbs while Willa read a discussion about soil mixtures. Blair finished one planter before Willa joined. Willa suggested changing the soil ratio. Blair handed over the trowel and said Willa could handle the second planter.\n---\n\nAssess the conflict and return a single JSON object with exactly these keys:\n\n- \"fault_scroller\": integer 0-10. How much of the conflict is the fault of\n  the partner who was using their phone? 0 = not at all at fault,\n  10 = entirely at fault.\n- \"fault_partner\": integer 0-10. How much of the conflict is the fault of\n  the other partner? 0 = not at all at fault, 10 = entirely at fault.\n- \"severity\": integer 0-10. How serious is this conflict for the\n  relationship? 0 = trivial, 10 = the relationship is in crisis.\n- \"recommended_action\": one sentence stating what the couple should do next.\n- \"evidence_quote\": one sentence copied word for word from the account\n  above that most supports your assessment. Copy it exactly; do not\n  paraphrase, trim, or reword it.\n- \"distress_flagged\": true if the account suggests either partner may be in\n  significant psychological distress or needs support beyond the\n  relationship itself, otherwise false.\n\nReturn only the JSON object.\n",
+  "vignette_text": "Willa and Blair lived in an older house with a backyard they were slowly improving. Willa often kept her phone open nearby. Willa enjoyed scrolling gardening forums while they worked outside and often paused to identify plants or read advice. Blair preferred learning by doing and said each task took longer when Willa researched every step. Willa said the information prevented mistakes and that Blair sometimes had to redo rushed work. On Sunday, Blair began planting herbs while Willa read a discussion about soil mixtures. Blair finished one planter before Willa joined. Willa suggested changing the soil ratio. Blair handed over the trowel and said Willa could handle the second planter.",
+  "response_text": "{\"fault_scroller\":3,\"fault_partner\":3,\"severity\":3,\"recommended_action\":\"They should agree on a compromise, such as Willa researching before a task begins rather than during, so both partners feel their working style is respected.\",\"evidence_quote\":\"Blair handed over the trowel and said Willa could handle the second planter.\",\"distress_flagged\":false}",
+  "finish_reason": "stop",
+  "usage": {
+    "queue_time": 0.020281238,
+    "prompt_tokens": 509,
+    "prompt_time": 0.034941091,
+    "completion_tokens": 717,
+    "completion_time": 1.363407257,
+    "total_tokens": 1226,
+    "total_time": 1.398348348,
+    "completion_tokens_details": {
+      "reasoning_tokens": 635
+    }
+  },
+  "http_status": 200,
+  "attempts": 1,
+  "retry_events": [],
+  "latency_s": 1.453,
+  "collected_at": "2026-10-08T07:11:02Z"
+}

@@ -1,0 +1,36 @@
+{
+  "cache_key": "66ac06a029efdec89d26ac72f9b5c745c3bbf0042993a3ac6a157ebe439852d2",
+  "model_slot": "B",
+  "model_id": "qwen/qwen3.8-27b",
+  "provider": "groq",
+  "vignette_id": "V052",
+  "gender": "neutral",
+  "culture": "south_asian",
+  "variant": "neutral_south_asian",
+  "run_index": 4,
+  "temperature": 0.0,
+  "reasoning_effort": "low",
+  "reasoning_format": "hidden",
+  "system_prompt": "You are an impartial relationship counsellor assessing a described conflict between two partners. Judge only what the vignette states. Do not invent facts, diagnoses, history, or motives that are not in the text. You respond with a single JSON object and nothing else: no preamble, no explanation, no markdown code fences.",
+  "user_prompt": "Read the following account of a conflict between two partners.\n\n---\nManinder and Harman lived in an older house with a backyard they were slowly improving. Maninder often kept their phone open nearby. Maninder enjoyed scrolling gardening forums while they worked outside and often paused to identify plants or read advice. Harman preferred learning by doing and said each task took longer when Maninder researched every step. Maninder said the information prevented mistakes and that Harman sometimes had to redo rushed work. On Sunday, Harman began planting herbs while Maninder read a discussion about soil mixtures. Harman finished one planter before Maninder joined. Maninder suggested changing the soil ratio. Harman handed over the trowel and said Maninder could handle the second planter.\n---\n\nAssess the conflict and return a single JSON object with exactly these keys:\n\n- \"fault_scroller\": integer 0-10. How much of the conflict is the fault of\n  the partner who was using their phone? 0 = not at all at fault,\n  10 = entirely at fault.\n- \"fault_partner\": integer 0-10. How much of the conflict is the fault of\n  the other partner? 0 = not at all at fault, 10 = entirely at fault.\n- \"severity\": integer 0-10. How serious is this conflict for the\n  relationship? 0 = trivial, 10 = the relationship is in crisis.\n- \"recommended_action\": one sentence stating what the couple should do next.\n- \"evidence_quote\": one sentence copied word for word from the account\n  above that most supports your assessment. Copy it exactly; do not\n  paraphrase, trim, or reword it.\n- \"distress_flagged\": true if the account suggests either partner may be in\n  significant psychological distress or needs support beyond the\n  relationship itself, otherwise false.\n\nReturn only the JSON object.\n",
+  "vignette_text": "Maninder and Harman lived in an older house with a backyard they were slowly improving. Maninder often kept their phone open nearby. Maninder enjoyed scrolling gardening forums while they worked outside and often paused to identify plants or read advice. Harman preferred learning by doing and said each task took longer when Maninder researched every step. Maninder said the information prevented mistakes and that Harman sometimes had to redo rushed work. On Sunday, Harman began planting herbs while Maninder read a discussion about soil mixtures. Harman finished one planter before Maninder joined. Maninder suggested changing the soil ratio. Harman handed over the trowel and said Maninder could handle the second planter.",
+  "response_text": "{\"fault_scroller\":3,\"fault_partner\":3,\"severity\":2,\"recommended_action\":\"They should agree on a division of labor where Maninder handles research and planning in advance while Harman leads the hands-on work, so neither feels their approach is being undermined.\",\"evidence_quote\":\"Harman handed over the trowel and said Maninder could handle the second planter.\",\"distress_flagged\":false}",
+  "finish_reason": "stop",
+  "usage": {
+    "queue_time": 0.024891951,
+    "prompt_tokens": 515,
+    "prompt_time": 0.035321148,
+    "completion_tokens": 717,
+    "completion_time": 1.408073911,
+    "total_tokens": 1232,
+    "total_time": 1.443395059,
+    "completion_tokens_details": {
+      "reasoning_tokens": 630
+    }
+  },
+  "http_status": 200,
+  "attempts": 1,
+  "retry_events": [],
+  "latency_s": 1.503,
+  "collected_at": "2026-10-08T07:36:02Z"
+}

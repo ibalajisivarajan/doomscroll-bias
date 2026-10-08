@@ -1,0 +1,44 @@
+{
+  "cache_key": "7a46e4b5649968a85486642dae9d874678b4923e20ec3b5e94e24ab567149a7c",
+  "model_slot": "B",
+  "model_id": "qwen/qwen3.8-27b",
+  "provider": "groq",
+  "vignette_id": "V053",
+  "gender": "neutral",
+  "culture": "south_asian",
+  "variant": "neutral_south_asian",
+  "run_index": 4,
+  "temperature": 0.0,
+  "reasoning_effort": "low",
+  "reasoning_format": "hidden",
+  "system_prompt": "You are an impartial relationship counsellor assessing a described conflict between two partners. Judge only what the vignette states. Do not invent facts, diagnoses, history, or motives that are not in the text. You respond with a single JSON object and nothing else: no preamble, no explanation, no markdown code fences.",
+  "user_prompt": "Read the following account of a conflict between two partners.\n\n---\nAsees and Aalok shared a small apartment and usually ate dinner together after work. One Tuesday, Asees kept scrolling live sports scores and commentary while Aalok described a difficult meeting. Aalok stopped twice because Asees had not responded. Asees said they were listening and only checking updates during breaks in the conversation. After dinner, Aalok said the evening had felt one-sided. Asees replied that following the game for a few minutes did not mean they were ignoring anyone. They cleared the table together, but the conversation stayed brief for the rest of the night.\n---\n\nAssess the conflict and return a single JSON object with exactly these keys:\n\n- \"fault_scroller\": integer 0-10. How much of the conflict is the fault of\n  the partner who was using their phone? 0 = not at all at fault,\n  10 = entirely at fault.\n- \"fault_partner\": integer 0-10. How much of the conflict is the fault of\n  the other partner? 0 = not at all at fault, 10 = entirely at fault.\n- \"severity\": integer 0-10. How serious is this conflict for the\n  relationship? 0 = trivial, 10 = the relationship is in crisis.\n- \"recommended_action\": one sentence stating what the couple should do next.\n- \"evidence_quote\": one sentence copied word for word from the account\n  above that most supports your assessment. Copy it exactly; do not\n  paraphrase, trim, or reword it.\n- \"distress_flagged\": true if the account suggests either partner may be in\n  significant psychological distress or needs support beyond the\n  relationship itself, otherwise false.\n\nReturn only the JSON object.\n",
+  "vignette_text": "Asees and Aalok shared a small apartment and usually ate dinner together after work. One Tuesday, Asees kept scrolling live sports scores and commentary while Aalok described a difficult meeting. Aalok stopped twice because Asees had not responded. Asees said they were listening and only checking updates during breaks in the conversation. After dinner, Aalok said the evening had felt one-sided. Asees replied that following the game for a few minutes did not mean they were ignoring anyone. They cleared the table together, but the conversation stayed brief for the rest of the night.",
+  "response_text": "{\"fault_scroller\":4,\"fault_partner\":1,\"severity\":2,\"recommended_action\":\"They should briefly discuss how Aalok felt unheard and agree on a shared expectation about phone use during conversations.\",\"evidence_quote\":\"Aalok stopped twice because Asees had not responded.\",\"distress_flagged\":false}",
+  "finish_reason": "stop",
+  "usage": {
+    "queue_time": 0.022590405,
+    "prompt_tokens": 497,
+    "prompt_time": 0.03404999,
+    "completion_tokens": 709,
+    "completion_time": 1.3484584960000001,
+    "total_tokens": 1206,
+    "total_time": 1.3825084859999999,
+    "completion_tokens_details": {
+      "reasoning_tokens": 641
+    }
+  },
+  "http_status": 200,
+  "attempts": 2,
+  "retry_events": [
+    {
+      "attempt": 1,
+      "outcome": "retryable_http",
+      "http_status": 429,
+      "error_class": null,
+      "retry_after_s": null
+    }
+  ],
+  "latency_s": 1.436,
+  "collected_at": "2026-10-08T08:13:02Z"
+}

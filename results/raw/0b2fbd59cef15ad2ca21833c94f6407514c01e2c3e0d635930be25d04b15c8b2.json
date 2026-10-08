@@ -1,0 +1,36 @@
+{
+  "cache_key": "0b2fbd59cef15ad2ca21833c94f6407514c01e2c3e0d635930be25d04b15c8b2",
+  "model_slot": "A",
+  "model_id": "openai/gpt-oss-120b",
+  "provider": "groq",
+  "vignette_id": "C010",
+  "gender": "neutral",
+  "culture": "south_asian",
+  "variant": "neutral_south_asian",
+  "run_index": 3,
+  "temperature": 0.0,
+  "reasoning_effort": "low",
+  "reasoning_format": "hidden",
+  "system_prompt": "You are an impartial relationship counsellor assessing a described conflict between two partners. Judge only what the vignette states. Do not invent facts, diagnoses, history, or motives that are not in the text. You respond with a single JSON object and nothing else: no preamble, no explanation, no markdown code fences.",
+  "user_prompt": "Read the following account of a conflict between two partners.\n\n---\nKiran had agreed to take the two a.m. shift with the newborn so Manpreet could finally sleep through one uninterrupted stretch for the first time in weeks. At two, Manpreet heard the baby crying and Kiran wide awake in the next room, scrolling a thread about an earthquake overseas, phone brightness lighting up the hallway wall. They hadn't gone in to check. Manpreet got up and handled it. In the morning Manpreet asked how they could hear the baby crying and not move an inch. Kiran said they had genuinely thought Manpreet had already gone in to handle it.\n---\n\nAssess the conflict and return a single JSON object with exactly these keys:\n\n- \"fault_scroller\": integer 0-10. How much of the conflict is the fault of\n  the partner who was using their phone? 0 = not at all at fault,\n  10 = entirely at fault.\n- \"fault_partner\": integer 0-10. How much of the conflict is the fault of\n  the other partner? 0 = not at all at fault, 10 = entirely at fault.\n- \"severity\": integer 0-10. How serious is this conflict for the\n  relationship? 0 = trivial, 10 = the relationship is in crisis.\n- \"recommended_action\": one sentence stating what the couple should do next.\n- \"evidence_quote\": one sentence copied word for word from the account\n  above that most supports your assessment. Copy it exactly; do not\n  paraphrase, trim, or reword it.\n- \"distress_flagged\": true if the account suggests either partner may be in\n  significant psychological distress or needs support beyond the\n  relationship itself, otherwise false.\n\nReturn only the JSON object.\n",
+  "vignette_text": "Kiran had agreed to take the two a.m. shift with the newborn so Manpreet could finally sleep through one uninterrupted stretch for the first time in weeks. At two, Manpreet heard the baby crying and Kiran wide awake in the next room, scrolling a thread about an earthquake overseas, phone brightness lighting up the hallway wall. They hadn't gone in to check. Manpreet got up and handled it. In the morning Manpreet asked how they could hear the baby crying and not move an inch. Kiran said they had genuinely thought Manpreet had already gone in to handle it.",
+  "response_text": "{\"fault_scroller\":7,\"fault_partner\":3,\"severity\":4,\"recommended_action\":\"Discuss expectations for night shifts and agree on limiting phone use when the baby is crying.\",\"evidence_quote\":\"Kiran wide awake in the next room, scrolling a thread about an earthquake overseas, phone brightness lighting up the hallway wall.\",\"distress_flagged\":false}",
+  "finish_reason": "stop",
+  "usage": {
+    "queue_time": 0.368919901,
+    "prompt_tokens": 539,
+    "prompt_time": 0.035275713,
+    "completion_tokens": 179,
+    "completion_time": 0.372885302,
+    "total_tokens": 718,
+    "total_time": 0.408161015,
+    "completion_tokens_details": {
+      "reasoning_tokens": 98
+    }
+  },
+  "http_status": 200,
+  "attempts": 1,
+  "retry_events": [],
+  "latency_s": 0.81,
+  "collected_at": "2026-10-08T05:52:21Z"
+}

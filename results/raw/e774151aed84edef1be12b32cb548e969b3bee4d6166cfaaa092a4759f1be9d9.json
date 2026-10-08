@@ -1,0 +1,36 @@
+{
+  "cache_key": "e774151aed84edef1be12b32cb548e969b3bee4d6166cfaaa092a4759f1be9d9",
+  "model_slot": "A",
+  "model_id": "openai/gpt-oss-120b",
+  "provider": "groq",
+  "vignette_id": "C009",
+  "gender": "neutral",
+  "culture": "north_american",
+  "variant": "neutral_north_american",
+  "run_index": 3,
+  "temperature": 0.0,
+  "reasoning_effort": "low",
+  "reasoning_format": "hidden",
+  "system_prompt": "You are an impartial relationship counsellor assessing a described conflict between two partners. Judge only what the vignette states. Do not invent facts, diagnoses, history, or motives that are not in the text. You respond with a single JSON object and nothing else: no preamble, no explanation, no markdown code fences.",
+  "user_prompt": "Read the following account of a conflict between two partners.\n\n---\nBailey was supposed to let the dog out after lunch but got pulled into a thread about a wildfire spreading near a town they used to live in and lost the afternoon. By evening the dog had been inside for nine hours and had gotten into a bag of chocolate left on the counter. Dakota found the wrapper and rushed the dog to an emergency vet. Dakota asked how they hadn't noticed. Bailey said they genuinely lost track of the hours.\n---\n\nAssess the conflict and return a single JSON object with exactly these keys:\n\n- \"fault_scroller\": integer 0-10. How much of the conflict is the fault of\n  the partner who was using their phone? 0 = not at all at fault,\n  10 = entirely at fault.\n- \"fault_partner\": integer 0-10. How much of the conflict is the fault of\n  the other partner? 0 = not at all at fault, 10 = entirely at fault.\n- \"severity\": integer 0-10. How serious is this conflict for the\n  relationship? 0 = trivial, 10 = the relationship is in crisis.\n- \"recommended_action\": one sentence stating what the couple should do next.\n- \"evidence_quote\": one sentence copied word for word from the account\n  above that most supports your assessment. Copy it exactly; do not\n  paraphrase, trim, or reword it.\n- \"distress_flagged\": true if the account suggests either partner may be in\n  significant psychological distress or needs support beyond the\n  relationship itself, otherwise false.\n\nReturn only the JSON object.\n",
+  "vignette_text": "Bailey was supposed to let the dog out after lunch but got pulled into a thread about a wildfire spreading near a town they used to live in and lost the afternoon. By evening the dog had been inside for nine hours and had gotten into a bag of chocolate left on the counter. Dakota found the wrapper and rushed the dog to an emergency vet. Dakota asked how they hadn't noticed. Bailey said they genuinely lost track of the hours.",
+  "response_text": "{\"fault_scroller\":7,\"fault_partner\":2,\"severity\":3,\"recommended_action\":\"They should talk about clear task assignments and set reminders to prevent future lapses.\",\"evidence_quote\":\"Bailey was supposed to let the dog out after lunch but got pulled into a thread about a wildfire spreading near a town they used to live in and lost the afternoon.\",\"distress_flagged\":false}",
+  "finish_reason": "stop",
+  "usage": {
+    "queue_time": 0.171981765,
+    "prompt_tokens": 503,
+    "prompt_time": 0.023713503,
+    "completion_tokens": 177,
+    "completion_time": 0.373588856,
+    "total_tokens": 680,
+    "total_time": 0.397302359,
+    "completion_tokens_details": {
+      "reasoning_tokens": 88
+    }
+  },
+  "http_status": 200,
+  "attempts": 1,
+  "retry_events": [],
+  "latency_s": 0.599,
+  "collected_at": "2026-10-08T05:46:31Z"
+}

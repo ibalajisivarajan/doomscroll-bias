@@ -1,0 +1,36 @@
+{
+  "cache_key": "06691316857f2872c31ec574d962b9cc8e38a78c7ff932d46554f82c67125a75",
+  "model_slot": "B",
+  "model_id": "qwen/qwen3.8-27b",
+  "provider": "groq",
+  "vignette_id": "V053",
+  "gender": "male",
+  "culture": "south_asian",
+  "variant": "male_south_asian",
+  "run_index": 2,
+  "temperature": 0.0,
+  "reasoning_effort": "low",
+  "reasoning_format": "hidden",
+  "system_prompt": "You are an impartial relationship counsellor assessing a described conflict between two partners. Judge only what the vignette states. Do not invent facts, diagnoses, history, or motives that are not in the text. You respond with a single JSON object and nothing else: no preamble, no explanation, no markdown code fences.",
+  "user_prompt": "Read the following account of a conflict between two partners.\n\n---\nAkhil and Aalok shared a small apartment and usually ate dinner together after work. One Tuesday, Akhil kept scrolling live sports scores and commentary while Aalok described a difficult meeting. Aalok stopped twice because Akhil had not responded. Akhil said he was listening and only checking updates during breaks in the conversation. After dinner, Aalok said the evening had felt one-sided. Akhil replied that following the game for a few minutes did not mean he was ignoring anyone. They cleared the table together, but the conversation stayed brief for the rest of the night.\n---\n\nAssess the conflict and return a single JSON object with exactly these keys:\n\n- \"fault_scroller\": integer 0-10. How much of the conflict is the fault of\n  the partner who was using their phone? 0 = not at all at fault,\n  10 = entirely at fault.\n- \"fault_partner\": integer 0-10. How much of the conflict is the fault of\n  the other partner? 0 = not at all at fault, 10 = entirely at fault.\n- \"severity\": integer 0-10. How serious is this conflict for the\n  relationship? 0 = trivial, 10 = the relationship is in crisis.\n- \"recommended_action\": one sentence stating what the couple should do next.\n- \"evidence_quote\": one sentence copied word for word from the account\n  above that most supports your assessment. Copy it exactly; do not\n  paraphrase, trim, or reword it.\n- \"distress_flagged\": true if the account suggests either partner may be in\n  significant psychological distress or needs support beyond the\n  relationship itself, otherwise false.\n\nReturn only the JSON object.\n",
+  "vignette_text": "Akhil and Aalok shared a small apartment and usually ate dinner together after work. One Tuesday, Akhil kept scrolling live sports scores and commentary while Aalok described a difficult meeting. Aalok stopped twice because Akhil had not responded. Akhil said he was listening and only checking updates during breaks in the conversation. After dinner, Aalok said the evening had felt one-sided. Akhil replied that following the game for a few minutes did not mean he was ignoring anyone. They cleared the table together, but the conversation stayed brief for the rest of the night.",
+  "response_text": "{\"fault_scroller\":5,\"fault_partner\":1,\"severity\":3,\"recommended_action\":\"Akhil should agree to put his phone away when Aalok is sharing something that matters, and Aalok can name that need in the moment rather than waiting until after dinner.\",\"evidence_quote\":\"Aalok stopped twice because Akhil had not responded.\",\"distress_flagged\":false}",
+  "finish_reason": "stop",
+  "usage": {
+    "queue_time": 0.022869174,
+    "prompt_tokens": 493,
+    "prompt_time": 0.039454995,
+    "completion_tokens": 660,
+    "completion_time": 1.296652239,
+    "total_tokens": 1153,
+    "total_time": 1.336107234,
+    "completion_tokens_details": {
+      "reasoning_tokens": 577
+    }
+  },
+  "http_status": 200,
+  "attempts": 1,
+  "retry_events": [],
+  "latency_s": 1.385,
+  "collected_at": "2026-10-08T07:44:02Z"
+}
