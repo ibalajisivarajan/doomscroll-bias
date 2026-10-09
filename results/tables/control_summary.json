@@ -1,11 +1,11 @@
 {
-  "n_control_responses": 380,
-  "n_scorable": 380,
-  "pass_rate": 0.9289473684210526,
+  "n_control_responses": 450,
+  "n_scorable": 450,
+  "pass_rate": 0.94,
   "by_model": {
     "A": {
-      "n": 380,
-      "pass_rate": 0.9289473684210526
+      "n": 450,
+      "pass_rate": 0.94
     }
   }
 }
