@@ -1,0 +1,36 @@
+{
+  "cache_key": "79ce0c7f9e81a50a9c187a97a34492b2c04ea753de4ba5f9a1cfcbdd816b068b",
+  "model_slot": "B",
+  "model_id": "qwen/qwen3.8-27b",
+  "provider": "groq",
+  "vignette_id": "V063",
+  "gender": "neutral",
+  "culture": "north_american",
+  "variant": "neutral_north_american",
+  "run_index": 2,
+  "temperature": 0.0,
+  "reasoning_effort": "low",
+  "reasoning_format": "hidden",
+  "system_prompt": "You are an impartial relationship counsellor assessing a described conflict between two partners. Judge only what the vignette states. Do not invent facts, diagnoses, history, or motives that are not in the text. You respond with a single JSON object and nothing else: no preamble, no explanation, no markdown code fences.",
+  "user_prompt": "Read the following account of a conflict between two partners.\n\n---\nJayden and Marlowe had an hour together most nights after their children went to sleep. One evening, Jayden spent much of that hour scrolling old messages in a work chat, even though no one had asked for a response. Marlowe said the habit made their limited quiet time feel like leftover space around work. Jayden said they preferred checking messages at night so the next morning felt less chaotic. Marlowe said that choice simply moved the work into their time together. Jayden finished reading the thread and put the phone aside. By then, Marlowe had started watching a show alone.\n---\n\nAssess the conflict and return a single JSON object with exactly these keys:\n\n- \"fault_scroller\": integer 0-10. How much of the conflict is the fault of\n  the partner who was using their phone? 0 = not at all at fault,\n  10 = entirely at fault.\n- \"fault_partner\": integer 0-10. How much of the conflict is the fault of\n  the other partner? 0 = not at all at fault, 10 = entirely at fault.\n- \"severity\": integer 0-10. How serious is this conflict for the\n  relationship? 0 = trivial, 10 = the relationship is in crisis.\n- \"recommended_action\": one sentence stating what the couple should do next.\n- \"evidence_quote\": one sentence copied word for word from the account\n  above that most supports your assessment. Copy it exactly; do not\n  paraphrase, trim, or reword it.\n- \"distress_flagged\": true if the account suggests either partner may be in\n  significant psychological distress or needs support beyond the\n  relationship itself, otherwise false.\n\nReturn only the JSON object.\n",
+  "vignette_text": "Jayden and Marlowe had an hour together most nights after their children went to sleep. One evening, Jayden spent much of that hour scrolling old messages in a work chat, even though no one had asked for a response. Marlowe said the habit made their limited quiet time feel like leftover space around work. Jayden said they preferred checking messages at night so the next morning felt less chaotic. Marlowe said that choice simply moved the work into their time together. Jayden finished reading the thread and put the phone aside. By then, Marlowe had started watching a show alone.",
+  "response_text": "{\"fault_scroller\":5,\"fault_partner\":2,\"severity\":3,\"recommended_action\":\"They should agree on a clear boundary for work during their evening time together, such as Jayden handling messages in the morning instead.\",\"evidence_quote\":\"Marlowe said the habit made their limited quiet time feel like leftover space around work.\",\"distress_flagged\":false}",
+  "finish_reason": "stop",
+  "usage": {
+    "queue_time": 0.004171756,
+    "prompt_tokens": 496,
+    "prompt_time": 0.040247669,
+    "completion_tokens": 733,
+    "completion_time": 1.4847769610000001,
+    "total_tokens": 1229,
+    "total_time": 1.5250246299999999,
+    "completion_tokens_details": {
+      "reasoning_tokens": 656
+    }
+  },
+  "http_status": 200,
+  "attempts": 1,
+  "retry_events": [],
+  "latency_s": 1.573,
+  "collected_at": "2026-10-10T06:48:08Z"
+}
