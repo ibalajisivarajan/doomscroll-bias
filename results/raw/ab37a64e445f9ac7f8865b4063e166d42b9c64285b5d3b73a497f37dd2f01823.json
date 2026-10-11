@@ -1,0 +1,36 @@
+{
+  "cache_key": "ab37a64e445f9ac7f8865b4063e166d42b9c64285b5d3b73a497f37dd2f01823",
+  "model_slot": "B",
+  "model_id": "qwen/qwen3.8-27b",
+  "provider": "groq",
+  "vignette_id": "V068",
+  "gender": "neutral",
+  "culture": "north_american",
+  "variant": "neutral_north_american",
+  "run_index": 2,
+  "temperature": 0.0,
+  "reasoning_effort": "low",
+  "reasoning_format": "hidden",
+  "system_prompt": "You are an impartial relationship counsellor assessing a described conflict between two partners. Judge only what the vignette states. Do not invent facts, diagnoses, history, or motives that are not in the text. You respond with a single JSON object and nothing else: no preamble, no explanation, no markdown code fences.",
+  "user_prompt": "Read the following account of a conflict between two partners.\n\n---\nNoel and Taylor went to a neighborhood restaurant they had wanted to try for weeks. Between ordering and the food arriving, Noel scrolled celebrity gossip and showed Taylor several headlines. Taylor answered at first, then said the phone was taking over the dinner. Noel said they thought sharing amusing stories counted as conversation and did not see the difference between that and talking about anything else. Taylor said the difference was that Noel kept returning attention to the feed. Noel put the phone in a bag or pocket and left it there through the meal. The dinner became easier, but still slightly awkward.\n---\n\nAssess the conflict and return a single JSON object with exactly these keys:\n\n- \"fault_scroller\": integer 0-10. How much of the conflict is the fault of\n  the partner who was using their phone? 0 = not at all at fault,\n  10 = entirely at fault.\n- \"fault_partner\": integer 0-10. How much of the conflict is the fault of\n  the other partner? 0 = not at all at fault, 10 = entirely at fault.\n- \"severity\": integer 0-10. How serious is this conflict for the\n  relationship? 0 = trivial, 10 = the relationship is in crisis.\n- \"recommended_action\": one sentence stating what the couple should do next.\n- \"evidence_quote\": one sentence copied word for word from the account\n  above that most supports your assessment. Copy it exactly; do not\n  paraphrase, trim, or reword it.\n- \"distress_flagged\": true if the account suggests either partner may be in\n  significant psychological distress or needs support beyond the\n  relationship itself, otherwise false.\n\nReturn only the JSON object.\n",
+  "vignette_text": "Noel and Taylor went to a neighborhood restaurant they had wanted to try for weeks. Between ordering and the food arriving, Noel scrolled celebrity gossip and showed Taylor several headlines. Taylor answered at first, then said the phone was taking over the dinner. Noel said they thought sharing amusing stories counted as conversation and did not see the difference between that and talking about anything else. Taylor said the difference was that Noel kept returning attention to the feed. Noel put the phone in a bag or pocket and left it there through the meal. The dinner became easier, but still slightly awkward.",
+  "response_text": "{\"fault_scroller\":6,\"fault_partner\":1,\"severity\":2,\"recommended_action\":\"They should briefly acknowledge the moment after dinner, with Noel validating that Taylor's concern was reasonable and Taylor appreciating the adjustment.\",\"evidence_quote\":\"Noel said they thought sharing amusing stories counted as conversation and did not see the difference between that and talking about anything else.\",\"distress_flagged\":false}",
+  "finish_reason": "stop",
+  "usage": {
+    "queue_time": 0.023151019,
+    "prompt_tokens": 488,
+    "prompt_time": 0.040476603,
+    "completion_tokens": 675,
+    "completion_time": 1.318656215,
+    "total_tokens": 1163,
+    "total_time": 1.359132818,
+    "completion_tokens_details": {
+      "reasoning_tokens": 592
+    }
+  },
+  "http_status": 200,
+  "attempts": 1,
+  "retry_events": [],
+  "latency_s": 1.408,
+  "collected_at": "2026-10-11T06:22:04Z"
+}
