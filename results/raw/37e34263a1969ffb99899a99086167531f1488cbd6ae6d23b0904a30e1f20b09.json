@@ -1,0 +1,36 @@
+{
+  "cache_key": "37e34263a1969ffb99899a99086167531f1488cbd6ae6d23b0904a30e1f20b09",
+  "model_slot": "B",
+  "model_id": "qwen/qwen3.8-27b",
+  "provider": "groq",
+  "vignette_id": "V073",
+  "gender": "neutral",
+  "culture": "north_american",
+  "variant": "neutral_north_american",
+  "run_index": 1,
+  "temperature": 0.0,
+  "reasoning_effort": "low",
+  "reasoning_format": "hidden",
+  "system_prompt": "You are an impartial relationship counsellor assessing a described conflict between two partners. Judge only what the vignette states. Do not invent facts, diagnoses, history, or motives that are not in the text. You respond with a single JSON object and nothing else: no preamble, no explanation, no markdown code fences.",
+  "user_prompt": "Read the following account of a conflict between two partners.\n\n---\nSutton and Quinn often sat on their balcony after dinner to talk about the day. One evening, Sutton kept scrolling investment news after markets had closed, pausing the conversation several times to read longer posts. Quinn said the habit made these evenings feel less like shared time. Sutton said they followed the news because financial decisions affected both of them and thought staying informed was responsible. Quinn said responsibility did not require checking every update during their only quiet half hour. Sutton finished one article and locked the phone. They stayed outside until it became cool, but talked mostly about practical plans.\n---\n\nAssess the conflict and return a single JSON object with exactly these keys:\n\n- \"fault_scroller\": integer 0-10. How much of the conflict is the fault of\n  the partner who was using their phone? 0 = not at all at fault,\n  10 = entirely at fault.\n- \"fault_partner\": integer 0-10. How much of the conflict is the fault of\n  the other partner? 0 = not at all at fault, 10 = entirely at fault.\n- \"severity\": integer 0-10. How serious is this conflict for the\n  relationship? 0 = trivial, 10 = the relationship is in crisis.\n- \"recommended_action\": one sentence stating what the couple should do next.\n- \"evidence_quote\": one sentence copied word for word from the account\n  above that most supports your assessment. Copy it exactly; do not\n  paraphrase, trim, or reword it.\n- \"distress_flagged\": true if the account suggests either partner may be in\n  significant psychological distress or needs support beyond the\n  relationship itself, otherwise false.\n\nReturn only the JSON object.\n",
+  "vignette_text": "Sutton and Quinn often sat on their balcony after dinner to talk about the day. One evening, Sutton kept scrolling investment news after markets had closed, pausing the conversation several times to read longer posts. Quinn said the habit made these evenings feel less like shared time. Sutton said they followed the news because financial decisions affected both of them and thought staying informed was responsible. Quinn said responsibility did not require checking every update during their only quiet half hour. Sutton finished one article and locked the phone. They stayed outside until it became cool, but talked mostly about practical plans.",
+  "response_text": "{\"fault_scroller\":5,\"fault_partner\":1,\"severity\":2,\"recommended_action\":\"They should agree to keep the balcony time phone-free and find a separate, dedicated time for Sutton to review financial news.\",\"evidence_quote\":\"Quinn said the habit made these evenings feel less like shared time.\",\"distress_flagged\":false}",
+  "finish_reason": "stop",
+  "usage": {
+    "queue_time": 0.03313437,
+    "prompt_tokens": 488,
+    "prompt_time": 0.039043307,
+    "completion_tokens": 672,
+    "completion_time": 1.431966568,
+    "total_tokens": 1160,
+    "total_time": 1.471009875,
+    "completion_tokens_details": {
+      "reasoning_tokens": 601
+    }
+  },
+  "http_status": 200,
+  "attempts": 1,
+  "retry_events": [],
+  "latency_s": 1.547,
+  "collected_at": "2026-10-12T06:11:22Z"
+}
