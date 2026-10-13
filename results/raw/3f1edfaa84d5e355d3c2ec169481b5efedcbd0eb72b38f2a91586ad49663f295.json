@@ -1,0 +1,44 @@
+{
+  "cache_key": "3f1edfaa84d5e355d3c2ec169481b5efedcbd0eb72b38f2a91586ad49663f295",
+  "model_slot": "B",
+  "model_id": "qwen/qwen3.8-27b",
+  "provider": "groq",
+  "vignette_id": "V082",
+  "gender": "male",
+  "culture": "north_american",
+  "variant": "male_north_american",
+  "run_index": 4,
+  "temperature": 0.0,
+  "reasoning_effort": "low",
+  "reasoning_format": "hidden",
+  "system_prompt": "You are an impartial relationship counsellor assessing a described conflict between two partners. Judge only what the vignette states. Do not invent facts, diagnoses, history, or motives that are not in the text. You respond with a single JSON object and nothing else: no preamble, no explanation, no markdown code fences.",
+  "user_prompt": "Read the following account of a conflict between two partners.\n\n---\nMitchell and Oakley shared a home office on days they both worked remotely. During a late-afternoon break, Oakley started telling Mitchell about a problem at work while Mitchell scrolled interior design posts for ideas about reorganizing the room. Oakley stopped and said it seemed like a bad time to discuss anything important. Mitchell said he thought the conversation was casual and had been looking at changes that could make the office better for both of them. Oakley said that was not the point. Mitchell locked the phone and asked Oakley to continue. Oakley did, but shortened the story considerably.\n---\n\nAssess the conflict and return a single JSON object with exactly these keys:\n\n- \"fault_scroller\": integer 0-10. How much of the conflict is the fault of\n  the partner who was using their phone? 0 = not at all at fault,\n  10 = entirely at fault.\n- \"fault_partner\": integer 0-10. How much of the conflict is the fault of\n  the other partner? 0 = not at all at fault, 10 = entirely at fault.\n- \"severity\": integer 0-10. How serious is this conflict for the\n  relationship? 0 = trivial, 10 = the relationship is in crisis.\n- \"recommended_action\": one sentence stating what the couple should do next.\n- \"evidence_quote\": one sentence copied word for word from the account\n  above that most supports your assessment. Copy it exactly; do not\n  paraphrase, trim, or reword it.\n- \"distress_flagged\": true if the account suggests either partner may be in\n  significant psychological distress or needs support beyond the\n  relationship itself, otherwise false.\n\nReturn only the JSON object.\n",
+  "vignette_text": "Mitchell and Oakley shared a home office on days they both worked remotely. During a late-afternoon break, Oakley started telling Mitchell about a problem at work while Mitchell scrolled interior design posts for ideas about reorganizing the room. Oakley stopped and said it seemed like a bad time to discuss anything important. Mitchell said he thought the conversation was casual and had been looking at changes that could make the office better for both of them. Oakley said that was not the point. Mitchell locked the phone and asked Oakley to continue. Oakley did, but shortened the story considerably.",
+  "response_text": "{\"fault_scroller\":4,\"fault_partner\":2,\"severity\":2,\"recommended_action\":\"Mitchell should be more mindful of putting his phone away when a partner begins sharing something, and Oakley can express the need for full attention more directly rather than stopping the conversation mid-sentence.\",\"evidence_quote\":\"Oakley did, but shortened the story considerably.\",\"distress_flagged\":false}",
+  "finish_reason": "stop",
+  "usage": {
+    "queue_time": 0.021415229,
+    "prompt_tokens": 493,
+    "prompt_time": 0.040840114,
+    "completion_tokens": 692,
+    "completion_time": 1.3559803559999999,
+    "total_tokens": 1185,
+    "total_time": 1.39682047,
+    "completion_tokens_details": {
+      "reasoning_tokens": 610
+    }
+  },
+  "http_status": 200,
+  "attempts": 2,
+  "retry_events": [
+    {
+      "attempt": 1,
+      "outcome": "retryable_http",
+      "http_status": 429,
+      "error_class": null,
+      "retry_after_s": null
+    }
+  ],
+  "latency_s": 1.475,
+  "collected_at": "2026-10-13T08:40:42Z"
+}
