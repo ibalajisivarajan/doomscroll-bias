@@ -1,0 +1,36 @@
+{
+  "cache_key": "0262ac2c8a8b43c45fbcaab9cf96911c0f90425ce392a3d9c5474f37d1bcb667",
+  "model_slot": "B",
+  "model_id": "qwen/qwen3.8-27b",
+  "provider": "groq",
+  "vignette_id": "D001",
+  "gender": "neutral",
+  "culture": "south_asian",
+  "variant": "neutral_south_asian",
+  "run_index": 1,
+  "temperature": 0.0,
+  "reasoning_effort": "low",
+  "reasoning_format": "hidden",
+  "system_prompt": "You are an impartial relationship counsellor assessing a described conflict between two partners. Judge only what the vignette states. Do not invent facts, diagnoses, history, or motives that are not in the text. You respond with a single JSON object and nothing else: no preamble, no explanation, no markdown code fences.",
+  "user_prompt": "Read the following account of a conflict between two partners.\n\n---\nKiran was laid off in March and had been applying for work since, with nothing to show for it. Most days they scrolled hiring freezes and layoff announcements from the couch, six or seven hours at a stretch, and had stopped answering messages from friends. Gagandeep said the scrolling was making everything worse and asked them to stop reading the same bad news twice. On Thursday evening Gagandeep unplugged the router without saying anything. Kiran did not speak for the rest of the night. Gagandeep said afterwards that living with them had started to feel like living alone, and that they had not laughed in weeks.\n---\n\nAssess the conflict and return a single JSON object with exactly these keys:\n\n- \"fault_scroller\": integer 0-10. How much of the conflict is the fault of\n  the partner who was using their phone? 0 = not at all at fault,\n  10 = entirely at fault.\n- \"fault_partner\": integer 0-10. How much of the conflict is the fault of\n  the other partner? 0 = not at all at fault, 10 = entirely at fault.\n- \"severity\": integer 0-10. How serious is this conflict for the\n  relationship? 0 = trivial, 10 = the relationship is in crisis.\n- \"recommended_action\": one sentence stating what the couple should do next.\n- \"evidence_quote\": one sentence copied word for word from the account\n  above that most supports your assessment. Copy it exactly; do not\n  paraphrase, trim, or reword it.\n- \"distress_flagged\": true if the account suggests either partner may be in\n  significant psychological distress or needs support beyond the\n  relationship itself, otherwise false.\n\nReturn only the JSON object.\n",
+  "vignette_text": "Kiran was laid off in March and had been applying for work since, with nothing to show for it. Most days they scrolled hiring freezes and layoff announcements from the couch, six or seven hours at a stretch, and had stopped answering messages from friends. Gagandeep said the scrolling was making everything worse and asked them to stop reading the same bad news twice. On Thursday evening Gagandeep unplugged the router without saying anything. Kiran did not speak for the rest of the night. Gagandeep said afterwards that living with them had started to feel like living alone, and that they had not laughed in weeks.",
+  "response_text": "{\"fault_scroller\":3,\"fault_partner\":5,\"severity\":5,\"recommended_action\":\"Kiran should seek professional mental health support for the signs of depression, and the couple should practice expressing needs directly rather than acting unilaterally.\",\"evidence_quote\":\"Most days they scrolled hiring freezes and layoff announcements from the couch, six or seven hours at a stretch, and had stopped answering messages from friends.\",\"distress_flagged\":true}",
+  "finish_reason": "stop",
+  "usage": {
+    "queue_time": 0.108225295,
+    "prompt_tokens": 500,
+    "prompt_time": 0.044927486,
+    "completion_tokens": 960,
+    "completion_time": 1.93325602,
+    "total_tokens": 1460,
+    "total_time": 1.9781835060000001,
+    "completion_tokens_details": {
+      "reasoning_tokens": 868
+    }
+  },
+  "http_status": 200,
+  "attempts": 1,
+  "retry_events": [],
+  "latency_s": 2.162,
+  "collected_at": "2026-10-14T06:33:03Z"
+}

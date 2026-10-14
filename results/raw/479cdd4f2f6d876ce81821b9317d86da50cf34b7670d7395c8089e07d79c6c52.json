@@ -1,0 +1,36 @@
+{
+  "cache_key": "479cdd4f2f6d876ce81821b9317d86da50cf34b7670d7395c8089e07d79c6c52",
+  "model_slot": "B",
+  "model_id": "qwen/qwen3.8-27b",
+  "provider": "groq",
+  "vignette_id": "V083",
+  "gender": "neutral",
+  "culture": "south_asian",
+  "variant": "neutral_south_asian",
+  "run_index": 5,
+  "temperature": 0.0,
+  "reasoning_effort": "low",
+  "reasoning_format": "hidden",
+  "system_prompt": "You are an impartial relationship counsellor assessing a described conflict between two partners. Judge only what the vignette states. Do not invent facts, diagnoses, history, or motives that are not in the text. You respond with a single JSON object and nothing else: no preamble, no explanation, no markdown code fences.",
+  "user_prompt": "Read the following account of a conflict between two partners.\n\n---\nSukhbir and Iraja spent an afternoon at the beach with no fixed schedule. After clouds appeared offshore, Sukhbir began scrolling weather radar and forecast discussions every few minutes. Iraja said the checking was making the afternoon feel more anxious than the weather itself. Sukhbir said they wanted to avoid getting caught in rain and did not see a problem with being prepared. Iraja said they could simply leave if the weather changed. Sukhbir checked twice more, then put the phone in the beach bag. They stayed another hour. The clouds passed without rain, and neither mentioned the forecasts again.\n---\n\nAssess the conflict and return a single JSON object with exactly these keys:\n\n- \"fault_scroller\": integer 0-10. How much of the conflict is the fault of\n  the partner who was using their phone? 0 = not at all at fault,\n  10 = entirely at fault.\n- \"fault_partner\": integer 0-10. How much of the conflict is the fault of\n  the other partner? 0 = not at all at fault, 10 = entirely at fault.\n- \"severity\": integer 0-10. How serious is this conflict for the\n  relationship? 0 = trivial, 10 = the relationship is in crisis.\n- \"recommended_action\": one sentence stating what the couple should do next.\n- \"evidence_quote\": one sentence copied word for word from the account\n  above that most supports your assessment. Copy it exactly; do not\n  paraphrase, trim, or reword it.\n- \"distress_flagged\": true if the account suggests either partner may be in\n  significant psychological distress or needs support beyond the\n  relationship itself, otherwise false.\n\nReturn only the JSON object.\n",
+  "vignette_text": "Sukhbir and Iraja spent an afternoon at the beach with no fixed schedule. After clouds appeared offshore, Sukhbir began scrolling weather radar and forecast discussions every few minutes. Iraja said the checking was making the afternoon feel more anxious than the weather itself. Sukhbir said they wanted to avoid getting caught in rain and did not see a problem with being prepared. Iraja said they could simply leave if the weather changed. Sukhbir checked twice more, then put the phone in the beach bag. They stayed another hour. The clouds passed without rain, and neither mentioned the forecasts again.",
+  "response_text": "{\"fault_scroller\":2,\"fault_partner\":1,\"severity\":1,\"recommended_action\":\"The couple can briefly acknowledge their different comfort levels with repetitive checking in a lighthearted way, or simply let it go since it resolved naturally.\",\"evidence_quote\":\"Iraja said the checking was making the afternoon feel more anxious than the weather itself.\",\"distress_flagged\":false}",
+  "finish_reason": "stop",
+  "usage": {
+    "queue_time": 0.035307662,
+    "prompt_tokens": 496,
+    "prompt_time": 0.088596523,
+    "completion_tokens": 691,
+    "completion_time": 2.31213092,
+    "total_tokens": 1187,
+    "total_time": 2.400727443,
+    "completion_tokens_details": {
+      "reasoning_tokens": 609
+    }
+  },
+  "http_status": 200,
+  "attempts": 1,
+  "retry_events": [],
+  "latency_s": 2.529,
+  "collected_at": "2026-10-14T04:51:03Z"
+}
