@@ -38,6 +38,25 @@ One paired difference per vignette per model: mean `fault_scroller` in the male-
 
 CIs are percentile bootstrap over vignettes, 10000 resamples. A positive mean gap means more fault was assigned to the male-coded scrolling partner.
 
+## 3b. H1/H2 complete-case matched-pair effect-size sensitivity (supplemental, post-lock)
+
+> **Supplemental, not preregistered.** The preregistered table above computes each gender's value as the average over whichever of the 2 cultural framings exist for that vignette (`np.nanmean`), so a vignette with only 1 of 2 cultures collected counts the same as one with both. This section instead requires both north_american and south_asian cells for both male and female before a vignette counts at all -- the same complete-case discipline as the H3 supplemental analysis in section 5b, applied here to H1/H2. It recomputes the identical gap/Cliff's-delta/Wilcoxon quantities on that stricter subset and reports them alongside the preregistered test, not instead of it. p-values here are unadjusted and are not folded into the primary family's Holm correction above; what is reported was fixed by the spec before this cache was analysed, not chosen after seeing the effects.
+
+**Slot A** — openai/gpt-oss-120b: 120 vignettes with a complete male/female x north_american/south_asian cell set included, 0 of 120 total excluded for an incomplete pairing.
+
+| H   | contrast                         |   n |   mean | 95% CI          |    W | p (unadjusted)   |   Cliff's d | magnitude   |
+|-----|----------------------------------|-----|--------|-----------------|------|------------------|-------------|-------------|
+| H1  | fault gap (male - female)        | 120 |  0.261 | [0.170, 0.348]  |  761 | <0.001           |       0.231 | small       |
+| H2  | gap difference (NA - SA framing) | 120 | -0.015 | [-0.175, 0.153] | 1780 | 0.458            |      -0.051 | negligible  |
+
+**Slot B** — qwen/qwen3.8-27b: 93 vignettes with a complete male/female x north_american/south_asian cell set included, 0 of 93 total excluded for an incomplete pairing.
+
+| H   | contrast                         |   n |   mean | 95% CI          |      W | p (unadjusted)   |   Cliff's d | magnitude   |
+|-----|----------------------------------|-----|--------|-----------------|--------|------------------|-------------|-------------|
+| H1  | fault gap (male - female)        |  93 |  0.423 | [0.313, 0.531]  |  349.5 | <0.001           |       0.215 | small       |
+| H2  | gap difference (NA - SA framing) |  93 |  0.282 | [-0.009, 0.570] | 1231.5 | 0.062            |       0.197 | small       |
+
+
 ## 4. Gaps by cultural framing, and the neutral condition
 
 | slot   | framing            |   n |   mean gap | 95% CI         | p (uncorrected)   |

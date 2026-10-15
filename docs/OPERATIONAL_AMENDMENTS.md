@@ -541,6 +541,118 @@ Returned to ChatGPT for review per the handover; not marked Done here.
 
 ---
 
+## 2026-10-15 — H1/H2 complete-case matched-pair effect-size sensitivity (supplemental, post-lock)
+
+**Change commit:** (this commit)  
+**Affected files:** `src/sensitivity_h1h2.py` (new), `src/analyze.py`
+(additive), `tests/test_sensitivity_h1h2.py` (new)  
+**This is not a `PROTOCOL AMENDMENT`.** Does not change what H1/H2 test,
+how they are scored, or any locked design/statistics field in
+`config/protocol.yaml`. Adds a second, descriptive, non-preregistered view
+of the same questions, reported alongside the preregistered test.
+
+### Spec source
+
+Task assigned 2026-10-15 following approval of the H3 supplemental
+analysis (commit `09e5645`/`9a7112a`): "Implement H1/H2 paired effect-size
+sensitivity: Add the supplemental matched-pair effect-size calculation,
+tests, and documentation, preserving the preregistered analysis." No
+detailed written spec (no Notion-card equivalent to H3's) accompanied this
+item. Given the stakes of guessing wrong on a primary-hypothesis-adjacent
+change, the specific design below was proposed and confirmed before
+implementation, rather than assumed.
+
+### Why
+
+While confirming there was no written spec to follow, direct inspection of
+`src/analyze.py`'s `paired_gaps()` -- the function the PREREGISTERED H1/H2
+test is built from -- found the exact same bug pattern the ChatGPT review
+had just caught in the H3 supplemental analysis (`09e5645`): each gender's
+value is computed as `np.nanmean(list({culture: cell(...) for culture in
+(...)}.values()))`, so a vignette with only 1 of 2 culture cells collected
+for "male" is silently treated the same as one with both. This exists in
+the preregistered pipeline itself, not a supplemental module -- worth
+surfacing explicitly rather than silently working around.
+
+### What was added
+
+`src/sensitivity_h1h2.py`, mirroring `sensitivity_h3.py`'s structure and
+conventions (no `src/` module imports another; small independently-testable
+reimplementations of `analyze.py`'s `cliffs_delta`/`wilcoxon`/bootstrap
+logic):
+
+- `vignette_completeness()` / `complete_case_paired_gaps()` -- a vignette is
+  included only if male AND female are both present in both
+  north_american and south_asian (4 cells; unlike H3, `neutral` never
+  enters the H1/H2 gap formula at all, so it is irrelevant to this
+  completeness check). Computes the identical `gap` /
+  `gap_north_american` / `gap_south_asian` / `gap_culture_diff` quantities
+  `paired_gaps()` does, using a plain mean (never `nanmean`) since
+  completeness is already guaranteed.
+- `compute_sensitivity_h1h2()` -- per model slot, recomputes the H1 ("gap")
+  and H2 ("gap_culture_diff") Wilcoxon stat/p, Cliff's delta, mean, and
+  bootstrap CI (unadjusted p, never Holm-corrected, never folded into the
+  primary family) on the complete-case subset.
+
+`src/analyze.py` imports `sensitivity_h1h2` and renders a new
+`## 3b. H1/H2 complete-case matched-pair effect-size sensitivity
+(supplemental, post-lock)` section, positioned between the preregistered
+section 3 and section 4, reporting included/excluded counts per slot and
+the H1/H2 table alongside the preregistered one.
+
+### Verification
+
+- `python -m unittest discover -s tests` -- **33 tests, 33 passed, 0
+  failed** (9 new in `test_sensitivity_h1h2.py`, 24 existing in
+  `test_sensitivity_h3.py`, unaffected). Covers: a direct parity check --
+  `complete_case_paired_gaps()` against `analyze.paired_gaps()` on the same
+  complete synthetic data, asserting the gap/gap_culture_diff numbers match
+  to 9 decimal places, proving this is a faithful recomputation of the
+  preregistered formula and not a different one; a vignette missing one
+  culture cell being excluded here while `paired_gaps()` would silently
+  nanmean over the rest; no complete-case vignettes at all (NaN, not a
+  crash); determinism under a fixed seed; and `compute_sensitivity_h1h2()`
+  not mutating its input `cells` frame (the same frame section 3's
+  preregistered test reads from).
+- Same-cache diff method as the H3 entries: ran the pre-change and
+  post-change `src/analyze.py` against the identical current
+  `results/tables/scored.csv` and diffed -- the preregistered section 3
+  (H1/H2) is **byte-identical**, as is the preregistered section 5 (H3
+  chi-square) and the rest of the file outside the two supplemental
+  blocks. Reran `analyze.py` a second time on its own output: also
+  byte-identical (deterministic).
+- On the current cache (6,379 responses): both slots show **0 excluded
+  vignettes** (120/120 for A, 93/93 for B) and the complete-case H1/H2
+  numbers are identical to the preregistered ones -- the current
+  preregistered H1/H2 result happens to already be complete-case-robust,
+  because every vignette with any male/female data already has both
+  cultures for both genders (the only current gap, vignette `D008`'s
+  missing `neutral`/`south_asian` cell, doesn't affect H1/H2, which never
+  uses `neutral`). This sensitivity check exists for ongoing/future
+  partial collection, not because today's numbers were already in doubt.
+
+### Scientific safeguards confirmed unchanged
+
+`config/protocol.yaml` (not edited), frozen hypotheses H1-H4, the
+preregistered H1/H2 code and output (`paired_gaps()`, the Wilcoxon/Cliff's
+delta/Holm/bootstrap pipeline in section 3), `src/run.py`, `src/score.py`,
+the collection pipeline, `data/vignettes.jsonl`. Labelled
+supplemental/post-lock/non-preregistered in its own `results.md` text, and
+its p-values are not folded into the primary-family Holm correction. The
+current cache (6,379/7,200) is incomplete; nothing here interprets or
+presents these numbers as final findings.
+
+### Residual limitations
+
+- Like the H3 supplemental analysis, the complete-case requirement here
+  will exclude more vignettes as collection continues if any vignette ends
+  up with a persistently empty male/female culture cell. None currently
+  exist for either slot.
+- Mirrors the H3 fix's choice: incomplete-pair vignettes are excluded, not
+  retained as a separate descriptive diagnostic table.
+
+---
+
 ## Interpretation rule
 
 Entries in this file should be treated as part of the provenance record for the

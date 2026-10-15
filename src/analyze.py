@@ -49,6 +49,7 @@ import pandas as pd  # noqa: E402
 import yaml  # noqa: E402
 from scipy import stats  # noqa: E402
 
+import sensitivity_h1h2  # noqa: E402
 import sensitivity_h3  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -505,6 +506,65 @@ def main(argv: list[str] | None = None) -> int:
           "scrolling partner.")
     else:
         w("_No analysable pairs yet._")
+    w("")
+
+    # ---- H1/H2 complete-case matched-pair effect-size sensitivity ---------
+    # Additive only: does not touch paired_gaps() or the preregistered table
+    # above, is not Holm-corrected (reported p-values here are unadjusted),
+    # and is not itself a preregistered test. See
+    # docs/OPERATIONAL_AMENDMENTS.md (2026-10-15) for the spec and rationale.
+    w("## 3b. H1/H2 complete-case matched-pair effect-size sensitivity (supplemental, post-lock)")
+    w("")
+    w("> **Supplemental, not preregistered.** The preregistered table above "
+      "computes each gender's value as the average over whichever of the 2 "
+      "cultural framings exist for that vignette (`np.nanmean`), so a "
+      "vignette with only 1 of 2 cultures collected counts the same as one "
+      "with both. This section instead requires both north_american and "
+      "south_asian cells for both male and female before a vignette counts "
+      "at all -- the same complete-case discipline as the H3 supplemental "
+      "analysis in section 5b, applied here to H1/H2. It recomputes the "
+      "identical gap/Cliff's-delta/Wilcoxon quantities on that stricter "
+      "subset and reports them alongside the preregistered test, not "
+      "instead of it. p-values here are unadjusted and are not folded into "
+      "the primary family's Holm correction above; what is reported was "
+      "fixed by the spec before this cache was analysed, not chosen after "
+      "seeing the effects.")
+    w("")
+    sensitivity_h1h2_results = sensitivity_h1h2.compute_sensitivity_h1h2(
+        cells, resamples=resamples, level=level, seed=seed
+    )
+    if not sensitivity_h1h2_results:
+        w("_No analysable pairs yet._")
+        w("")
+    for slot, res in sensitivity_h1h2_results.items():
+        model_id = str(cells[cells["model_slot"] == slot]["model_id"].iloc[0])
+        w(f"**Slot {slot}** — {model_id}: {res['n_included_vignettes']} "
+          f"vignettes with a complete male/female x north_american/"
+          f"south_asian cell set included, {res['n_excluded_vignettes']} of "
+          f"{res['n_total_vignettes']} total excluded for an incomplete "
+          "pairing.")
+        w("")
+        w(md_table(
+            ["H", "contrast", "n", "mean", f"{int(level * 100)}% CI",
+             "W", "p (unadjusted)", "Cliff's d", "magnitude"],
+            [
+                [
+                    "H1", "fault gap (male - female)", res["h1"]["n"],
+                    fmt(res["h1"]["mean"]),
+                    f"[{fmt(res['h1']['ci_lo'])}, {fmt(res['h1']['ci_hi'])}]",
+                    fmt(res["h1"]["stat"], 1), fmt_p(res["h1"]["p"]),
+                    fmt(res["h1"]["delta"]), delta_label(res["h1"]["delta"], thresholds),
+                ],
+                [
+                    "H2", "gap difference (NA - SA framing)", res["h2"]["n"],
+                    fmt(res["h2"]["mean"]),
+                    f"[{fmt(res['h2']['ci_lo'])}, {fmt(res['h2']['ci_hi'])}]",
+                    fmt(res["h2"]["stat"], 1), fmt_p(res["h2"]["p"]),
+                    fmt(res["h2"]["delta"]), delta_label(res["h2"]["delta"], thresholds),
+                ],
+            ],
+        ))
+        w("")
     w("")
 
     # ---- per-culture and neutral ------------------------------------------
