@@ -49,6 +49,8 @@ import pandas as pd  # noqa: E402
 import yaml  # noqa: E402
 from scipy import stats  # noqa: E402
 
+import sensitivity_h3  # noqa: E402
+
 ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_CONFIG = ROOT / "config" / "protocol.yaml"
 
@@ -571,6 +573,64 @@ def main(argv: list[str] | None = None) -> int:
             secondary_meta.append({"slot": slot, "test": "action x culture"})
         else:
             w("_Not enough categories or framings present for a chi-square._")
+        w("")
+
+    # ---- H3 paired-aware sensitivity analysis (supplemental, post-lock) ---
+    # Additive only: does not touch the chi-square above, does not feed
+    # secondary_p/secondary_meta (so it is never Holm-corrected alongside the
+    # preregistered secondary family), and is not itself a preregistered
+    # test. See docs/OPERATIONAL_AMENDMENTS.md (2026-10-15) for the spec
+    # source and full rationale.
+    w("## 5b. H3 paired-aware sensitivity analysis (supplemental, post-lock)")
+    w("")
+    w("> **Supplemental, not preregistered.** The chi-square in section 5 "
+      "treats the 5 repeats of each cell as 5 independent observations; this "
+      "section instead collapses repeats to a proportion vector per cell "
+      "first (the same averaging-before-testing principle sections 3-4 use "
+      "for H1/H2) and pairs within vignette. It is a robustness check on "
+      "the same question, reported alongside the preregistered test, not a "
+      "replacement for it. These are descriptive checks on the secondary "
+      "family: no new significance threshold is applied, no Holm correction "
+      "is applied here, and what is reported below was fixed by the spec "
+      "before this cache was analysed, not chosen after seeing the effects.")
+    w("")
+    w("> The `action_category` column is the same unvalidated keyword "
+      "pre-pass noted in section 5 — see `CLASSIFIER_NOTE` in `src/score.py`.")
+    w("")
+    action_categories = config["metrics"]["action_category"]["categories"]
+    sensitivity = sensitivity_h3.compute_sensitivity_h3(
+        good, action_categories, resamples, level, seed
+    )
+    if not sensitivity:
+        w("_No analysable pairs yet._")
+        w("")
+    for slot, res in sensitivity.items():
+        model_id = str(cells[cells["model_slot"] == slot]["model_id"].iloc[0])
+        w(f"**Slot {slot}** — {model_id}, n={res['n_vignettes']} vignettes with a "
+          "paired north_american/south_asian cell on at least one gender:")
+        w("")
+        summary = res["category_summary"]
+        w(md_table(
+            ["action_category", "n vignettes", "mean diff (NA - SA)",
+             f"{int(level * 100)}% CI"],
+            [
+                [row.action_category, row.n_vignettes, fmt(row.mean_diff),
+                 f"[{fmt(row.ci_lo)}, {fmt(row.ci_hi)}]"]
+                for row in summary.itertuples()
+            ],
+        ))
+        w("")
+        w(f"Omnibus permutation check: observed statistic = "
+          f"{fmt(res['omnibus_observed'])}, Monte Carlo p = "
+          f"{fmt_p(res['omnibus_p'])} ({resamples} resamples). Planned null: "
+          "within each vignette, which culture framing is labelled "
+          "north_american versus south_asian is exchangeable -- i.e. the "
+          "paired difference for that vignette is equally likely to have come "
+          "out with either sign. The statistic sums, across the categories "
+          "above, the square of each category's mean paired difference; a "
+          "small p means the combined category-proportion shift between "
+          "framings is larger than chance would produce under that "
+          "exchangeability null, jointly across categories.")
         w("")
 
     # ---- distress recall --------------------------------------------------

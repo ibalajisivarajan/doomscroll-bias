@@ -285,6 +285,118 @@ required either way.
 
 ---
 
+## 2026-10-15 — H3 paired-aware sensitivity analysis (supplemental, post-lock)
+
+**Change commit:** (this commit)  
+**Affected files:** `src/sensitivity_h3.py` (new), `src/analyze.py` (additive),
+`tests/test_sensitivity_h3.py` (new)  
+**This is not a `PROTOCOL AMENDMENT`.** It does not change what H3 tests, how
+it is scored, or any locked design/statistics field in
+`config/protocol.yaml`. It adds a second, descriptive, non-preregistered
+view of the same question, reported alongside the preregistered test.
+
+### Spec source
+
+Notion card "Specify a paired-aware H3 sensitivity analysis, clearly
+labeled supplemental/post-lock" (statistical design authored by ChatGPT,
+2026-10-15), handed off via a Boost (research orchestration) implementation
+request on 2026-10-15, P0 ahead of the ~2026-10-20 corpus freeze.
+
+### Why
+
+The preregistered H3 test (`src/analyze.py` section 5) is a chi-square of
+`action_category` by `culture` computed directly on individual responses --
+it treats the 5 repeated runs of a cell as 5 independent observations. They
+are not: the 5 repeats measure decoding instability at temperature 0, the
+same reason sections 3-4 collapse repeats to a cell mean before testing
+H1/H2 at all. A reviewer could reasonably flag the implicit n-inflation in
+the H3 chi-square's denominator.
+
+### What was added
+
+A new, independently testable module, `src/sensitivity_h3.py`, implementing
+the four specified steps:
+
+1. `aggregate_proportions` -- collapse each (model, vignette, gender,
+   culture) cell's repeats into a proportion vector over the 5 action
+   categories.
+2. `paired_vignette_differences` -- per vignette, the north_american minus
+   south_asian proportion difference per category, averaged over the 3
+   gender conditions.
+3. `category_bootstrap_summary` / `bootstrap_mean_ci` -- percentile
+   bootstrap CI per category, resampling whole vignettes (never individual
+   responses), mirroring `analyze.bootstrap_ci`'s resampling unit and
+   `default_rng(seed)` convention. Reimplemented locally rather than
+   imported, since no `src/` module currently imports another.
+4. `omnibus_permutation_test` -- a single joint statistic across all
+   categories (sum of squared across-vignette mean differences), with a
+   Monte Carlo null built by independently sign-flipping each vignette's
+   whole diff vector (= swapping its culture labels across all three gender
+   variants at once, preserving the within-vignette pairing). See the
+   module's docstring for why the statistic squares the across-vignette
+   mean rather than each vignette's own value first -- the latter reading
+   is invariant under the permutation and would make the test degenerate.
+
+`src/analyze.py` imports `sensitivity_h3` and calls
+`compute_sensitivity_h3(good, action_categories, resamples, level, seed)`
+using the same `good` (analysable, exclusion-filtered) frame, and the same
+`resamples`/`level`/`seed` config values, that the existing H1/H2 bootstrap
+and H3 chi-square already use -- nothing about exclusion rules, the design
+config, or the random seed is reinterpreted for this analysis. The result is
+rendered as a new `## 5b. H3 paired-aware sensitivity analysis (supplemental,
+post-lock)` section in `results/tables/results.md`, positioned between the
+existing section 5 (preregistered H3 chi-square) and section 6 (H4). It
+reports, per model slot: a table of mean paired difference + 95% CI per
+action category, and the omnibus permutation statistic, p-value, and the
+planned null stated in words. It is explicitly marked supplemental/not
+preregistered in its own text, repeats the classifier-validity caveat from
+section 5, and states plainly that it is not Holm-corrected and not folded
+into the secondary-family correction table.
+
+### Verification
+
+- `python -m unittest tests.test_sensitivity_h3 -v` -- 11 tests, all pass:
+  proportion-vector aggregation (sums to 1, unused categories are 0 not
+  missing), paired-difference averaging over genders (correct sign and
+  averaging; a missing culture cell gives NaN, not a silent 0), bootstrap CI
+  shape/sanity (contains the point estimate on symmetric synthetic data;
+  degenerate n=1 input returns NaN bounds without crashing; deterministic
+  given the same seed), the permutation null (a genuinely null synthetic
+  dataset does not collapse to p~0; a strong, consistent synthetic signal is
+  detected at p<0.01; an explicit check that the rejected "per-vignette
+  squared-then-averaged" statistic reading is sign-invariant, which is why
+  the implementation instead squares the across-vignette mean).
+- `python src/analyze.py` run on the current cache (6,379 raw responses,
+  6,378 analysable) completes in ~3.4s and appends the new section.
+- Preregistered-output check, run on the *same* cache both ways (the
+  previously committed `results.md` predates most of the current cache, so
+  comparing against it directly would have shown a stale-cache diff, not a
+  code diff): ran the pre-change `src/analyze.py` and the post-change
+  version against the identical `results/tables/scored.csv`, then diffed
+  section 5 between the two outputs line-for-line. **Identical.** The full
+  file outside the new section 5b block is also identical between the two
+  runs (H1/H2 numbers, figures, H4 section, everything).
+
+### Scientific impact assessment
+
+Additive, descriptive supplemental analysis. Unchanged: the preregistered
+H3 chi-square's code and output, H1/H2/H4, the statistical plan's Holm
+correction and secondary family, `config/protocol.yaml` (not edited at
+all), `src/run.py`, `src/score.py`, the collection pipeline, the vignette
+dataset, and every locked design/inference setting. The new section applies
+no new significance threshold, is not Holm-corrected, and its content (which
+categories, which statistic, 10,000 resamples) was fixed by the written
+spec before this cache was analysed -- not selected after seeing the
+result.
+
+### Next step (not done here)
+
+Per the handover: Boost revises the manuscript (Methods 3.7) to describe
+this supplemental analysis, and ChatGPT reviews the statistical
+implementation against the original spec.
+
+---
+
 ## Interpretation rule
 
 Entries in this file should be treated as part of the provenance record for the
