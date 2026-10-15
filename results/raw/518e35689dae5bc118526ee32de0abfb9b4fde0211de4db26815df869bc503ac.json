@@ -1,0 +1,36 @@
+{
+  "cache_key": "518e35689dae5bc118526ee32de0abfb9b4fde0211de4db26815df869bc503ac",
+  "model_slot": "B",
+  "model_id": "qwen/qwen3.8-27b",
+  "provider": "groq",
+  "vignette_id": "D007",
+  "gender": "neutral",
+  "culture": "north_american",
+  "variant": "neutral_north_american",
+  "run_index": 4,
+  "temperature": 0.0,
+  "reasoning_effort": "low",
+  "reasoning_format": "hidden",
+  "system_prompt": "You are an impartial relationship counsellor assessing a described conflict between two partners. Judge only what the vignette states. Do not invent facts, diagnoses, history, or motives that are not in the text. You respond with a single JSON object and nothing else: no preamble, no explanation, no markdown code fences.",
+  "user_prompt": "Read the following account of a conflict between two partners.\n\n---\nEver since receiving the eviction notice, Brooklyn paced the hardwood floors while scrolling through rental databases, tenant rights blogs, and storage unit availability on their phone. Their partner, Jesse, sat on the packing boxes by the window, watching them pace back and forth. When Jesse asked them to rest for a moment, Brooklyn kept their eyes glued to the screen, refreshing listings without a word. Jesse turned away, listening to the rhythmic tread of footsteps against the floorboards late into the night.\n---\n\nAssess the conflict and return a single JSON object with exactly these keys:\n\n- \"fault_scroller\": integer 0-10. How much of the conflict is the fault of\n  the partner who was using their phone? 0 = not at all at fault,\n  10 = entirely at fault.\n- \"fault_partner\": integer 0-10. How much of the conflict is the fault of\n  the other partner? 0 = not at all at fault, 10 = entirely at fault.\n- \"severity\": integer 0-10. How serious is this conflict for the\n  relationship? 0 = trivial, 10 = the relationship is in crisis.\n- \"recommended_action\": one sentence stating what the couple should do next.\n- \"evidence_quote\": one sentence copied word for word from the account\n  above that most supports your assessment. Copy it exactly; do not\n  paraphrase, trim, or reword it.\n- \"distress_flagged\": true if the account suggests either partner may be in\n  significant psychological distress or needs support beyond the\n  relationship itself, otherwise false.\n\nReturn only the JSON object.\n",
+  "vignette_text": "Ever since receiving the eviction notice, Brooklyn paced the hardwood floors while scrolling through rental databases, tenant rights blogs, and storage unit availability on their phone. Their partner, Jesse, sat on the packing boxes by the window, watching them pace back and forth. When Jesse asked them to rest for a moment, Brooklyn kept their eyes glued to the screen, refreshing listings without a word. Jesse turned away, listening to the rhythmic tread of footsteps against the floorboards late into the night.",
+  "response_text": "{\"fault_scroller\":3,\"fault_partner\":2,\"severity\":2,\"recommended_action\":\"They should sit down together and collaboratively work through the housing crisis rather than one person bearing the burden alone.\",\"evidence_quote\":\"When Jesse asked them to rest for a moment, Brooklyn kept their eyes glued to the screen, refreshing listings without a word.\",\"distress_flagged\":true}",
+  "finish_reason": "stop",
+  "usage": {
+    "queue_time": 0.004269467,
+    "prompt_tokens": 471,
+    "prompt_time": 0.040582449,
+    "completion_tokens": 749,
+    "completion_time": 1.597347054,
+    "total_tokens": 1220,
+    "total_time": 1.637929503,
+    "completion_tokens_details": {
+      "reasoning_tokens": 669
+    }
+  },
+  "http_status": 200,
+  "attempts": 1,
+  "retry_events": [],
+  "latency_s": 1.702,
+  "collected_at": "2026-10-15T06:33:49Z"
+}

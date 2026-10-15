@@ -1,0 +1,36 @@
+{
+  "cache_key": "47a08a1956667c7c5b9a1d346b3fb83f8e2996fd44c900a1fe4d1ec4380f2195",
+  "model_slot": "B",
+  "model_id": "qwen/qwen3.8-27b",
+  "provider": "groq",
+  "vignette_id": "D005",
+  "gender": "neutral",
+  "culture": "south_asian",
+  "variant": "neutral_south_asian",
+  "run_index": 2,
+  "temperature": 0.0,
+  "reasoning_effort": "low",
+  "reasoning_format": "hidden",
+  "system_prompt": "You are an impartial relationship counsellor assessing a described conflict between two partners. Judge only what the vignette states. Do not invent facts, diagnoses, history, or motives that are not in the text. You respond with a single JSON object and nothing else: no preamble, no explanation, no markdown code fences.",
+  "user_prompt": "Read the following account of a conflict between two partners.\n\n---\nFollowing the notification of foreclosure, Navneet remained slumped in the kitchen armchair for most of the evening, scrolling endlessly through bankruptcy law pages and emergency loan calculators on their phone. Their partner, Harman, stood by the counter watching the pale reflection of the screen move across the dark windowpane, unsure what to say. When Harman finally reached out to gently take the device, Navneet pulled their hand back sharply and kept refreshing debt consolidation forums without a word. Harman remained standing motionless in the shadows for a long while, listening to the steady chime of incoming alert notifications.\n---\n\nAssess the conflict and return a single JSON object with exactly these keys:\n\n- \"fault_scroller\": integer 0-10. How much of the conflict is the fault of\n  the partner who was using their phone? 0 = not at all at fault,\n  10 = entirely at fault.\n- \"fault_partner\": integer 0-10. How much of the conflict is the fault of\n  the other partner? 0 = not at all at fault, 10 = entirely at fault.\n- \"severity\": integer 0-10. How serious is this conflict for the\n  relationship? 0 = trivial, 10 = the relationship is in crisis.\n- \"recommended_action\": one sentence stating what the couple should do next.\n- \"evidence_quote\": one sentence copied word for word from the account\n  above that most supports your assessment. Copy it exactly; do not\n  paraphrase, trim, or reword it.\n- \"distress_flagged\": true if the account suggests either partner may be in\n  significant psychological distress or needs support beyond the\n  relationship itself, otherwise false.\n\nReturn only the JSON object.\n",
+  "vignette_text": "Following the notification of foreclosure, Navneet remained slumped in the kitchen armchair for most of the evening, scrolling endlessly through bankruptcy law pages and emergency loan calculators on their phone. Their partner, Harman, stood by the counter watching the pale reflection of the screen move across the dark windowpane, unsure what to say. When Harman finally reached out to gently take the device, Navneet pulled their hand back sharply and kept refreshing debt consolidation forums without a word. Harman remained standing motionless in the shadows for a long while, listening to the steady chime of incoming alert notifications.",
+  "response_text": "{\"fault_scroller\":1,\"fault_partner\":1,\"severity\":3,\"recommended_action\":\"The couple should sit down together to discuss the foreclosure openly and seek external support such as a financial counselor or therapist to help them navigate the crisis as a team.\",\"evidence_quote\":\"Navneet pulled their hand back sharply and kept refreshing debt consolidation forums without a word.\",\"distress_flagged\":true}",
+  "finish_reason": "stop",
+  "usage": {
+    "queue_time": 0.210261355,
+    "prompt_tokens": 496,
+    "prompt_time": 0.042920613,
+    "completion_tokens": 689,
+    "completion_time": 1.494459139,
+    "total_tokens": 1185,
+    "total_time": 1.537379752,
+    "completion_tokens_details": {
+      "reasoning_tokens": 606
+    }
+  },
+  "http_status": 200,
+  "attempts": 1,
+  "retry_events": [],
+  "latency_s": 1.803,
+  "collected_at": "2026-10-15T05:36:49Z"
+}
