@@ -136,10 +136,17 @@ def paired_vignette_differences(
 ) -> pd.DataFrame:
     """One row per (model_slot, vignette_id) with a COMPLETE paired cell set:
     every gender in `genders` present in BOTH `culture_a` and `culture_b`
-    (6 cells for the default 3 genders). A vignette missing even one of
-    those cells is excluded from this frame entirely -- no partial-gender
-    averaging and no reweighted denominator. Call `vignette_completeness`
-    for the per-model-slot included/excluded counts this produces.
+    (6 cells for the default 3 genders). A vignette is excluded from this
+    frame entirely if even one of those 6 (gender, culture) CELLS has zero
+    collected responses -- no partial-gender averaging and no reweighted
+    denominator. A cell with fewer than the full 5 repeats (but at least
+    one) still counts as present: completeness is checked at the cell
+    level (does this gender/culture combination exist at all?), never at
+    the individual-repeat level (how many of its 5 repeats exist?) -- a
+    cell missing 1-4 of its repeats only shrinks that cell's own
+    proportion's denominator, it does not, by itself, exclude the
+    vignette. Call `vignette_completeness` for the per-model-slot
+    included/excluded counts this produces.
 
     For each category, the included row's value is the mean over all
     `genders` of (proportion in `culture_a` minus proportion in
@@ -172,10 +179,14 @@ def vignette_completeness(
     culture_a: str = CULTURE_A,
     culture_b: str = CULTURE_B,
 ) -> pd.DataFrame:
-    """Per model_slot: n_included (all 6 required cells present) vs
-    n_excluded (missing at least one), out of n_total vignettes with any
-    data at all for that slot. Exists so `paired_vignette_differences`'s
-    complete-case exclusion is never silent.
+    """Per model_slot: n_included (all 6 required (gender, culture) cells
+    present, each with at least 1 of its 5 repeats collected) vs n_excluded
+    (at least one of those 6 cells has zero collected repeats), out of
+    n_total vignettes with any data at all for that slot. A cell with 1-4
+    of its 5 repeats still counts as present -- this checks cell presence,
+    not repeat completeness within a cell. Exists so
+    `paired_vignette_differences`'s complete-case exclusion is never
+    silent.
     """
     genders = list(genders)
     required = {(g, culture_a) for g in genders} | {(g, culture_b) for g in genders}

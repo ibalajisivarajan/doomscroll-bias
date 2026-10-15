@@ -504,13 +504,35 @@ here interprets or presents these numbers as final findings.
 
 ### Residual limitations
 
+- **Correction (2026-10-17):** the bullet originally here named
+  `B V002 female_south_asian run=3` as an example of a vignette this
+  complete-case requirement would exclude. That was imprecise in two ways,
+  worth stating plainly rather than just quietly fixing: (1) exclusion in
+  `paired_vignette_differences`/`vignette_completeness` is decided per
+  (gender, culture) **cell**, not per individual repeat -- a cell counts as
+  present as soon as it has at least 1 of its 5 repeats, so naming a single
+  `run=3` could be misread as "one missing repeat excludes the vignette,"
+  which is not how the code behaves; and (2) that specific example was
+  already stale by the time this entry was written -- as of 2026-10-16 all
+  5 of that cell's repeats are collected (the 2026-09-19 concern that it
+  would keep failing non-retryably did not play out that way in practice),
+  so it was never actually excluded under this fix.
+
+  The real, current example on today's cache: slot B's vignette `D008` is
+  excluded because its `(neutral, south_asian)` cell has **zero** collected
+  responses -- that cell simply does not exist yet in `results/raw`. Its
+  sibling cell, `(neutral, north_american)`, has only 4 of 5 repeats
+  collected and still counts as present, which is exactly the contrast that
+  matters: a cell missing repeats is still "present" (1-4 of 5 responses is
+  enough); a cell missing entirely (0 of 5) is what triggers exclusion of
+  the whole vignette for that model slot.
+
 - The complete-case requirement will reduce `n` further as collection
-  continues if any vignette ends up with a persistently missing cell (e.g.
-  a cell that only ever fails non-retryably, per the 2026-09-19 amendment on
-  `B V002 female_south_asian run=3`) -- that vignette will be excluded from
-  this supplemental analysis for both models until/unless that cell is
-  eventually collected, even though it is not necessarily excluded from the
-  preregistered analyses, which use different per-test pairing.
+  continues if any vignette ends up with a persistently empty cell (zero
+  responses, for whatever reason) -- that vignette will be excluded from
+  this supplemental analysis for that model slot until/unless the missing
+  cell is eventually collected, even though it is not necessarily excluded
+  from the preregistered analyses, which use different per-test pairing.
 - Partial-pair vignettes are excluded, not reported as a separate descriptive
   diagnostic; if ChatGPT's review wants that retained, it is a follow-up
   scope decision, not implemented here.

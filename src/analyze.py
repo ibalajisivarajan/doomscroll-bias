@@ -598,11 +598,13 @@ def main(argv: list[str] | None = None) -> int:
       "pre-pass noted in section 5 — see `CLASSIFIER_NOTE` in `src/score.py`.")
     w("")
     w("> **Complete-case only.** A vignette is included here only if all "
-      "three gender conditions (male, female, neutral) have both the "
-      "north_american and south_asian rendering collected -- no partial-"
-      "gender averaging and no reweighted denominator for an incomplete "
-      "vignette. Included/excluded counts are reported per slot below; an "
-      "excluded vignette is simply not yet part of this complete-case "
+      "three gender conditions (male, female, neutral) have at least one "
+      "collected response in both the north_american and south_asian "
+      "rendering -- a cell missing some of its 5 repeats still counts as "
+      "present; a cell with zero responses excludes the whole vignette for "
+      "that model, no partial-gender averaging and no reweighted "
+      "denominator. Included/excluded counts are reported per slot below; "
+      "an excluded vignette is simply not yet part of this complete-case "
       "sensitivity check, not discarded from the study.")
     w("")
     action_categories = config["metrics"]["action_category"]["categories"]
