@@ -31,6 +31,14 @@ original written spec this implements)
 2. paired_vignette_differences: for each vignette, the north_american minus
    south_asian proportion difference per category, averaged over the three
    gender conditions -- one signed number per (model, vignette, category).
+   Complete-case only (OPERATIONAL AMENDMENT, 2026-10-16, ChatGPT review of
+   commit a9cceb1): a vignette must have all three genders present in BOTH
+   culture conditions (6 cells) to be included at all. The original
+   implementation averaged over however many gender pairs happened to
+   exist, which could silently reweight a vignette with 1 available gender
+   pair the same as one with 3. `vignette_completeness` reports exactly how
+   many vignettes were included versus excluded, per model slot, so the
+   exclusion is never silent.
 3. category_bootstrap_summary: percentile bootstrap CI on the mean of that
    per-vignette difference, resampling whole vignettes (never individual
    responses) -- mirrors analyze.bootstrap_ci's resampling unit and percentile
@@ -41,7 +49,18 @@ original written spec this implements)
    categories, with a permutation null built by independently sign-flipping
    each vignette's entire diff vector (equivalent to swapping which culture
    is labelled north_american/south_asian for that vignette, preserving the
-   within-vignette pairing across all three genders at once).
+   within-vignette pairing across all three genders at once). Both the
+   observed and the permuted statistics are computed from the exact same
+   complete-case `values` matrix, established once by `complete_case_matrix`
+   before either is touched (OPERATIONAL AMENDMENT, 2026-10-16: the original
+   implementation computed the observed statistic by filtering each
+   category's NaNs independently, before the complete-case row mask used
+   for the permutation existed -- for data produced by this module's own
+   paired_vignette_differences the two happened to select the same rows
+   (a vignette's NaN-ness never differs by category there), but a diffs_df
+   built or edited any other way could silently disagree, and an empty
+   input returned 0.0 -- "no shift detected" -- instead of NaN -- "nothing
+   to measure").
 
 A note on the omnibus statistic's definition, because the written spec's
 wording is ambiguous and worth being explicit about: the statistic is
@@ -115,28 +134,66 @@ def paired_vignette_differences(
     culture_a: str = CULTURE_A,
     culture_b: str = CULTURE_B,
 ) -> pd.DataFrame:
-    """One row per (model_slot, vignette_id): for each category, the mean
-    over available genders of (proportion in `culture_a` minus proportion in
-    `culture_b`). A vignette/category is NaN only when neither culture's cell
-    exists for any gender -- same missing-cell semantics as the rest of the
-    pipeline, never silently dropped versus silently zeroed.
+    """One row per (model_slot, vignette_id) with a COMPLETE paired cell set:
+    every gender in `genders` present in BOTH `culture_a` and `culture_b`
+    (6 cells for the default 3 genders). A vignette missing even one of
+    those cells is excluded from this frame entirely -- no partial-gender
+    averaging and no reweighted denominator. Call `vignette_completeness`
+    for the per-model-slot included/excluded counts this produces.
+
+    For each category, the included row's value is the mean over all
+    `genders` of (proportion in `culture_a` minus proportion in
+    `culture_b`).
     """
     categories = list(categories)
     genders = list(genders)
+    required = {(g, culture_a) for g in genders} | {(g, culture_b) for g in genders}
     rows: list[dict[str, Any]] = []
     for (slot, vid), sub in prop_df.groupby(["model_slot", "vignette_id"]):
         by_gc = {(r["gender"], r["culture"]): r for r in sub.to_dict("records")}
+        if not required.issubset(by_gc.keys()):
+            continue
         row: dict[str, Any] = {"model_slot": slot, "vignette_id": vid}
         for cat in categories:
-            diffs = []
-            for gender in genders:
-                a = by_gc.get((gender, culture_a))
-                b = by_gc.get((gender, culture_b))
-                if a is not None and b is not None:
-                    diffs.append(a[cat] - b[cat])
-            row[f"diff_{cat}"] = float(np.mean(diffs)) if diffs else float("nan")
+            diffs = [
+                by_gc[(gender, culture_a)][cat] - by_gc[(gender, culture_b)][cat]
+                for gender in genders
+            ]
+            row[f"diff_{cat}"] = float(np.mean(diffs))
         rows.append(row)
+    if not rows:
+        return pd.DataFrame(columns=["model_slot", "vignette_id"] + [f"diff_{c}" for c in categories])
     return pd.DataFrame(rows)
+
+
+def vignette_completeness(
+    prop_df: pd.DataFrame,
+    genders: Iterable[str] = DEFAULT_GENDERS,
+    culture_a: str = CULTURE_A,
+    culture_b: str = CULTURE_B,
+) -> pd.DataFrame:
+    """Per model_slot: n_included (all 6 required cells present) vs
+    n_excluded (missing at least one), out of n_total vignettes with any
+    data at all for that slot. Exists so `paired_vignette_differences`'s
+    complete-case exclusion is never silent.
+    """
+    genders = list(genders)
+    required = {(g, culture_a) for g in genders} | {(g, culture_b) for g in genders}
+    rows: list[dict[str, Any]] = []
+    for (slot, _vid), sub in prop_df.groupby(["model_slot", "vignette_id"]):
+        present = set(zip(sub["gender"], sub["culture"]))
+        rows.append({"model_slot": slot, "complete": required.issubset(present)})
+    if not rows:
+        return pd.DataFrame(columns=["model_slot", "n_included", "n_total", "n_excluded"])
+    per_vignette = pd.DataFrame(rows)
+    summary = (
+        per_vignette.groupby("model_slot")["complete"]
+        .agg(n_included="sum", n_total="count")
+        .reset_index()
+    )
+    summary["n_included"] = summary["n_included"].astype(int)
+    summary["n_excluded"] = summary["n_total"] - summary["n_included"]
+    return summary
 
 
 # ---------------------------------------------------------------------------
@@ -194,21 +251,47 @@ def category_bootstrap_summary(
 # ---------------------------------------------------------------------------
 # step 4: omnibus permutation check
 # ---------------------------------------------------------------------------
-def omnibus_statistic(diffs_df: pd.DataFrame, categories: Iterable[str]) -> float:
-    """sum_over_categories( (mean_over_vignettes of diff_category) ** 2 ).
+def complete_case_matrix(diffs_df: pd.DataFrame, categories: Iterable[str]) -> np.ndarray:
+    """(n_vignettes, n_categories) array restricted to rows where every one
+    of `categories`' diff column is non-NaN.
+
+    This is the single source of truth for which vignettes count toward the
+    omnibus statistic -- established once, before either the observed or
+    the permuted statistic is computed, so the two can never silently
+    disagree on the vignette population (OPERATIONAL AMENDMENT, 2026-10-16:
+    see the module docstring's step 4 note). `paired_vignette_differences`
+    already returns a complete-case frame with no NaNs left in it, so in the
+    normal pipeline this is a no-op filter -- it exists so these functions
+    are also correct in isolation, against any diffs_df built by hand.
+    """
+    categories = list(categories)
+    cat_cols = [f"diff_{c}" for c in categories]
+    if diffs_df.empty or not set(cat_cols).issubset(diffs_df.columns):
+        return np.empty((0, len(categories)))
+    values = diffs_df[cat_cols].to_numpy(dtype=float)
+    valid = ~np.isnan(values).any(axis=1)
+    return values[valid]
+
+
+def omnibus_statistic(values: np.ndarray) -> float:
+    """sum_over_categories( (mean_over_vignettes of diff_category) ** 2 ),
+    computed on an already complete-case `values` matrix of shape
+    (n_vignettes, n_categories) -- see `complete_case_matrix`.
+
+    NaN when there are zero complete-case rows, never 0.0: "no complete
+    cases to measure from" is a different fact from "measured a zero
+    shift", and conflating them (the original implementation returned 0.0
+    for an empty input) would misreport an empty sensitivity analysis as a
+    null result.
 
     See the module docstring for why this reading (square the across-vignette
     mean, not the per-vignette value) is the one that makes the permutation
     test non-degenerate.
     """
-    total = 0.0
-    for cat in categories:
-        values = diffs_df[f"diff_{cat}"].to_numpy(dtype=float)
-        values = values[~np.isnan(values)]
-        if len(values) == 0:
-            continue
-        total += float(np.mean(values)) ** 2
-    return total
+    if values.shape[0] == 0:
+        return float("nan")
+    cat_means = values.mean(axis=0)
+    return float(np.sum(cat_means**2))
 
 
 def omnibus_permutation_test(
@@ -216,7 +299,7 @@ def omnibus_permutation_test(
     categories: Iterable[str] = DEFAULT_CATEGORIES,
     resamples: int = 10000,
     seed: int = 0,
-) -> tuple[float, float, np.ndarray]:
+) -> tuple[float, float, np.ndarray, int]:
     """Monte Carlo permutation test on `omnibus_statistic`.
 
     Planned null (stated in words): within each vignette, which culture
@@ -233,18 +316,20 @@ def omnibus_permutation_test(
 
         p = (1 + #{permuted statistic >= observed}) / (1 + resamples)
 
-    Returns (observed_statistic, p_value, permutation_distribution).
+    The complete-case vignette set is established once (`complete_case_matrix`)
+    and used for both the observed statistic and every permutation -- they
+    are never computed over different vignette populations.
+
+    Returns (observed_statistic, p_value, permutation_distribution,
+    n_complete_vignettes) -- the last so a caller can report the exact
+    sample size the statistic was actually computed from.
     """
     categories = list(categories)
-    cat_cols = [f"diff_{c}" for c in categories]
-    observed = omnibus_statistic(diffs_df, categories)
-
-    values = diffs_df[cat_cols].to_numpy(dtype=float)  # (n_vignettes, n_categories)
-    valid_rows = ~np.isnan(values).any(axis=1)
-    values = values[valid_rows]
+    values = complete_case_matrix(diffs_df, categories)
     n_vignettes = values.shape[0]
+    observed = omnibus_statistic(values)
     if n_vignettes == 0:
-        return observed, float("nan"), np.array([])
+        return observed, float("nan"), np.array([]), 0
 
     rng = np.random.default_rng(seed)
     signs = rng.choice(np.array([-1.0, 1.0]), size=(resamples, n_vignettes))
@@ -255,7 +340,7 @@ def omnibus_permutation_test(
     perm_stats = (cat_means**2).sum(axis=1)  # (resamples,)
 
     p = float((1 + np.count_nonzero(perm_stats >= observed)) / (1 + resamples))
-    return observed, p, perm_stats
+    return observed, p, perm_stats, n_vignettes
 
 
 # ---------------------------------------------------------------------------
@@ -264,6 +349,7 @@ def omnibus_permutation_test(
 def compute_sensitivity_h3(
     good: pd.DataFrame,
     categories: Iterable[str] = DEFAULT_CATEGORIES,
+    genders: Iterable[str] = DEFAULT_GENDERS,
     resamples: int = 10000,
     level: float = 0.95,
     seed: int = 0,
@@ -275,25 +361,46 @@ def compute_sensitivity_h3(
     chi-square block; this function does not re-apply or alter any
     exclusion rule.
 
-    Returns {model_slot: {"n_vignettes", "category_summary" (DataFrame),
-    "omnibus_observed", "omnibus_p"}}. Each model_slot gets its own seed
-    offset so the two models' Monte Carlo draws do not coincide.
+    Returns {model_slot: {"n_total_vignettes", "n_included_vignettes",
+    "n_excluded_vignettes", "category_summary" (DataFrame),
+    "omnibus_observed", "omnibus_p", "omnibus_n_complete"}}. Every model
+    slot present in `good` gets an entry, even one with zero complete-case
+    vignettes (reported as NaN bootstrap/omnibus results, not omitted --
+    see the handover's "no complete paired vignettes" test case). Each
+    model_slot gets its own seed offset so the two models' Monte Carlo
+    draws do not coincide.
     """
     categories = list(categories)
+    genders = list(genders)
     prop_df = aggregate_proportions(good, categories)
-    diffs_df = paired_vignette_differences(prop_df, categories)
+    completeness = vignette_completeness(prop_df, genders)
+    diffs_df = paired_vignette_differences(prop_df, categories, genders)
 
     results: dict[str, dict[str, Any]] = {}
-    for i, (slot, sub) in enumerate(diffs_df.groupby("model_slot")):
+    if prop_df.empty:
+        return results
+    slots = sorted(prop_df["model_slot"].unique())
+    for i, slot in enumerate(slots):
         slot_seed = seed + 1000 * (i + 1)
+        slot_diffs = diffs_df[diffs_df["model_slot"] == slot]
+        comp_rows = completeness[completeness["model_slot"] == slot]
+        n_total = int(comp_rows["n_total"].iloc[0]) if len(comp_rows) else 0
+        n_included = int(comp_rows["n_included"].iloc[0]) if len(comp_rows) else 0
+        n_excluded = int(comp_rows["n_excluded"].iloc[0]) if len(comp_rows) else 0
+
         category_summary = category_bootstrap_summary(
-            sub, categories, resamples, level, slot_seed
+            slot_diffs, categories, resamples, level, slot_seed
         )
-        observed, p, _ = omnibus_permutation_test(sub, categories, resamples, slot_seed + 500)
+        observed, p, _, n_complete = omnibus_permutation_test(
+            slot_diffs, categories, resamples, slot_seed + 500
+        )
         results[slot] = {
-            "n_vignettes": int(sub["vignette_id"].nunique()),
+            "n_total_vignettes": n_total,
+            "n_included_vignettes": n_included,
+            "n_excluded_vignettes": n_excluded,
             "category_summary": category_summary,
             "omnibus_observed": observed,
             "omnibus_p": p,
+            "omnibus_n_complete": n_complete,
         }
     return results

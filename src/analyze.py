@@ -597,18 +597,36 @@ def main(argv: list[str] | None = None) -> int:
     w("> The `action_category` column is the same unvalidated keyword "
       "pre-pass noted in section 5 — see `CLASSIFIER_NOTE` in `src/score.py`.")
     w("")
+    w("> **Complete-case only.** A vignette is included here only if all "
+      "three gender conditions (male, female, neutral) have both the "
+      "north_american and south_asian rendering collected -- no partial-"
+      "gender averaging and no reweighted denominator for an incomplete "
+      "vignette. Included/excluded counts are reported per slot below; an "
+      "excluded vignette is simply not yet part of this complete-case "
+      "sensitivity check, not discarded from the study.")
+    w("")
     action_categories = config["metrics"]["action_category"]["categories"]
     sensitivity = sensitivity_h3.compute_sensitivity_h3(
-        good, action_categories, resamples, level, seed
+        good,
+        categories=action_categories,
+        resamples=resamples,
+        level=level,
+        seed=seed,
     )
     if not sensitivity:
         w("_No analysable pairs yet._")
         w("")
     for slot, res in sensitivity.items():
         model_id = str(cells[cells["model_slot"] == slot]["model_id"].iloc[0])
-        w(f"**Slot {slot}** — {model_id}, n={res['n_vignettes']} vignettes with a "
-          "paired north_american/south_asian cell on at least one gender:")
+        w(f"**Slot {slot}** — {model_id}: {res['n_included_vignettes']} "
+          f"vignettes with a complete gender x culture cell set included, "
+          f"{res['n_excluded_vignettes']} of {res['n_total_vignettes']} "
+          "total excluded for an incomplete pairing.")
         w("")
+        if res["n_included_vignettes"] == 0:
+            w("_No complete-case vignettes yet; bootstrap and omnibus results "
+              "below are not computable (reported as n/a)._")
+            w("")
         summary = res["category_summary"]
         w(md_table(
             ["action_category", "n vignettes", "mean diff (NA - SA)",
@@ -620,7 +638,8 @@ def main(argv: list[str] | None = None) -> int:
             ],
         ))
         w("")
-        w(f"Omnibus permutation check: observed statistic = "
+        w(f"Omnibus permutation check (n={res['omnibus_n_complete']} complete-"
+          f"case vignettes): observed statistic = "
           f"{fmt(res['omnibus_observed'])}, Monte Carlo p = "
           f"{fmt_p(res['omnibus_p'])} ({resamples} resamples). Planned null: "
           "within each vignette, which culture framing is labelled "

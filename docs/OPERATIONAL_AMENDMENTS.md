@@ -397,6 +397,128 @@ implementation against the original spec.
 
 ---
 
+## 2026-10-16 — H3 sensitivity analysis: missing-data and complete-case correction
+
+**Change commit:** (this commit)  
+**Reviewer:** ChatGPT (review of commit `a9cceb1`, verdict: CHANGES REQUESTED)  
+**Affected files:** `src/sensitivity_h3.py`, `src/analyze.py` (call site and
+rendering only), `tests/test_sensitivity_h3.py`  
+**Not a `PROTOCOL AMENDMENT`.** Corrects two implementation bugs in the
+2026-10-15 supplemental analysis; does not change the preregistered H3
+chi-square, any locked design/statistics field, or what the supplemental
+analysis is testing.
+
+### Issue 1 — observed and permutation statistics could disagree on which vignettes counted
+
+`omnibus_permutation_test()` computed the observed statistic via
+`omnibus_statistic(diffs_df, categories)`, which filtered each category's
+NaNs **independently**, before the row mask used for the permutation
+distribution existed. For data produced by this module's own
+`paired_vignette_differences` the two happened to select the same rows (a
+given vignette's NaN-ness never differed by category there), so this was
+latent rather than observed in commit `a9cceb1`'s reported numbers -- but it
+was not provably correct in isolation, and an empty/all-NaN input returned
+`0.0` ("no shift detected") instead of `NaN` ("nothing to measure").
+
+**Fix:** a new `complete_case_matrix(diffs_df, categories)` establishes the
+eligible complete-case vignette set once, before either statistic is
+touched; `omnibus_statistic(values)` now takes that already-filtered matrix
+directly (and returns `NaN`, not `0.0`, when it is empty); and
+`omnibus_permutation_test()` returns a 4th value, `n_complete_vignettes`, so
+callers can report the exact sample size both statistics were actually
+computed from. **Regression tests added** (`CompleteCaseMatrixRegressionTest`
+in `tests/test_sensitivity_h3.py`) construct a `diffs_df` with a
+category-specific NaN by hand and confirm: the pre-fix per-category-filter
+style of computing the observed statistic disagrees with the corrected,
+single-complete-case-set version on that exact input; the corrected
+`omnibus_permutation_test` reports `n_complete` consistent with
+`complete_case_matrix`'s own row count; and an all-missing input returns
+`NaN` for both the observed statistic and the p-value, with an empty
+permutation distribution, rather than `0.0`/a crash.
+
+### Issue 2 — paired-gender completeness was not enforced
+
+`paired_vignette_differences()` averaged a vignette's NA-minus-SA contrast
+over however many of the three gender pairs happened to have both culture
+cells collected, silently reweighting a vignette with 1 available gender
+pair the same as one with all 3 -- no distinction was made, and nothing
+reported how many vignettes this affected.
+
+**Fix:** the primary supplemental analysis is now complete-case only. A
+vignette is included only if all three gender conditions each have both the
+north_american and south_asian cell present (6 of 6 required cells); a
+vignette missing even one is excluded entirely, not partially averaged. A
+new `vignette_completeness()` reports, per model slot, how many vignettes
+were included versus excluded out of the total with any data at all, so the
+exclusion is never silent. Partial-pair results are not retained as a
+separate descriptive table -- out of scope per the review ("if partial-pair
+results are retained, separate them clearly"; this implementation does not
+retain them). `src/analyze.py`'s section 5b now reports the included/
+excluded/total counts per slot before the category table.
+
+On the current cache (6,379 raw responses, checked 2026-10-16): slot A is
+unaffected (120/120 vignettes complete); slot B has 92/93 included, 1
+excluded for an incomplete gender/culture pairing. This will matter more as
+collection continues and more partially-collected vignettes exist.
+
+### Testing performed
+
+`python -m unittest tests.test_sensitivity_h3 -v` -- **24 tests, 24 passed,
+0 failed**, covering, per the review's required list: complete paired data
+producing the expected contrasts; a single missing name-cue condition for
+one gender (whole vignette excluded); an entire missing gender pair (whole
+vignette excluded); missing/unclassifiable action-category values (excluded
+from the numerator, still counted in the denominator); no complete paired
+vignettes at all, at both the `paired_vignette_differences` and
+`compute_sensitivity_h3` orchestration level (NaN results, not a crash);
+observed and permutation statistics on identical vignette sets (the
+regression tests above); deterministic results given a fixed seed (both
+`bootstrap_mean_ci` and `omnibus_permutation_test`); and existing
+preregistered H3 output remaining unchanged, tested directly as
+`compute_sensitivity_h3` not mutating its input `good` frame in place
+(`test_does_not_mutate_input_good_frame`) -- the live-cache diff below is
+the complementary real-data confirmation of the same property.
+
+Full existing suite: `tests/test_sensitivity_h3.py` is the only test module
+in this repository (no other `tests/*.py` exists), so the full suite and the
+relevant suite are the same 24 tests.
+
+`python src/analyze.py` run on the current cache (6,379 responses, 6,378
+analysable): completes cleanly, writes an updated section 5b. Preregistered-
+output check, same method as the 2026-10-15 entry (pre-change and
+post-change `analyze.py` run against the identical `results/tables/scored.csv`,
+diffed): section 5 (the preregistered H3 chi-square) is **byte-identical**;
+the full file outside the 5b block is **byte-identical**. Rerunning
+`analyze.py` a second time on its own output is also byte-identical
+(deterministic).
+
+### Scientific safeguards confirmed unchanged
+
+`config/protocol.yaml` (not edited), frozen hypotheses H1-H4, the
+preregistered H3 chi-square's code and output, `src/run.py`, `src/score.py`,
+the collection pipeline, and `data/vignettes.jsonl`. The supplemental
+analysis remains labelled supplemental / post-lock / non-preregistered in
+its own `results.md` text and is still not folded into the secondary-family
+Holm correction. The current cache (6,379/7,200) is incomplete; nothing
+here interprets or presents these numbers as final findings.
+
+### Residual limitations
+
+- The complete-case requirement will reduce `n` further as collection
+  continues if any vignette ends up with a persistently missing cell (e.g.
+  a cell that only ever fails non-retryably, per the 2026-09-19 amendment on
+  `B V002 female_south_asian run=3`) -- that vignette will be excluded from
+  this supplemental analysis for both models until/unless that cell is
+  eventually collected, even though it is not necessarily excluded from the
+  preregistered analyses, which use different per-test pairing.
+- Partial-pair vignettes are excluded, not reported as a separate descriptive
+  diagnostic; if ChatGPT's review wants that retained, it is a follow-up
+  scope decision, not implemented here.
+
+Returned to ChatGPT for review per the handover; not marked Done here.
+
+---
+
 ## Interpretation rule
 
 Entries in this file should be treated as part of the provenance record for the

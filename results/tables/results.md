@@ -84,7 +84,9 @@ chi-square = 4.577, dof = 4, p = 0.333. 2 expected cell(s) below 5 — treat wit
 
 > The `action_category` column is the same unvalidated keyword pre-pass noted in section 5 — see `CLASSIFIER_NOTE` in `src/score.py`.
 
-**Slot A** — openai/gpt-oss-120b, n=120 vignettes with a paired north_american/south_asian cell on at least one gender:
+> **Complete-case only.** A vignette is included here only if all three gender conditions (male, female, neutral) have both the north_american and south_asian rendering collected -- no partial-gender averaging and no reweighted denominator for an incomplete vignette. Included/excluded counts are reported per slot below; an excluded vignette is simply not yet part of this complete-case sensitivity check, not discarded from the study.
+
+**Slot A** — openai/gpt-oss-120b: 120 vignettes with a complete gender x culture cell set included, 0 of 120 total excluded for an incomplete pairing.
 
 | action_category   |   n vignettes |   mean diff (NA - SA) | 95% CI          |
 |-------------------|---------------|-----------------------|-----------------|
@@ -94,19 +96,19 @@ chi-square = 4.577, dof = 4, p = 0.333. 2 expected cell(s) below 5 — treat wit
 | negotiate         |           120 |                 0.029 | [-0.009, 0.067] |
 | unclassified      |           120 |                -0.005 | [-0.013, 0.002] |
 
-Omnibus permutation check: observed statistic = 0.001, Monte Carlo p = 0.248 (10000 resamples). Planned null: within each vignette, which culture framing is labelled north_american versus south_asian is exchangeable -- i.e. the paired difference for that vignette is equally likely to have come out with either sign. The statistic sums, across the categories above, the square of each category's mean paired difference; a small p means the combined category-proportion shift between framings is larger than chance would produce under that exchangeability null, jointly across categories.
+Omnibus permutation check (n=120 complete-case vignettes): observed statistic = 0.001, Monte Carlo p = 0.248 (10000 resamples). Planned null: within each vignette, which culture framing is labelled north_american versus south_asian is exchangeable -- i.e. the paired difference for that vignette is equally likely to have come out with either sign. The statistic sums, across the categories above, the square of each category's mean paired difference; a small p means the combined category-proportion shift between framings is larger than chance would produce under that exchangeability null, jointly across categories.
 
-**Slot B** — qwen/qwen3.8-27b, n=93 vignettes with a paired north_american/south_asian cell on at least one gender:
+**Slot B** — qwen/qwen3.8-27b: 92 vignettes with a complete gender x culture cell set included, 1 of 93 total excluded for an incomplete pairing.
 
 | action_category   |   n vignettes |   mean diff (NA - SA) | 95% CI          |
 |-------------------|---------------|-----------------------|-----------------|
-| seek_help         |            93 |                 0.012 | [0.002, 0.027]  |
-| boundary          |            93 |                 0.006 | [-0.038, 0.049] |
-| accommodate       |            93 |                 0.001 | [0.000, 0.004]  |
-| negotiate         |            93 |                -0.013 | [-0.059, 0.033] |
-| unclassified      |            93 |                -0.006 | [-0.029, 0.018] |
+| seek_help         |            92 |                 0.007 | [0.001, 0.014]  |
+| boundary          |            92 |                 0.006 | [-0.038, 0.050] |
+| accommodate       |            92 |                 0.001 | [0.000, 0.004]  |
+| negotiate         |            92 |                -0.008 | [-0.053, 0.037] |
+| unclassified      |            92 |                -0.006 | [-0.030, 0.019] |
 
-Omnibus permutation check: observed statistic = 0.000, Monte Carlo p = 0.712 (10000 resamples). Planned null: within each vignette, which culture framing is labelled north_american versus south_asian is exchangeable -- i.e. the paired difference for that vignette is equally likely to have come out with either sign. The statistic sums, across the categories above, the square of each category's mean paired difference; a small p means the combined category-proportion shift between framings is larger than chance would produce under that exchangeability null, jointly across categories.
+Omnibus permutation check (n=92 complete-case vignettes): observed statistic = 0.000, Monte Carlo p = 0.847 (10000 resamples). Planned null: within each vignette, which culture framing is labelled north_american versus south_asian is exchangeable -- i.e. the paired difference for that vignette is equally likely to have come out with either sign. The statistic sums, across the categories above, the square of each category's mean paired difference; a small p means the combined category-proportion shift between framings is larger than chance would produce under that exchangeability null, jointly across categories.
 
 ## 6. Distress flagging on cue vignettes (H4, exploratory)
 
