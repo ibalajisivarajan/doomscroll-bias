@@ -397,7 +397,7 @@ implementation against the original spec.
 
 ---
 
-## 2026-10-16 — H3 sensitivity analysis: missing-data and complete-case correction
+## 2026-10-15 — H3 sensitivity analysis: missing-data and complete-case correction
 
 **Change commit:** (this commit)  
 **Reviewer:** ChatGPT (review of commit `a9cceb1`, verdict: CHANGES REQUESTED)  
@@ -456,7 +456,7 @@ results are retained, separate them clearly"; this implementation does not
 retain them). `src/analyze.py`'s section 5b now reports the included/
 excluded/total counts per slot before the category table.
 
-On the current cache (6,379 raw responses, checked 2026-10-16): slot A is
+On the current cache (6,379 raw responses, checked 2026-10-15): slot A is
 unaffected (120/120 vignettes complete); slot B has 92/93 included, 1
 excluded for an incomplete gender/culture pairing. This will matter more as
 collection continues and more partially-collected vignettes exist.
@@ -504,7 +504,7 @@ here interprets or presents these numbers as final findings.
 
 ### Residual limitations
 
-- **Correction (2026-10-17):** the bullet originally here named
+- **Correction (same day, later commit):** the bullet originally here named
   `B V002 female_south_asian run=3` as an example of a vignette this
   complete-case requirement would exclude. That was imprecise in two ways,
   worth stating plainly rather than just quietly fixing: (1) exclusion in
@@ -513,7 +513,7 @@ here interprets or presents these numbers as final findings.
   present as soon as it has at least 1 of its 5 repeats, so naming a single
   `run=3` could be misread as "one missing repeat excludes the vignette,"
   which is not how the code behaves; and (2) that specific example was
-  already stale by the time this entry was written -- as of 2026-10-16 all
+  already stale by the time this entry was written -- as of 2026-10-15 all
   5 of that cell's repeats are collected (the 2026-09-19 concern that it
   would keep failing non-retryably did not play out that way in practice),
   so it was never actually excluded under this fix.

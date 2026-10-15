@@ -9,7 +9,7 @@ or, from the repo root, `python -m unittest discover -s tests`. No pytest
 dependency: the rest of this repo has none, so this stays runnable with only
 what's already in requirements.txt (pandas, numpy via pandas/scipy).
 
-Covers the ChatGPT review of commit a9cceb1 (2026-10-16 correction):
+Covers the ChatGPT review of commit a9cceb1 (2026-10-15 correction):
   1. complete paired data producing the expected contrasts
   2. missing one name-cue condition for one gender
   3. missing an entire gender pair
@@ -254,7 +254,7 @@ class BootstrapMeanCiTest(unittest.TestCase):
 # 6. omnibus: observed and permutation must share the exact same vignette set
 # ---------------------------------------------------------------------------
 class CompleteCaseMatrixRegressionTest(unittest.TestCase):
-    """Regression tests that fail against the pre-2026-10-16 implementation,
+    """Regression tests that fail against the pre-2026-10-15-fix implementation,
     which computed the observed statistic from each category's NaNs filtered
     independently, before the row mask used for permutation existed.
     """

@@ -31,7 +31,7 @@ original written spec this implements)
 2. paired_vignette_differences: for each vignette, the north_american minus
    south_asian proportion difference per category, averaged over the three
    gender conditions -- one signed number per (model, vignette, category).
-   Complete-case only (OPERATIONAL AMENDMENT, 2026-10-16, ChatGPT review of
+   Complete-case only (OPERATIONAL AMENDMENT, 2026-10-15, ChatGPT review of
    commit a9cceb1): a vignette must have all three genders present in BOTH
    culture conditions (6 cells) to be included at all. The original
    implementation averaged over however many gender pairs happened to
@@ -52,7 +52,7 @@ original written spec this implements)
    within-vignette pairing across all three genders at once). Both the
    observed and the permuted statistics are computed from the exact same
    complete-case `values` matrix, established once by `complete_case_matrix`
-   before either is touched (OPERATIONAL AMENDMENT, 2026-10-16: the original
+   before either is touched (OPERATIONAL AMENDMENT, 2026-10-15: the original
    implementation computed the observed statistic by filtering each
    category's NaNs independently, before the complete-case row mask used
    for the permutation existed -- for data produced by this module's own
@@ -269,7 +269,7 @@ def complete_case_matrix(diffs_df: pd.DataFrame, categories: Iterable[str]) -> n
     This is the single source of truth for which vignettes count toward the
     omnibus statistic -- established once, before either the observed or
     the permuted statistic is computed, so the two can never silently
-    disagree on the vignette population (OPERATIONAL AMENDMENT, 2026-10-16:
+    disagree on the vignette population (OPERATIONAL AMENDMENT, 2026-10-15:
     see the module docstring's step 4 note). `paired_vignette_differences`
     already returns a complete-case frame with no NaNs left in it, so in the
     normal pipeline this is a no-op filter -- it exists so these functions
