@@ -653,6 +653,88 @@ presents these numbers as final findings.
 
 ---
 
+## 2026-10-15 — H1/H2 matched-pair sign statistic (supplemental, post-lock)
+
+**Change commit:** (this commit)  
+**Affected files:** `src/sensitivity_h1h2.py` (additive), `src/analyze.py`
+(additive), `tests/test_sensitivity_h1h2.py` (additive)  
+**Not a `PROTOCOL AMENDMENT`.** Adds a further supplemental, descriptive
+statistic to the already-approved H1/H2 complete-case sensitivity analysis
+(prior entry, this file); changes nothing preregistered and nothing already
+reported in that prior entry's section.
+
+### Why
+
+ChatGPT's review of `d667431` approved the complete-case effect-size
+sensitivity analysis as additional supplemental work, but noted it did not
+implement an item the H1/H2 Notion card specifies exactly: the matched-pair
+sign statistic, `(n_positive - n_negative) / (n_positive + n_negative)`,
+with positive/negative/tied/total/non-tied counts, and defined handling for
+empty and all-tied samples.
+
+### What was added
+
+`sign_statistic(values)` in `src/sensitivity_h1h2.py`: counts the sign of
+each paired difference (positive, negative, tied), ignoring magnitude --
+deliberately complementary to the already-reported Cliff's delta/Wilcoxon,
+which are magnitude-sensitive. Ties are excluded from the statistic's own
+denominator (`n_nontied`, the classical sign-test convention) but always
+counted and returned (`n_tied`), never silently dropped. Returns `NaN` --
+never `0.0`, never a division error -- whenever `n_nontied == 0`: both an
+empty sample and an all-tied sample hit this path, and conflating either
+with "signs balanced out" (what `0.0` would communicate) would misreport
+"nothing to measure" as a null result.
+
+`compute_sensitivity_h1h2()` now also returns `h1_sign`/`h2_sign` per model
+slot, computed on the *same* complete-case `gap`/`gap_culture_diff` values
+already used for `h1`/`h2` -- not a different dataset -- but kept as
+separate dict keys so nothing about the existing `h1`/`h2` results changes.
+`src/analyze.py` renders this as its own, separately labeled
+`## 3c. H1/H2 matched-pair sign statistic (supplemental, post-lock)`
+section, after the existing `## 3b.` section (left untouched) and before
+section 4.
+
+### Testing performed
+
+`python -m unittest discover -s tests` -- **43 tests, 43 passed, 0
+failed** (24 existing H3 + 19 H1/H2, 10 of which are new: `SignStatisticTest`
+covers known counts producing the exact specified formula; an all-positive
+sample giving +1; an all-negative sample giving -1; an empty sample
+returning NaN with all counts at 0; an all-tied sample returning NaN (not
+0.0) with `n_tied == n_total`; NaN values dropped before counting; and a
+direct regression test proving the denominator is `n_nontied`, not
+`n_total` -- asserting the statistic differs from what a naive
+total-denominator implementation would compute on the same ties-containing
+input. `ComputeSensitivityH1H2SignIntegrationTest` covers `h1_sign`/`h2_sign`
+being present and consistent with `h1`/`h2`'s own sample size, correct NaN
+propagation when there are no complete-case vignettes, and an explicit
+guard that the existing `h1`/`h2` dicts are unchanged by this addition.
+
+Same-cache diff method as every prior entry: ran the pre-change and
+post-change `src/analyze.py` against the identical current
+`results/tables/scored.csv` and diffed. **Four separate blocks checked,
+all byte-identical:** the preregistered section 3 (H1/H2), the
+preregistered section 5 (H3 chi-square), the *existing* section 3b
+(complete-case effect-size sensitivity, from the prior entry -- confirming
+it was genuinely preserved, not just left alone by inspection), and the
+entire rest of the file outside the one new section 3c block. Reran
+`analyze.py` a second time on its own output: also byte-identical.
+
+On the current cache: Slot A -- H1 77 positive/17 negative/26 tied
+(n=120), sign statistic 0.638; H2 42/46/32, -0.045. Slot B -- H1
+66/14/13 (n=93), 0.650; H2 47/33/13, 0.175.
+
+### Scientific safeguards confirmed unchanged
+
+`config/protocol.yaml` (not edited), frozen hypotheses H1-H4, the
+preregistered H1/H2/H3 code and output, the existing H1/H2 complete-case
+effect-size sensitivity section from the prior entry, `src/run.py`,
+`src/score.py`, the collection pipeline, `data/vignettes.jsonl`. The new
+section is explicitly labeled supplemental/post-lock/non-preregistered and
+is not folded into any Holm correction or family.
+
+---
+
 ## Interpretation rule
 
 Entries in this file should be treated as part of the provenance record for the

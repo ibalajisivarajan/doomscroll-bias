@@ -567,6 +567,57 @@ def main(argv: list[str] | None = None) -> int:
         w("")
     w("")
 
+    # ---- H1/H2 matched-pair sign statistic (supplemental) ------------------
+    # Separately labeled per the Notion card's exact spec: (n_positive -
+    # n_negative) / (n_positive + n_negative), computed on the SAME
+    # complete-case gap/gap_culture_diff values as section 3b above (not a
+    # different dataset), but reported as its own distinct result -- section
+    # 3b above is unmodified by this addition. Sign-only (magnitude-blind),
+    # the deliberate complement to Cliff's delta/Wilcoxon in 3b. Also not
+    # Holm-corrected, not preregistered, not folded into any family.
+    w("## 3c. H1/H2 matched-pair sign statistic (supplemental, post-lock)")
+    w("")
+    w("> **Separately labeled supplemental result.** "
+      "(n_positive - n_negative) / (n_positive + n_negative) on the same "
+      "complete-case paired differences as section 3b, counting only the "
+      "*sign* of each vignette's difference and ignoring its magnitude -- "
+      "unlike Cliff's delta and Wilcoxon above, a single large outlier "
+      "vignette cannot dominate this statistic the way it can a "
+      "magnitude-sensitive one. Ties (a difference of exactly 0) are "
+      "excluded from the statistic's own denominator, the classical "
+      "sign-test convention, but always counted and reported (`n_tied`) --"
+      " never silently dropped. The statistic is reported as n/a, not 0, "
+      "when there is no sign information to report at all: an empty sample "
+      "or one where every paired difference is exactly tied.")
+    w("")
+    for slot, res in sensitivity_h1h2_results.items():
+        model_id = str(cells[cells["model_slot"] == slot]["model_id"].iloc[0])
+        w(f"**Slot {slot}** — {model_id}:")
+        w("")
+        w(md_table(
+            ["H", "contrast", "n_positive", "n_negative", "n_tied",
+             "n_total", "n_nontied", "sign statistic"],
+            [
+                [
+                    "H1", "fault gap (male - female)",
+                    res["h1_sign"]["n_positive"], res["h1_sign"]["n_negative"],
+                    res["h1_sign"]["n_tied"], res["h1_sign"]["n_total"],
+                    res["h1_sign"]["n_nontied"], fmt(res["h1_sign"]["statistic"]),
+                ],
+                [
+                    "H2", "gap difference (NA - SA framing)",
+                    res["h2_sign"]["n_positive"], res["h2_sign"]["n_negative"],
+                    res["h2_sign"]["n_tied"], res["h2_sign"]["n_total"],
+                    res["h2_sign"]["n_nontied"], fmt(res["h2_sign"]["statistic"]),
+                ],
+            ],
+        ))
+        w("")
+    if not sensitivity_h1h2_results:
+        w("_No analysable pairs yet._")
+        w("")
+    w("")
+
     # ---- per-culture and neutral ------------------------------------------
     w("## 4. Gaps by cultural framing, and the neutral condition")
     w("")

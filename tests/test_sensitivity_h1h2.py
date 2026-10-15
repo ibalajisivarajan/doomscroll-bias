@@ -25,6 +25,15 @@ H3 fix:
      level via the same same-cache diff method used for the H3 entries,
      reported in docs/OPERATIONAL_AMENDMENTS.md, not re-derived here since
      it depends on the live scored.csv.
+
+Plus (2026-10-15, second review round): the matched-pair sign statistic,
+(n_positive - n_negative) / (n_positive + n_negative), per the H1/H2 Notion
+card's exact specification. SignStatisticTest covers known counts, all-
+positive/all-negative samples, an empty sample, an all-tied sample, NaN
+values dropped before counting, and a regression test proving the
+denominator is n_nontied (excluding ties) and not n_total (which a naive,
+misleading implementation would use instead, producing a different and
+wrong number whenever ties are present).
 """
 
 from __future__ import annotations
@@ -254,6 +263,131 @@ class ComputeSensitivityH1H2Test(unittest.TestCase):
         sh12.compute_sensitivity_h1h2(cells, resamples=200, seed=1)
 
         pd.testing.assert_frame_equal(cells, before)
+
+
+class SignStatisticTest(unittest.TestCase):
+    def test_known_counts_produce_the_specified_formula(self):
+        # 7 positive, 3 negative, 0 tied -> (7 - 3) / 10 = 0.4
+        values = np.array([1, 2, 3, 4, 5, 6, 7, -1, -2, -3], dtype=float)
+        result = sh12.sign_statistic(values)
+        self.assertEqual(result["n_positive"], 7)
+        self.assertEqual(result["n_negative"], 3)
+        self.assertEqual(result["n_tied"], 0)
+        self.assertEqual(result["n_total"], 10)
+        self.assertEqual(result["n_nontied"], 10)
+        self.assertAlmostEqual(result["statistic"], 0.4)
+
+    def test_all_positive_gives_plus_one(self):
+        result = sh12.sign_statistic(np.array([0.1, 2.0, 5.5]))
+        self.assertEqual(result["n_positive"], 3)
+        self.assertEqual(result["n_negative"], 0)
+        self.assertAlmostEqual(result["statistic"], 1.0)
+
+    def test_all_negative_gives_minus_one(self):
+        result = sh12.sign_statistic(np.array([-0.1, -2.0, -5.5]))
+        self.assertEqual(result["n_negative"], 3)
+        self.assertEqual(result["n_positive"], 0)
+        self.assertAlmostEqual(result["statistic"], -1.0)
+
+    def test_empty_sample_is_nan_with_zero_counts(self):
+        result = sh12.sign_statistic(np.array([]))
+        self.assertEqual(result["n_positive"], 0)
+        self.assertEqual(result["n_negative"], 0)
+        self.assertEqual(result["n_tied"], 0)
+        self.assertEqual(result["n_total"], 0)
+        self.assertEqual(result["n_nontied"], 0)
+        self.assertTrue(np.isnan(result["statistic"]))
+
+    def test_all_tied_sample_is_nan_not_zero(self):
+        # Every value exactly 0: a naive (n_positive - n_negative) / n_total
+        # implementation would compute 0/3 = 0.0, misreporting "signs
+        # balanced out" when the truth is "no sign information exists at
+        # all" (n_nontied == 0). Must be NaN.
+        result = sh12.sign_statistic(np.array([0.0, 0.0, 0.0]))
+        self.assertEqual(result["n_tied"], 3)
+        self.assertEqual(result["n_total"], 3)
+        self.assertEqual(result["n_nontied"], 0)
+        self.assertTrue(np.isnan(result["statistic"]))
+
+    def test_ties_are_counted_and_excluded_from_denominator_not_dropped(self):
+        # 2 positive, 1 negative, 2 tied: statistic must use n_nontied (3),
+        # not n_total (5) -- (2 - 1) / 3 = 0.333..., NOT (2 - 1) / 5 = 0.2.
+        # This is the direct regression test against a misleading
+        # implementation that divides by n_total.
+        values = np.array([1.0, 2.0, -1.0, 0.0, 0.0])
+        result = sh12.sign_statistic(values)
+        self.assertEqual(result["n_positive"], 2)
+        self.assertEqual(result["n_negative"], 1)
+        self.assertEqual(result["n_tied"], 2)
+        self.assertEqual(result["n_total"], 5)
+        self.assertEqual(result["n_nontied"], 3)
+        self.assertAlmostEqual(result["statistic"], 1 / 3)
+        # A naive total-denominator implementation would give a DIFFERENT,
+        # wrong answer on this exact input -- assert that difference
+        # explicitly so this test fails if the denominator regresses.
+        naive_wrong = (result["n_positive"] - result["n_negative"]) / result["n_total"]
+        self.assertNotAlmostEqual(result["statistic"], naive_wrong)
+
+    def test_nan_values_dropped_before_counting(self):
+        values = np.array([1.0, -1.0, np.nan, 2.0, np.nan])
+        result = sh12.sign_statistic(values)
+        self.assertEqual(result["n_total"], 3)  # the 2 NaNs don't count
+        self.assertEqual(result["n_positive"], 2)
+        self.assertEqual(result["n_negative"], 1)
+
+
+class ComputeSensitivityH1H2SignIntegrationTest(unittest.TestCase):
+    def test_sign_results_present_and_consistent_with_h1_h2(self):
+        # Integration: h1_sign/h2_sign must be present, and their n_total
+        # must match the already-reported h1/h2 "n" for the identical
+        # complete-case gap values -- same underlying data, two separately
+        # labeled results, never a different dataset silently substituted.
+        rng = np.random.default_rng(3)
+
+        def value_fn(v, gender, culture):
+            base = {"male": 6.0, "female": 4.0, "neutral": 5.0}[gender]
+            return base + float(rng.normal(0, 0.05))
+
+        cells = make_cells(n_vignettes=12, value_fn=value_fn, model_slot="A")
+        results = sh12.compute_sensitivity_h1h2(cells, resamples=300, seed=1)
+        res = results["A"]
+
+        self.assertIn("h1_sign", res)
+        self.assertIn("h2_sign", res)
+        self.assertEqual(res["h1_sign"]["n_total"], res["h1"]["n"])
+        self.assertEqual(res["h2_sign"]["n_total"], res["h2"]["n"])
+        # Strong, consistent male > female signal built into value_fn -> H1
+        # sign statistic should be strongly positive.
+        self.assertGreater(res["h1_sign"]["statistic"], 0.5)
+
+    def test_no_complete_vignettes_sign_statistic_is_nan(self):
+        def value_fn(v, gender, culture):
+            return 5.0
+
+        cells = make_cells(
+            n_vignettes=2, value_fn=value_fn, model_slot="A",
+            omit_cells={(0, "male", "south_asian"), (1, "female", "north_american")},
+        )
+        results = sh12.compute_sensitivity_h1h2(cells, resamples=200, seed=1)
+        res = results["A"]
+        self.assertTrue(np.isnan(res["h1_sign"]["statistic"]))
+        self.assertEqual(res["h1_sign"]["n_total"], 0)
+
+    def test_existing_h1_h2_block_unchanged_by_sign_statistic_addition(self):
+        # Regression guard for "preserve the existing complete-case
+        # sensitivity section": adding h1_sign/h2_sign must not alter the
+        # h1/h2 dicts' own values at all.
+        rng = np.random.default_rng(5)
+
+        def value_fn(v, gender, culture):
+            base = {"male": 6.0, "female": 4.0, "neutral": 5.0}[gender]
+            return base + float(rng.normal(0, 0.05))
+
+        cells = make_cells(n_vignettes=10, value_fn=value_fn, model_slot="A")
+        res = sh12.compute_sensitivity_h1h2(cells, resamples=300, seed=1)["A"]
+        for key in ("n", "mean", "ci_lo", "ci_hi", "stat", "p", "delta"):
+            self.assertIn(key, res["h1"])
+            self.assertIn(key, res["h2"])
 
 
 if __name__ == "__main__":

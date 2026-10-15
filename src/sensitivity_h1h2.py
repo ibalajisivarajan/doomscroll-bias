@@ -212,6 +212,54 @@ def wilcoxon(differences: np.ndarray, zero_method: str = "wilcox") -> tuple[floa
     return float(result.statistic), float(result.pvalue), nonzero
 
 
+def sign_statistic(values: np.ndarray) -> dict[str, Any]:
+    """Matched-pair sign statistic: (n_positive - n_negative) / (n_positive
+    + n_negative), per the H1/H2 Notion card's exact specification.
+
+    Counts only the SIGN of each paired difference, ignoring magnitude --
+    the deliberate complement to the magnitude-sensitive Wilcoxon/Cliff's
+    delta already reported. A positive statistic means more vignettes
+    favoured the male-coded direction than the female-coded one (for H1's
+    "gap"; analogously for H2's "gap_culture_diff"), regardless of how large
+    any individual difference was.
+
+    Ties (a difference of exactly 0) are excluded from the statistic's own
+    denominator -- the classical sign-test convention, since a tie carries
+    no directional information -- but are always counted and returned
+    separately (`n_tied`) so they are never silently dropped from the
+    record. NaN values (should not occur on this module's own complete-case
+    output, but this function is also directly unit-tested and may be
+    called on hand-built input) are dropped before any counting, exactly
+    like every other statistic in this module and in analyze.py.
+
+    Returns a dict with `n_positive`, `n_negative`, `n_tied`, `n_total`
+    (all non-NaN values: n_positive + n_negative + n_tied), `n_nontied`
+    (n_positive + n_negative, the statistic's own denominator), and
+    `statistic`. `statistic` is NaN -- never 0.0, and never a ZeroDivisionError
+    -- whenever `n_nontied` is 0: both an empty sample (n_total == 0) and an
+    all-tied sample (n_total > 0 but every value is exactly 0) hit this
+    path, and both mean "no sign information to report," which is a
+    different fact from "the signs balanced out" (which 0.0 would
+    communicate.)
+    """
+    values = np.asarray(values, float)
+    values = values[~np.isnan(values)]
+    n_positive = int(np.sum(values > 0))
+    n_negative = int(np.sum(values < 0))
+    n_tied = int(np.sum(values == 0))
+    n_total = n_positive + n_negative + n_tied
+    n_nontied = n_positive + n_negative
+    statistic = float("nan") if n_nontied == 0 else (n_positive - n_negative) / n_nontied
+    return {
+        "n_positive": n_positive,
+        "n_negative": n_negative,
+        "n_tied": n_tied,
+        "n_total": n_total,
+        "n_nontied": n_nontied,
+        "statistic": statistic,
+    }
+
+
 def bootstrap_mean_ci(
     values: np.ndarray, resamples: int, level: float, seed: int
 ) -> tuple[float, float, float]:
@@ -269,15 +317,21 @@ def compute_sensitivity_h1h2(
     alter any exclusion rule.
 
     Returns {model_slot: {"n_total_vignettes", "n_included_vignettes",
-    "n_excluded_vignettes", "h1": {...}, "h2": {...}}}, where each of "h1"
-    (the "gap" column, male-minus-female) and "h2" (the "gap_culture_diff"
-    column) carries n, mean, bootstrap CI, Wilcoxon stat/p (unadjusted --
-    never Holm-corrected here), and Cliff's delta. Every model slot present
-    in `cells` gets an entry, even one with zero complete-case vignettes
-    (NaN results, not omitted). Each model slot gets its own seed offset so
-    the two models' Monte Carlo draws do not coincide, and offset away from
-    sensitivity_h3's seed ranges so the two supplemental analyses never
-    reuse the same bootstrap draws either.
+    "n_excluded_vignettes", "h1": {...}, "h2": {...}, "h1_sign": {...},
+    "h2_sign": {...}}}. "h1"/"h2" (unchanged from the original supplemental
+    analysis -- see sign_statistic()'s own addition below for what's new)
+    carry n, mean, bootstrap CI, Wilcoxon stat/p (unadjusted -- never
+    Holm-corrected here), and Cliff's delta, on the "gap" (H1,
+    male-minus-female) and "gap_culture_diff" (H2) columns respectively.
+    "h1_sign"/"h2_sign" are `sign_statistic()`'s own dict (n_positive,
+    n_negative, n_tied, n_total, n_nontied, statistic) on those same two
+    columns -- a separately labeled, separately computed result, not a
+    replacement for or a modification of "h1"/"h2". Every model slot
+    present in `cells` gets an entry, even one with zero complete-case
+    vignettes (NaN results, not omitted). Each model slot gets its own seed
+    offset so the two models' Monte Carlo draws do not coincide, and offset
+    away from sensitivity_h3's seed ranges so the two supplemental analyses
+    never reuse the same bootstrap draws either.
     """
     if cells.empty:
         return {}
@@ -294,11 +348,17 @@ def compute_sensitivity_h1h2(
         n_included = int(comp_rows["n_included"].iloc[0]) if len(comp_rows) else 0
         n_excluded = int(comp_rows["n_excluded"].iloc[0]) if len(comp_rows) else 0
 
+        gap_values = slot_gaps["gap"].to_numpy(dtype=float) if len(slot_gaps) else np.array([])
+        culture_diff_values = (
+            slot_gaps["gap_culture_diff"].to_numpy(dtype=float) if len(slot_gaps) else np.array([])
+        )
         results[slot] = {
             "n_total_vignettes": n_total,
             "n_included_vignettes": n_included,
             "n_excluded_vignettes": n_excluded,
             "h1": _test_block(slot_gaps, "gap", resamples, level, slot_seed + 1),
             "h2": _test_block(slot_gaps, "gap_culture_diff", resamples, level, slot_seed + 2),
+            "h1_sign": sign_statistic(gap_values),
+            "h2_sign": sign_statistic(culture_diff_values),
         }
     return results

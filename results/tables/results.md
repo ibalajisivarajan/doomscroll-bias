@@ -57,6 +57,25 @@ CIs are percentile bootstrap over vignettes, 10000 resamples. A positive mean ga
 | H2  | gap difference (NA - SA framing) |  93 |  0.282 | [-0.009, 0.570] | 1231.5 | 0.062            |       0.197 | small       |
 
 
+## 3c. H1/H2 matched-pair sign statistic (supplemental, post-lock)
+
+> **Separately labeled supplemental result.** (n_positive - n_negative) / (n_positive + n_negative) on the same complete-case paired differences as section 3b, counting only the *sign* of each vignette's difference and ignoring its magnitude -- unlike Cliff's delta and Wilcoxon above, a single large outlier vignette cannot dominate this statistic the way it can a magnitude-sensitive one. Ties (a difference of exactly 0) are excluded from the statistic's own denominator, the classical sign-test convention, but always counted and reported (`n_tied`) -- never silently dropped. The statistic is reported as n/a, not 0, when there is no sign information to report at all: an empty sample or one where every paired difference is exactly tied.
+
+**Slot A** — openai/gpt-oss-120b:
+
+| H   | contrast                         |   n_positive |   n_negative |   n_tied |   n_total |   n_nontied |   sign statistic |
+|-----|----------------------------------|--------------|--------------|----------|-----------|-------------|------------------|
+| H1  | fault gap (male - female)        |           77 |           17 |       26 |       120 |          94 |            0.638 |
+| H2  | gap difference (NA - SA framing) |           42 |           46 |       32 |       120 |          88 |           -0.045 |
+
+**Slot B** — qwen/qwen3.8-27b:
+
+| H   | contrast                         |   n_positive |   n_negative |   n_tied |   n_total |   n_nontied |   sign statistic |
+|-----|----------------------------------|--------------|--------------|----------|-----------|-------------|------------------|
+| H1  | fault gap (male - female)        |           66 |           14 |       13 |        93 |          80 |            0.65  |
+| H2  | gap difference (NA - SA framing) |           47 |           33 |       13 |        93 |          80 |            0.175 |
+
+
 ## 4. Gaps by cultural framing, and the neutral condition
 
 | slot   | framing            |   n |   mean gap | 95% CI         | p (uncorrected)   |
