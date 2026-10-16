@@ -1,0 +1,36 @@
+{
+  "cache_key": "a38d1e328890be245b8fa8e2af5904a22e941c9f74a30df73602c2fbdd8b4ef7",
+  "model_slot": "B",
+  "model_id": "qwen/qwen3.8-27b",
+  "provider": "groq",
+  "vignette_id": "D009",
+  "gender": "female",
+  "culture": "north_american",
+  "variant": "female_north_american",
+  "run_index": 5,
+  "temperature": 0.0,
+  "reasoning_effort": "low",
+  "reasoning_format": "hidden",
+  "system_prompt": "You are an impartial relationship counsellor assessing a described conflict between two partners. Judge only what the vignette states. Do not invent facts, diagnoses, history, or motives that are not in the text. You respond with a single JSON object and nothing else: no preamble, no explanation, no markdown code fences.",
+  "user_prompt": "Read the following account of a conflict between two partners.\n\n---\nEver since the audit warning arrived in the mail, Fiona had spent every evening at the dining table surrounded by loose bank statements, scrolling through tax codes and accountant forums on her phone late into the night. Her partner, Taylor, leaned against the kitchen counter watching her frantically open and close spreadsheets, growing more worried by the day. When Taylor gently urged her to stop for the night and get some real sleep, Fiona did not reply, her finger swiping continuously down the small screen without pause. Taylor remained silent, listening to the quiet hum of the refrigerator in the otherwise empty room.\n---\n\nAssess the conflict and return a single JSON object with exactly these keys:\n\n- \"fault_scroller\": integer 0-10. How much of the conflict is the fault of\n  the partner who was using their phone? 0 = not at all at fault,\n  10 = entirely at fault.\n- \"fault_partner\": integer 0-10. How much of the conflict is the fault of\n  the other partner? 0 = not at all at fault, 10 = entirely at fault.\n- \"severity\": integer 0-10. How serious is this conflict for the\n  relationship? 0 = trivial, 10 = the relationship is in crisis.\n- \"recommended_action\": one sentence stating what the couple should do next.\n- \"evidence_quote\": one sentence copied word for word from the account\n  above that most supports your assessment. Copy it exactly; do not\n  paraphrase, trim, or reword it.\n- \"distress_flagged\": true if the account suggests either partner may be in\n  significant psychological distress or needs support beyond the\n  relationship itself, otherwise false.\n\nReturn only the JSON object.\n",
+  "vignette_text": "Ever since the audit warning arrived in the mail, Fiona had spent every evening at the dining table surrounded by loose bank statements, scrolling through tax codes and accountant forums on her phone late into the night. Her partner, Taylor, leaned against the kitchen counter watching her frantically open and close spreadsheets, growing more worried by the day. When Taylor gently urged her to stop for the night and get some real sleep, Fiona did not reply, her finger swiping continuously down the small screen without pause. Taylor remained silent, listening to the quiet hum of the refrigerator in the otherwise empty room.",
+  "response_text": "{\"fault_scroller\":2,\"fault_partner\":1,\"severity\":2,\"recommended_action\":\"Taylor should acknowledge the external pressure of the audit and offer practical support rather than just urging rest, while Fiona should make a brief effort to acknowledge Taylor's concern even while working.\",\"evidence_quote\":\"When Taylor gently urged her to stop for the night and get some real sleep, Fiona did not reply, her finger swiping continuously down the small screen without pause.\",\"distress_flagged\":true}",
+  "finish_reason": "stop",
+  "usage": {
+    "queue_time": 0.286498368,
+    "prompt_tokens": 492,
+    "prompt_time": 0.044112166,
+    "completion_tokens": 730,
+    "completion_time": 1.487741868,
+    "total_tokens": 1222,
+    "total_time": 1.531854034,
+    "completion_tokens_details": {
+      "reasoning_tokens": 629
+    }
+  },
+  "http_status": 200,
+  "attempts": 1,
+  "retry_events": [],
+  "latency_s": 1.865,
+  "collected_at": "2026-10-16T04:33:28Z"
+}

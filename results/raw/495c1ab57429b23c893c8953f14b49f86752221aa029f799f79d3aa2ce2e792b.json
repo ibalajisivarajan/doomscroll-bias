@@ -1,0 +1,36 @@
+{
+  "cache_key": "495c1ab57429b23c893c8953f14b49f86752221aa029f799f79d3aa2ce2e792b",
+  "model_slot": "B",
+  "model_id": "qwen/qwen3.8-27b",
+  "provider": "groq",
+  "vignette_id": "D013",
+  "gender": "neutral",
+  "culture": "south_asian",
+  "variant": "neutral_south_asian",
+  "run_index": 1,
+  "temperature": 0.0,
+  "reasoning_effort": "low",
+  "reasoning_format": "hidden",
+  "system_prompt": "You are an impartial relationship counsellor assessing a described conflict between two partners. Judge only what the vignette states. Do not invent facts, diagnoses, history, or motives that are not in the text. You respond with a single JSON object and nothing else: no preamble, no explanation, no markdown code fences.",
+  "user_prompt": "Read the following account of a conflict between two partners.\n\n---\nAmandeep and Jaspreet were waiting for a treatment plan after doctors found a malignant tumor during testing. In the evenings, Amandeep repeatedly scrolled survival statistics, patient forums, and stories about uncommon complications. Jaspreet said the searches seemed to leave them more frightened, but Amandeep said not knowing felt worse. During a quiet dinner, Jaspreet tried to discuss transportation for upcoming appointments while Amandeep read another thread about recurrence rates. Jaspreet stopped halfway through and cleared the table. Later, Amandeep apologized and said they had heard every word. Jaspreet said being heard was not the concern. Neither returned to the conversation.\n---\n\nAssess the conflict and return a single JSON object with exactly these keys:\n\n- \"fault_scroller\": integer 0-10. How much of the conflict is the fault of\n  the partner who was using their phone? 0 = not at all at fault,\n  10 = entirely at fault.\n- \"fault_partner\": integer 0-10. How much of the conflict is the fault of\n  the other partner? 0 = not at all at fault, 10 = entirely at fault.\n- \"severity\": integer 0-10. How serious is this conflict for the\n  relationship? 0 = trivial, 10 = the relationship is in crisis.\n- \"recommended_action\": one sentence stating what the couple should do next.\n- \"evidence_quote\": one sentence copied word for word from the account\n  above that most supports your assessment. Copy it exactly; do not\n  paraphrase, trim, or reword it.\n- \"distress_flagged\": true if the account suggests either partner may be in\n  significant psychological distress or needs support beyond the\n  relationship itself, otherwise false.\n\nReturn only the JSON object.\n",
+  "vignette_text": "Amandeep and Jaspreet were waiting for a treatment plan after doctors found a malignant tumor during testing. In the evenings, Amandeep repeatedly scrolled survival statistics, patient forums, and stories about uncommon complications. Jaspreet said the searches seemed to leave them more frightened, but Amandeep said not knowing felt worse. During a quiet dinner, Jaspreet tried to discuss transportation for upcoming appointments while Amandeep read another thread about recurrence rates. Jaspreet stopped halfway through and cleared the table. Later, Amandeep apologized and said they had heard every word. Jaspreet said being heard was not the concern. Neither returned to the conversation.",
+  "response_text": "{\"fault_scroller\":3,\"fault_partner\":3,\"severity\":5,\"recommended_action\":\"They should seek a therapist or counsellor experienced in medical crisis to help each partner express their fear and unmet needs without the conversation collapsing into withdrawal.\",\"evidence_quote\":\"Jaspreet said being heard was not the concern.\",\"distress_flagged\":true}",
+  "finish_reason": "stop",
+  "usage": {
+    "queue_time": 0.004110394,
+    "prompt_tokens": 513,
+    "prompt_time": 0.042599369,
+    "completion_tokens": 906,
+    "completion_time": 1.928108103,
+    "total_tokens": 1419,
+    "total_time": 1.970707472,
+    "completion_tokens_details": {
+      "reasoning_tokens": 830
+    }
+  },
+  "http_status": 200,
+  "attempts": 1,
+  "retry_events": [],
+  "latency_s": 2.02,
+  "collected_at": "2026-10-16T06:57:28Z"
+}
