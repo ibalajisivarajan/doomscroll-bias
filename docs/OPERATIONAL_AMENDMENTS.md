@@ -735,6 +735,147 @@ is not folded into any Holm correction or family.
 
 ---
 
+## 2026-10-16 — Statistical audit edge cases: Wilcoxon insufficient-n, H1 partial pairing, severity exclusion
+
+**Change commit:** (this commit)  
+**Reviewer:** ChatGPT (statistical audit, 15 Oct 2026, Notion task "Review
+JSON parsing, scoring, excluded keys, Wilcoxon ties, missingness and
+incomplete paired-cell handling"; implementation task "Claude Code: resolve
+statistical audit edge cases (Wilcoxon, H1 paired coverage, severity
+exclusions)", P0, due 2026-10-19)  
+**Not a `PROTOCOL AMENDMENT`.** `config/protocol.yaml` is not edited.
+Addresses three specific edge cases the audit identified in
+`src/analyze.py`; two get a code fix, one gets a documented determination
+plus additive reporting, consistent with "align only with documented frozen
+rule."
+
+### Issue 1 — `wilcoxon()` reported p=1.0 for both insufficient-n and all-tied
+
+**Before:** `len(differences) < 2 or nonzero == 0` both returned `(NaN, 1.0,
+nonzero)` -- conflating "cannot test at all" (0 or 1 paired observation)
+with "tested, every difference was exactly zero" (a real, meaningful
+degenerate result, the convention this function's own docstring already
+disclosed).
+
+**Fix:** split the two cases. `len(differences) < 2` now returns
+`(NaN, NaN, nonzero)` -- `NaN` renders as "n/a" via the existing `fmt_p()`,
+distinct from a real `1.0`. `nonzero == 0` with `len >= 2` is unchanged:
+still `(NaN, 1.0, nonzero)`. The scipy-level `ValueError` fallback (a
+separate, pre-existing degenerate path the audit did not flag) is
+unchanged, still `1.0`, since changing it would need its own separate
+justification.
+
+**Consequence requiring its own fix:** `holm()` takes a list of p-values
+across a whole family (e.g. H1 and H2 together) and would silently corrupt
+the OTHER real test's adjusted p-value if one entry in the list became
+`NaN` -- `NaN` propagating through Python's `sorted`/`max` does not
+reliably "sort last." `holm()` now filters `NaN` entries out of the
+correction itself (they don't count toward the family size `m` and don't
+enter the step-down ordering), returning `(NaN, False)` for them --
+"untested," never a false "no" -- while every real entry's adjusted
+p-value is computed exactly as if the untestable one were never in the
+list. When every input is a real number (every case this study has
+produced so far), the result is byte-identical to the pre-amendment
+implementation.
+
+Both render sites that show a "reject at a=..." yes/no column (section 3's
+primary table, section 6/7's secondary-family table) now show `"n/a"` for
+an untested entry instead of a misleading `"no"`. `sensitivity_h1h2.py`'s
+own `wilcoxon()` reimplementation (which explicitly mirrors `analyze.py`'s)
+got the identical fix for consistency, even though it does not call
+`holm()` and so has no sibling-corruption risk of its own.
+
+### Issue 2 — H1 (and H2) partial name-cue pairing not reported where the preregistered test lives
+
+The 2026-10-15 entry already built a supplemental complete-case sensitivity
+check for exactly this bug (`sensitivity_h1h2.py`, section 3b) -- the audit
+is right that it was not visible from the preregistered section 3 itself.
+**Fix:** section 3 now also renders a small coverage table, computed by
+`sensitivity_h1h2.vignette_completeness()` (already built, tested, and
+proven not to alter any preregistered output) directly beneath the
+preregistered H1/H2 table -- per model slot, how many vignettes have
+complete male+female x north_american+south_asian coverage versus partial
+(nanmean'd) coverage, pointing the reader at section 3b. `paired_gaps()`
+and the preregistered table's own numbers are untouched; this is reporting
+only. On the current cache, 0 vignettes are partial for either slot (H1/H2
+never uses the `neutral` gender, and every vignette with any male/female
+data already has both cultures for both genders -- the one current gap,
+`D008`'s missing `neutral`/`south_asian` cell, doesn't reach this check).
+
+### Issue 3 — `severity` has no range-exclusion equivalent to `fault_scroller`/`fault_partner`
+
+**Investigated, not silently changed.** `config/protocol.yaml`'s frozen
+exclusion rule reads: "Responses missing any required key, or with
+out-of-range **fault** values" -- scoped by name to `fault_scroller`/
+`fault_partner`, not to `severity` or ratings generically.
+`analysable()`'s `missing_keys == ""` check already excludes a response
+whose `severity` KEY is entirely absent, same as every other required key
+(`score.py`'s `missing = [k for k in required if k not in parsed]` checks
+key presence for all 6 required keys uniformly). The gap is narrower than
+"severity has no exclusion at all": a response whose `severity` key is
+present but holds a value `coerce_score()` cannot parse or that falls
+outside 0-10 is not caught by anything, since `missing_keys` only checks
+presence, not value validity -- that response's `severity` becomes `NaN` in
+`scored.csv` while still passing every current `analysable()` filter.
+
+**Determination: `analysable()` is left unchanged.** The protocol's literal
+wording does not extend the range-exclusion to `severity`, and "align only
+with documented frozen rule" means not guessing at a stricter rule the text
+does not state. This determination is enforced by a test
+(`AnalysableSeverityDeterminationTest` in `tests/test_analyze_statistics.py`),
+not left as prose that a future change could silently contradict.
+
+**Additive reporting fix:** section 2's per-model quality table gained an
+`n with valid severity` column (count of `severity.notna()` within each
+model's analysable set), with a note explaining exactly why it can differ
+from `n` and confirming it currently does not (both slots: `n with valid
+severity == n`, 3,599/3,599 for A, 2,779/2,779 for B -- the gap is latent,
+not currently biasing `mean severity`). Section 1's exclusion-rule summary
+line was also tightened from "out-of-range ratings" (its own prior
+wording, which overclaimed beyond what the protocol text actually says) to
+"out-of-range **fault** values specifically," matching the frozen wording
+exactly.
+
+### Testing performed
+
+- `python -m unittest discover -s tests` -- **56 tests, 56 passed, 0
+  failed** (43 existing, unaffected, + 13 new in
+  `tests/test_analyze_statistics.py`): `WilcoxonDegenerateInputTest`
+  (0 and 1 observations -> NaN p, not 1.0; 2+ all-tied -> still the
+  disclosed 1.0; normal input unaffected; NaN padding dropped before the
+  n-check); `HolmNaNHandlingTest` (a known hand-checked Holm case with no
+  NaNs reproduces the exact pre-amendment arithmetic; a direct regression
+  test proving a NaN entry does not change the adjusted p-values of the
+  real entries at all, compared to running `holm()` on just those real
+  entries alone -- the exact bug a naive "sort NaN last" implementation
+  would have; all-NaN input; empty input; NaN position not mattering);
+  `AnalysableSeverityDeterminationTest` (the Issue 3 determination, plus
+  confirming the missing-key and out-of-range-fault paths are both still
+  correctly excluded). One existing test in `test_sensitivity_h1h2.py`
+  (`test_no_complete_paired_vignettes_reports_nan_not_a_crash`) was updated
+  from asserting the old `p == 1.0` to the corrected `NaN` -- it was
+  exercising exactly the insufficient-n case this amendment fixes.
+- Same-cache diff method as every prior entry: ran the pre-change and
+  post-change `src/analyze.py` against the identical current
+  `results/tables/scored.csv` and diffed. **Byte-identical:** sections 3b,
+  3c, 4, 5, 5b in full, and -- critically -- every numeric table row in
+  sections 3 and 6/7 (the actual H1/H2/H3/H4 test output: same n, mean, W,
+  p, p (Holm), Cliff's delta, and reject/no-reject for every row), proving
+  the fix changes zero currently-reported numbers. Only the new,
+  additive report text (sections 1, 2, 3's coverage additions) differs.
+  Reran `analyze.py` a second time on its own output: also byte-identical.
+
+### Scientific safeguards confirmed unchanged
+
+`config/protocol.yaml` (not edited), frozen hypotheses H1-H4,
+`paired_gaps()` itself (only how its surrounding coverage is *reported*
+changed, not computed), `analysable()`'s exclusion logic (Issue 3's
+determination keeps it exactly as-is), `src/run.py`, `src/score.py`, the
+collection pipeline, `data/vignettes.jsonl`, and every number in the
+preregistered H1-H4 tables on the current cache.
+
+---
+
 ## Interpretation rule
 
 Entries in this file should be treated as part of the provenance record for the

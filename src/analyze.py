@@ -123,15 +123,30 @@ def bootstrap_ci(
 def wilcoxon(differences: np.ndarray, zero_method: str = "wilcox") -> tuple[float, float, int]:
     """Two-sided Wilcoxon signed-rank on the paired differences.
 
-    Returns (statistic, p, n_nonzero). Degenerate inputs -- fewer than 2 pairs,
-    or every difference exactly zero -- are reported as p = 1.0 rather than
-    allowed to raise, because "the model gave identical answers to both
-    renderings" is a real and interesting result, not an error.
+    Returns (statistic, p, n_nonzero), and distinguishes two different
+    degenerate inputs that OPERATIONAL AMENDMENT (2026-10-16, ChatGPT
+    statistical audit of 15 Oct) found were being conflated:
+
+    - Fewer than 2 paired observations: there is no sample to test at all.
+      Returns p = NaN ("n/a" once formatted) -- not 1.0 -- because "cannot
+      test" and "tested, found no evidence of a difference" are different
+      facts, and the original code reported both as p = 1.0.
+    - 2 or more observations, all exactly zero: a real, meaningful result
+      ("the model gave identical answers to both renderings"), kept as the
+      existing disclosed convention, p = 1.0, unchanged from before this
+      amendment.
+
+    A scipy-level ValueError on an otherwise-valid (>=2 obs, >=1 nonzero)
+    sample is unchanged from before: still reported as p = 1.0, since that
+    path was not what the audit flagged and changing it would need its own
+    separate justification.
     """
     differences = np.asarray(differences, float)
     differences = differences[~np.isnan(differences)]
     nonzero = int(np.count_nonzero(differences))
-    if len(differences) < 2 or nonzero == 0:
+    if len(differences) < 2:
+        return float("nan"), float("nan"), nonzero
+    if nonzero == 0:
         return float("nan"), 1.0, nonzero
     try:
         result = stats.wilcoxon(differences, zero_method=zero_method, alternative="two-sided")
@@ -146,18 +161,40 @@ def holm(pvalues: list[float], alpha: float) -> list[tuple[float, bool]]:
     Adjusted p-values are made monotone non-decreasing in the sorted order,
     which is what makes "adjusted p < alpha" equivalent to the step-down
     decision rule.
+
+    A NaN entry (wilcoxon()'s insufficient-n case: fewer than 2 paired
+    observations, so no test could be run at all -- OPERATIONAL AMENDMENT,
+    2026-10-16) is excluded from the correction itself, not merely sorted
+    last: it does not count toward the family size m, and does not enter
+    the step-down ordering, so it can never corrupt a sibling test's
+    adjusted p-value (NaN propagating through Python's `sorted`/`max`
+    comparisons is not reliably "sorts last" -- it would otherwise risk
+    silently corrupting the whole family's correction over one untestable
+    hypothesis). Its own output is (NaN, False): untested, which the
+    caller renders as "n/a", never "no" -- "no" would claim a real test
+    failed to reject, which did not happen.
+
+    When every input is a real number (every case seen in this study to
+    date, since every H1/H2/H3/H4 test here has far more than 2 paired
+    vignettes), `testable` covers every index and this is byte-identical
+    to the pre-amendment implementation.
     """
-    m = len(pvalues)
-    if m == 0:
+    m_total = len(pvalues)
+    if m_total == 0:
         return []
-    order = sorted(range(m), key=lambda i: pvalues[i])
-    adjusted = [0.0] * m
-    running = 0.0
-    for rank, i in enumerate(order):
-        candidate = min(1.0, (m - rank) * pvalues[i])
-        running = max(running, candidate)
-        adjusted[i] = running
-    return [(adjusted[i], adjusted[i] < alpha) for i in range(m)]
+    testable = [i for i, p in enumerate(pvalues) if not np.isnan(p)]
+    adjusted = [float("nan")] * m_total
+    reject = [False] * m_total
+    m = len(testable)
+    if m > 0:
+        order = sorted(testable, key=lambda i: pvalues[i])
+        running = 0.0
+        for rank, i in enumerate(order):
+            candidate = min(1.0, (m - rank) * pvalues[i])
+            running = max(running, candidate)
+            adjusted[i] = running
+            reject[i] = running < alpha
+    return [(adjusted[i], reject[i]) for i in range(m_total)]
 
 
 # ---------------------------------------------------------------------------
@@ -405,7 +442,9 @@ def main(argv: list[str] | None = None) -> int:
     ))
     w("")
     w("Exclusions follow `statistics.exclusions` in the protocol: unparseable "
-      "responses, responses missing a required key, and out-of-range ratings.")
+      "responses, responses missing a required key, and out-of-range "
+      "**fault** values specifically (`fault_scroller`/`fault_partner`) -- "
+      "see section 2 for `severity`'s narrower, documented treatment.")
     w("")
 
     # ---- per-model descriptives -------------------------------------------
@@ -427,10 +466,12 @@ def main(argv: list[str] | None = None) -> int:
             fmt(float(sub["fault_scroller"].mean()), 2),
             fmt(float(sub["fault_partner"].mean()), 2),
             fmt(float(sub["severity"].mean()), 2),
+            int(sub["severity"].notna().sum()),
         ])
     w(md_table(
         ["slot", "model", "n", "hallucination rate", "instability (median SD)",
-         "mean fault_scroller", "mean fault_partner", "mean severity"],
+         "mean fault_scroller", "mean fault_partner", "mean severity",
+         "n with valid severity"],
         quality_rows,
     ))
     w("")
@@ -441,6 +482,21 @@ def main(argv: list[str] | None = None) -> int:
       "`fault_scroller` over the 5 repeats; at temperature 0 it should be ~0, "
       "and anything larger means the endpoint is not deterministic and the "
       "cell means carry decoding noise.")
+    w("")
+    w("> **n with valid severity** (OPERATIONAL AMENDMENT, 2026-10-16, ChatGPT "
+      "statistical audit of 15 Oct). `analysable()`'s exclusion filters check "
+      "`fault_scroller`/`fault_partner` are present and in-range, matching the "
+      "protocol's exclusion rule for \"out-of-range **fault** values\" (not "
+      "ratings generically). `severity` gets no equivalent range check, so a "
+      "response with a valid `missing_keys` record (the key was present) but "
+      "an unparseable or out-of-range `severity` value still counts in `n` "
+      "above, with `mean severity` silently computed over only the valid "
+      "subset. On the current cache this column equals `n` for every slot --"
+      " the gap is latent, not currently biasing any reported mean -- but is "
+      "reported explicitly here rather than left implicit, since the "
+      "protocol's frozen wording does not extend the range-exclusion to "
+      "severity and this is intentionally left unchanged pending documented "
+      "review.")
     w("")
 
     # ---- primary tests ----------------------------------------------------
@@ -497,7 +553,7 @@ def main(argv: list[str] | None = None) -> int:
                 f"[{fmt(t['ci'][0])}, {fmt(t['ci'][1])}]",
                 fmt(t["stat"], 1), fmt_p(t["p"]), fmt_p(t["p_holm"]),
                 fmt(t["delta"]), delta_label(t["delta"], thresholds),
-                "yes" if t["reject"] else "no",
+                "n/a" if np.isnan(t["p"]) else ("yes" if t["reject"] else "no"),
             ] for t in tests],
         ))
         w("")
@@ -507,6 +563,34 @@ def main(argv: list[str] | None = None) -> int:
     else:
         w("_No analysable pairs yet._")
     w("")
+
+    # Eligible name-cue cell coverage (OPERATIONAL AMENDMENT, 2026-10-16,
+    # ChatGPT statistical audit of 15 Oct). The "n" column above counts
+    # every vignette with ANY data for a gender, because paired_gaps()
+    # averages a gender's value with np.nanmean() over whichever of the 2
+    # cultural name-cue cells exist -- a vignette with only 1 of 2 cultures
+    # collected for "male" is not distinguished from one with both. This
+    # does not change paired_gaps() or the table above; it reports, using
+    # the same vignette_completeness() the section 3b sensitivity check is
+    # built on, how many of those vignettes actually had complete coverage.
+    coverage = sensitivity_h1h2.vignette_completeness(cells)
+    if not coverage.empty:
+        w(md_table(
+            ["slot", "n with complete male+female x NA+SA coverage",
+             "n with partial (nanmean'd) coverage", "n total"],
+            [
+                [row.model_slot, row.n_included, row.n_excluded, row.n_total]
+                for row in coverage.itertuples()
+            ],
+        ))
+        w("")
+        w("A vignette in the \"partial\" column still appears in the table "
+          "above -- its gender mean is `np.nanmean`'d over just the 1 "
+          "culture collected, same weight as a complete vignette's "
+          "2-culture mean. Section 3b recomputes H1/H2 restricted to "
+          "complete-coverage vignettes only, as a sensitivity check "
+          "against this.")
+        w("")
 
     # ---- H1/H2 complete-case matched-pair effect-size sensitivity ---------
     # Additive only: does not touch paired_gaps() or the preregistered table
@@ -801,7 +885,8 @@ def main(argv: list[str] | None = None) -> int:
         w("")
         w(md_table(
             ["slot", "test", "p", "p (Holm, secondary family)", f"reject at a={alpha}"],
-            [[m["slot"], m["test"], fmt_p(p), fmt_p(adj), "yes" if rej else "no"]
+            [[m["slot"], m["test"], fmt_p(p), fmt_p(adj),
+              "n/a" if np.isnan(p) else ("yes" if rej else "no")]
              for m, p, (adj, rej) in zip(secondary_meta, secondary_p,
                                          holm(secondary_p, alpha))],
         ))

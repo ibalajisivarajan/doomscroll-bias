@@ -236,7 +236,10 @@ class ComputeSensitivityH1H2Test(unittest.TestCase):
         self.assertEqual(res["n_excluded_vignettes"], 2)
         self.assertTrue(np.isnan(res["h1"]["mean"]))
         self.assertTrue(np.isnan(res["h2"]["mean"]))
-        self.assertEqual(res["h1"]["p"], 1.0)  # wilcoxon's degenerate-input convention
+        # Zero complete-case vignettes -> zero paired observations -> the
+        # 2026-10-16 amendment's "insufficient n" case: NaN ("n/a"), not the
+        # old 1.0 convention (which was reserved for >=2 obs, all-tied).
+        self.assertTrue(np.isnan(res["h1"]["p"]))
 
     def test_deterministic_given_same_seed(self):
         def value_fn(v, gender, culture):

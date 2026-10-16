@@ -198,12 +198,22 @@ def cliffs_delta(a: np.ndarray, b: np.ndarray) -> float:
 
 def wilcoxon(differences: np.ndarray, zero_method: str = "wilcox") -> tuple[float, float, int]:
     """Two-sided Wilcoxon signed-rank. Mirrors analyze.wilcoxon exactly,
-    including reporting p=1.0 (not raising) on degenerate input.
+    including the 2026-10-16 amendment distinguishing insufficient-n
+    (fewer than 2 paired observations: p = NaN, "cannot test") from
+    all-tied-with-enough-pairs (p = 1.0, the disclosed "no evidence of a
+    difference" convention) -- see analyze.wilcoxon's docstring for the
+    full rationale (ChatGPT statistical audit, 15 Oct 2026). This module
+    does not call holm() on its own p-values (they are explicitly
+    unadjusted/not preregistered), so there is no sibling-corruption risk
+    here the way there is in analyze.holm() -- the fix is mirrored anyway,
+    purely so NaN-vs-1.0 means the same thing in both modules' output.
     """
     differences = np.asarray(differences, float)
     differences = differences[~np.isnan(differences)]
     nonzero = int(np.count_nonzero(differences))
-    if len(differences) < 2 or nonzero == 0:
+    if len(differences) < 2:
+        return float("nan"), float("nan"), nonzero
+    if nonzero == 0:
         return float("nan"), 1.0, nonzero
     try:
         result = stats.wilcoxon(differences, zero_method=zero_method, alternative="two-sided")
