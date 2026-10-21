@@ -1,0 +1,17 @@
+{
+  "frozen_at_utc": "2026-10-21T20:19:47Z",
+  "git_head_at_freeze": "2329e6021cec3f5342bb4c1b07758e1da0365a4e",
+  "raw_response_count": 7200,
+  "expected_response_count": 7200,
+  "dataset": {
+    "path": "data/vignettes.jsonl",
+    "sha256": "495f354e66d1530ab6a8ac3d5e095160a789b417a07c84ea21eb37c717621ae7"
+  },
+  "protocol": {
+    "path": "config/protocol.yaml",
+    "sha256": "03c59749b7548a67c9076edee16ffd5a666eee7494106e0a4aa514f9f216a96f",
+    "locked": true
+  },
+  "raw_manifest": "results/final/raw_sha256.txt",
+  "raw_manifest_sha256": "6d0ccd726b7fec0b47dc550edab4f1ec41ae90e564226e469dbf4bbfe05fc265"
+}
