@@ -97,7 +97,32 @@ design:
   temperature: 0.0
   # Smoke run #1 showed that 500 tokens could exhaust Qwen's reasoning budget
   # before it emitted the required JSON. Smoke run #2 passed 24/24 at 1024.
-  max_tokens: 1024
+  #
+  # PROTOCOL AMENDMENT (2026-10-21): 1024 -> 2048. At 7,195/7,200, the only
+  # 5 cells left uncollected (all slot B, control vignettes C002/C010/C014)
+  # fail every attempt with the identical Groq HTTP 400 json_validate_failed
+  # ("max completion tokens reached before generating a valid document"),
+  # confirmed in the production job log for dispatch 39552501344 -- the
+  # same failure mode smoke run #1 hit at 500 tokens, now recurring at 1024
+  # for these specific control vignettes. src/run.py treats HTTP 400 as
+  # non-retryable by design, so these 5 cells fail identically on every
+  # future dispatch; no amount of retrying or resuming collects them under
+  # the old cap. This changes only the response-length budget: it does not
+  # alter the prompt, the model, the temperature, the seed, which vignette
+  # or condition is asked, any hypothesis, or any scoring/analysis rule.
+  # It is also mechanically incapable of altering any already-collected
+  # response: src/run.py's cache key (Task.cache_key) hashes model_id,
+  # reasoning_effort, reasoning_format, run_index, system_prompt and
+  # user_prompt -- max_tokens is not part of it, and is not re-sent for a
+  # cell that already has a cached file. The other 7,195 responses were
+  # collected successfully within the 1,024-token budget (none were
+  # truncated), so raising the cap could not have changed their content
+  # even retroactively. See docs/OPERATIONAL_AMENDMENTS.md (2026-10-21) for
+  # the full record, including the one residual risk worth stating
+  # plainly: these 5 cells collect under a different (larger) token budget
+  # than the rest of the corpus, so a longer reasoning allowance is a
+  # possible, if unproven, confound specific to these 5 responses.
+  max_tokens: 2048
   seed: 20260914                      # passed when the endpoint honours it
 
   blinding: >-
