@@ -876,6 +876,80 @@ preregistered H1-H4 tables on the current cache.
 
 ---
 
+## 2026-10-21 — PROTOCOL AMENDMENT cross-reference: max_tokens 1024 -> 2048
+
+**This is a scientific `PROTOCOL AMENDMENT`, not an operational one.**
+Per this file's own interpretation rule below and the header of
+`config/protocol.yaml` itself ("Changes to the design, metrics or
+statistical plan after `locked: true` get their own commit with a message
+beginning 'PROTOCOL AMENDMENT:'"), the authoritative record of this change
+is the dedicated commit and the inline comment it left in
+`config/protocol.yaml`, not this file. This entry exists only as a
+cross-reference, so a reader of this log is pointed at the real record
+instead of concluding no one wrote one down.
+
+**Change commit:** `4cf1148` (`PROTOCOL AMENDMENT: raise max_tokens
+1024 -> 2048 to finish slot B`)  
+**Affected file:** `config/protocol.yaml`, `design.max_tokens` only  
+**Handover:** "Claude Code: Protocol amendment to finish slot B
+collection" (direct instruction, 2026-10-21)
+
+### Why
+
+Corpus stuck at 7,195/7,200: slot A complete (3,600/3,600), slot B missing
+exactly 5 cells (control vignettes C002, C010, C014). Verified directly
+against the production job log for dispatch `39552501344`
+(job `119064642747`) before making any change: all 5 fail every attempt
+with Groq HTTP 400 `json_validate_failed` -- 3 with the explicit
+`"max completion tokens reached before generating a valid document"`
+message, 2 with the same error code and an empty `failed_generation`
+field (same underlying symptom, slightly different diagnostic text).
+`src/run.py` treats HTTP 400 as non-retryable by design, so these 5 cells
+fail identically on every future dispatch regardless of how many times
+collection resumes -- this is the same failure mode smoke run #1 hit at
+500 tokens (documented in the prior comment this amendment sits next to
+in `protocol.yaml`), now recurring at 1,024 for these specific control
+vignettes.
+
+### What changed, and what provably did not
+
+Only `design.max_tokens`: 1024 -> 2048. Nothing else in
+`config/protocol.yaml` was touched (verified: `git diff` on this commit
+touches exactly one field). No prompt, model, temperature, seed, vignette,
+condition, hypothesis, or scoring/analysis rule changed.
+
+This is also mechanically incapable of altering any already-collected
+response, not merely asserted to be: `src/run.py`'s `Task.cache_key`
+hashes `model_id`, `reasoning_effort`, `reasoning_format`, `run_index`,
+`system_prompt` and `user_prompt` -- `max_tokens` is not part of it, so a
+cell with an existing cache file is never re-sent regardless of this
+change. Verified empirically, not just by reading the code: ran
+`python src/run.py --dry-run` immediately before and immediately after the
+edit -- both runs report the identical 5 pending cells with the identical
+cache keys (e.g. `B C002 male_north_american run=3 key=37f388d2432d`,
+unchanged). The other 7,195 responses completed successfully within the
+1,024-token budget (none were truncated -- truncation is exactly the
+failure mode being fixed), so raising the cap could not have changed their
+content even if it had been in effect retroactively.
+
+### Residual risk -- flagged, not absorbed
+
+These 5 cells will collect under a larger token budget (2,048) than the
+other 7,195 responses (1,024). A longer reasoning allowance is a possible,
+though unproven, confound specific to these 5 responses relative to the
+rest of the corpus for the same model and condition family. This is stated
+here plainly rather than silently treated as equivalent collection
+conditions. [Filled in after collection: see the dispatch result below for
+whether this remained a theoretical risk or changed any reported number.]
+
+### Collection result
+
+[Filled in after the post-amendment dispatch completes -- see the
+Claude Code report for commit SHAs, final raw/per-model counts, and
+finalize-workflow status.]
+
+---
+
 ## Interpretation rule
 
 Entries in this file should be treated as part of the provenance record for the
