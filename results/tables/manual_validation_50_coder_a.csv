@@ -1,4 +1,4 @@
-sample_id,model_slot,vignette_id,gender,culture,run_index,recommended_action,human_action_category,coder_notes
+sample_id,model_slot,vignette_id,gender,culture,run_index,recommended_action,action_category,coder_notes
 MV001,A,V037,female,north_american,1,Agree on a consistent screen‑free dinner rule and both commit to following it.,,
 MV002,A,V001,neutral,north_american,2,"They should discuss boundaries and set regular phone‑free times, especially during meals, to rebuild shared conversation.",,
 MV003,A,C011,female,south_asian,2,They should talk about setting clear boundaries for phone use when a deadline is imminent and agree on a plan to leave on time.,,

@@ -1,3 +1,17 @@
+# Scoring, QC, the final preregistered analysis, and the two-coder manual
+# validation agreement all run automatically once collection is complete and
+# both coder worksheets are filled -- none of that is identity-revealing.
+#
+# PUBLIC-RELEASE GATE: creating the git tag / GitHub Release, and
+# reserving+publishing the Zenodo DOI, are held behind a manual
+# workflow_dispatch confirmation (confirm_public_release). Those steps create
+# new, search-indexable public artifacts (a titled GitHub Release, a
+# published Zenodo DOI record) under this real, author-identified repo. Until
+# FAccT's double-anonymous review window has closed, firing them automatically
+# the moment the CSV is committed would let a reviewer find the study and the
+# author's identity via a web search, independent of anything the paper
+# itself links. Run this workflow manually with confirm_public_release=true
+# only once that's no longer a concern (post-decision / camera-ready).
 name: finalize-study
 
 on:
@@ -5,9 +19,20 @@ on:
     workflows: ["run"]
     types: [completed]
   workflow_dispatch:
+    inputs:
+      confirm_public_release:
+        description: >-
+          Set true only when it is safe to create public, search-indexable
+          release artifacts (GitHub Release, published Zenodo DOI) under the
+          real author-identified repo -- i.e. after FAccT's double-anonymous
+          review window has closed. Leave false/unset during the anonymous
+          submission period.
+        type: boolean
+        default: false
   push:
     paths:
-      - "results/tables/manual_validation_50.csv"
+      - "results/tables/manual_validation_50_coder_a.csv"
+      - "results/tables/manual_validation_50_coder_b.csv"
 
 permissions:
   contents: write
@@ -66,16 +91,21 @@ jobs:
       - name: Human-validation gate
         if: steps.prep.outputs.complete == 'true' && steps.prep.outputs.manual_ready != 'true'
         run: |
-          echo "Collection is frozen, but manual validation is only ${{ steps.prep.outputs.manual_coded }}/50."
-          echo "Fill results/tables/manual_validation_50.csv and commit it."
-          echo "This workflow will resume automatically on that push."
+          echo "Collection is frozen, but manual validation is only ${{ steps.prep.outputs.manual_coded }}/50 (slower of the two coders)."
+          echo "Two independent coders must each fill action_category for all 50 rows:"
+          echo "  results/tables/manual_validation_50_coder_a.csv"
+          echo "  results/tables/manual_validation_50_coder_b.csv"
+          echo "Each coder works blind to the other's file and to the automated classifier."
+          echo "This workflow will resume automatically once both files are committed and complete."
 
-      - name: Upload blinded validation worksheet
+      - name: Upload blinded validation worksheets
         if: steps.prep.outputs.complete == 'true' && steps.prep.outputs.manual_ready != 'true'
         uses: actions/upload-artifact@v4
         with:
           name: manual-validation-50
-          path: results/tables/manual_validation_50.csv
+          path: |
+            results/tables/manual_validation_50_coder_a.csv
+            results/tables/manual_validation_50_coder_b.csv
           retention-days: 90
 
       - name: Compute manual-validation agreement
@@ -87,15 +117,37 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add results/final results/tables/manual_validation_50.csv results/tables/manual_validation_50_key.csv
+          git add results/final \
+            results/tables/manual_validation_50_coder_a.csv \
+            results/tables/manual_validation_50_coder_b.csv \
+            results/tables/manual_validation_50_key.csv
           if ! git diff --cached --quiet; then
             git commit -m "results: add preregistered manual-validation agreement"
             git pull --rebase --autostash origin main
             git push origin HEAD:main
           fi
 
+      # --- Public-release gate -------------------------------------------
+      # Everything below here creates new, search-indexable public artifacts
+      # under the real, author-identified repo (a titled GitHub Release, a
+      # published Zenodo DOI). It only runs on a manual workflow_dispatch
+      # with confirm_public_release=true, so it never fires just because the
+      # CSVs were committed. See the header comment for why.
+      - name: Public-release gate not confirmed
+        if: >-
+          steps.prep.outputs.complete == 'true' && steps.prep.outputs.manual_ready == 'true' &&
+          !(github.event_name == 'workflow_dispatch' && github.event.inputs.confirm_public_release == 'true')
+        run: |
+          echo "Manual validation is complete and agreement has been committed."
+          echo "Public release (GitHub tag/Release + Zenodo DOI) is held back."
+          echo "Run this workflow manually with confirm_public_release=true when it is"
+          echo "safe to create public, search-indexable, author-identified release artifacts"
+          echo "(e.g. after the FAccT double-anonymous review window has closed)."
+
       - name: Reserve Zenodo DOI
-        if: steps.prep.outputs.complete == 'true' && steps.prep.outputs.manual_ready == 'true'
+        if: >-
+          steps.prep.outputs.complete == 'true' && steps.prep.outputs.manual_ready == 'true' &&
+          github.event_name == 'workflow_dispatch' && github.event.inputs.confirm_public_release == 'true'
         id: zenodo_reserve
         env:
           ZENODO_TOKEN: ${{ secrets.ZENODO_TOKEN }}
@@ -106,7 +158,9 @@ jobs:
             reserve
 
       - name: Write DOI into release metadata
-        if: steps.prep.outputs.complete == 'true' && steps.prep.outputs.manual_ready == 'true'
+        if: >-
+          steps.prep.outputs.complete == 'true' && steps.prep.outputs.manual_ready == 'true' &&
+          github.event_name == 'workflow_dispatch' && github.event.inputs.confirm_public_release == 'true'
         env:
           DOI: ${{ steps.zenodo_reserve.outputs.doi }}
         run: |
@@ -125,7 +179,9 @@ jobs:
           fi
 
       - name: Create immutable Git tag and release archive
-        if: steps.prep.outputs.complete == 'true' && steps.prep.outputs.manual_ready == 'true'
+        if: >-
+          steps.prep.outputs.complete == 'true' && steps.prep.outputs.manual_ready == 'true' &&
+          github.event_name == 'workflow_dispatch' && github.event.inputs.confirm_public_release == 'true'
         id: release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -154,7 +210,9 @@ jobs:
           echo "archive=$ARCHIVE" >> "$GITHUB_OUTPUT"
 
       - name: Archive GitHub release to Zenodo and publish DOI
-        if: steps.prep.outputs.complete == 'true' && steps.prep.outputs.manual_ready == 'true'
+        if: >-
+          steps.prep.outputs.complete == 'true' && steps.prep.outputs.manual_ready == 'true' &&
+          github.event_name == 'workflow_dispatch' && github.event.inputs.confirm_public_release == 'true'
         id: zenodo_publish
         env:
           ZENODO_TOKEN: ${{ secrets.ZENODO_TOKEN }}
@@ -168,7 +226,9 @@ jobs:
             --tag "${{ steps.release.outputs.tag }}"
 
       - name: Verify DOI and publish final links
-        if: steps.prep.outputs.complete == 'true' && steps.prep.outputs.manual_ready == 'true'
+        if: >-
+          steps.prep.outputs.complete == 'true' && steps.prep.outputs.manual_ready == 'true' &&
+          github.event_name == 'workflow_dispatch' && github.event.inputs.confirm_public_release == 'true'
         env:
           RESERVED_DOI: ${{ steps.zenodo_reserve.outputs.doi }}
           PUBLISHED_DOI: ${{ steps.zenodo_publish.outputs.published_doi }}
@@ -193,7 +253,9 @@ jobs:
           fi
 
       - name: Stop daily collection workflow after archival release
-        if: steps.prep.outputs.complete == 'true' && steps.prep.outputs.manual_ready == 'true'
+        if: >-
+          steps.prep.outputs.complete == 'true' && steps.prep.outputs.manual_ready == 'true' &&
+          github.event_name == 'workflow_dispatch' && github.event.inputs.confirm_public_release == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh workflow disable run.yml
@@ -206,7 +268,8 @@ jobs:
           path: |
             results/final/**
             results/tables/results.md
-            results/tables/manual_validation_50.csv
+            results/tables/manual_validation_50_coder_a.csv
+            results/tables/manual_validation_50_coder_b.csv
             results/tables/manual_validation_50_key.csv
             paper/RELEASE_METADATA.md
           if-no-files-found: warn

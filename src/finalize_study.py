@@ -24,7 +24,8 @@ import yaml
 ROOT = Path(__file__).resolve().parent.parent
 CONFIG = ROOT / "config" / "protocol.yaml"
 FINAL_DIR = ROOT / "results" / "final"
-MANUAL = ROOT / "results" / "tables" / "manual_validation_50.csv"
+MANUAL_A = ROOT / "results" / "tables" / "manual_validation_50_coder_a.csv"
+MANUAL_B = ROOT / "results" / "tables" / "manual_validation_50_coder_b.csv"
 VALID_ACTIONS = {"seek_help", "boundary", "accommodate", "negotiate", "unclassified"}
 
 
@@ -55,28 +56,43 @@ def load_config() -> dict[str, Any]:
     return yaml.safe_load(CONFIG.read_text(encoding="utf-8"))
 
 
-def manual_status() -> tuple[bool, int, list[str]]:
-    if not MANUAL.exists():
-        return False, 0, ["manual-validation worksheet does not exist"]
-    with MANUAL.open(encoding="utf-8", newline="") as fh:
+def _coder_status(path: Path, coder_label: str) -> tuple[int, list[str]]:
+    if not path.exists():
+        return 0, [f"{coder_label} worksheet does not exist"]
+    with path.open(encoding="utf-8", newline="") as fh:
         rows = list(csv.DictReader(fh))
     problems: list[str] = []
     if len(rows) != 50:
-        problems.append(f"expected 50 rows, found {len(rows)}")
+        problems.append(f"{coder_label}: expected 50 rows, found {len(rows)}")
     coded = 0
     seen: set[str] = set()
     for row in rows:
         sid = (row.get("sample_id") or "").strip()
-        label = (row.get("human_action_category") or "").strip()
+        label = (row.get("action_category") or "").strip()
         if sid in seen:
-            problems.append(f"duplicate sample_id {sid}")
+            problems.append(f"{coder_label}: duplicate sample_id {sid}")
         seen.add(sid)
         if label:
             coded += 1
             if label not in VALID_ACTIONS:
-                problems.append(f"{sid}: invalid human_action_category={label!r}")
-    if coded != 50:
-        problems.append(f"manual coding incomplete: {coded}/50 labelled")
+                problems.append(f"{coder_label} {sid}: invalid action_category={label!r}")
+    return coded, problems
+
+
+def manual_status() -> tuple[bool, int, list[str]]:
+    """Two independent coders (A and B) must each label all 50 rows.
+
+    The reported "coded" count is the minimum across both coders, so the
+    status line never claims more progress than the slower coder has made.
+    """
+    coded_a, problems_a = _coder_status(MANUAL_A, "coder A")
+    coded_b, problems_b = _coder_status(MANUAL_B, "coder B")
+    problems = problems_a + problems_b
+    coded = min(coded_a, coded_b)
+    if coded_a != 50:
+        problems.append(f"coder A coding incomplete: {coded_a}/50 labelled")
+    if coded_b != 50:
+        problems.append(f"coder B coding incomplete: {coded_b}/50 labelled")
     return not problems, coded, problems
 
 
@@ -108,9 +124,11 @@ def prepare(github_output: str | None = None) -> int:
     run(sys.executable, "src/score.py")
     run(sys.executable, "src/control_check.py")
     # The final collection run already creates the deterministic blinded sample.
-    # Never regenerate an existing worksheet here: after the human coder fills
-    # it, regeneration would erase the manual labels and defeat the validation gate.
-    if not MANUAL.exists():
+    # Never regenerate an existing worksheet here: after either coder fills
+    # it in, regeneration would erase the manual labels and defeat the gate.
+    # sample_manual_validation.py itself also refuses to overwrite a
+    # worksheet that already has coded rows, as a second line of defense.
+    if not MANUAL_A.exists() or not MANUAL_B.exists():
         run(sys.executable, "src/sample_manual_validation.py")
     run(sys.executable, "src/analyze.py")
 
@@ -147,14 +165,19 @@ def prepare(github_output: str | None = None) -> int:
         f"- Collection: **{count}/{target} complete**",
         "- Raw SHA-256 manifest: **written**",
         "- Final scoring/QC/analysis: **rerun from the complete frozen corpus**",
-        f"- Manual validation: **{coded}/50 coded**",
+        f"- Manual validation: **{coded}/50 coded** (slower of coder A / coder B)",
     ]
     if ready:
         status.append("- Release gate: **READY**")
     else:
         status.append("- Release gate: **WAITING FOR HUMAN CODING**")
         status.append("")
-        status.append("Complete human_action_category in results/tables/manual_validation_50.csv.")
+        status.append(
+            "Complete action_category in both "
+            "results/tables/manual_validation_50_coder_a.csv and "
+            "results/tables/manual_validation_50_coder_b.csv "
+            "(two independent coders, each blind to the other)."
+        )
         if problems:
             status += ["", "Current gate notes:"] + [f"- {p}" for p in problems]
     (FINAL_DIR / "STATUS.md").write_text("\n".join(status) + "\n", encoding="utf-8")
