@@ -1,0 +1,29 @@
+{
+  "n": 50,
+  "categories": [
+    "seek_help",
+    "boundary",
+    "accommodate",
+    "negotiate",
+    "unclassified"
+  ],
+  "primary_inter_rater": {
+    "description": "Cohen's kappa between the two independent human coders (A and B), each blind to the other and to the automated classifier.",
+    "exact_agreement_n": 27,
+    "exact_agreement_rate": 0.54,
+    "cohens_kappa": 0.10436137071651096
+  },
+  "secondary_classifier_agreement": {
+    "description": "Each human coder vs. the automated action-category classifier. Reported for reference only; not inter-rater reliability.",
+    "coder_a_vs_automated": {
+      "exact_agreement_n": 44,
+      "exact_agreement_rate": 0.88,
+      "cohens_kappa": 0.765990639625585
+    },
+    "coder_b_vs_automated": {
+      "exact_agreement_n": 27,
+      "exact_agreement_rate": 0.54,
+      "cohens_kappa": 0.0930599369085174
+    }
+  }
+}
